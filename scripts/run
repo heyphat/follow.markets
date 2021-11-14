@@ -1,0 +1,4 @@
+#!/bin/bash
+
+docker kill fm
+docker run -d --rm --name fm -p 6868:6868 phat/followmarket:latest

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+docker build --rm -t phat/followmarket:$(git rev-parse HEAD) -f deployments/Dockerfile .
+docker tag phat/followmarket:$(git rev-parse HEAD) phat/followmarket:latest

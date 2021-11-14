@@ -1,0 +1,26 @@
+{
+  "env": "development",  
+  "server": {
+    "host": "",
+    "port": 6868,
+    "limit": 5,
+    "timeout": {
+      "read": 10,
+      "write": 10,
+      "idle": 10
+    }
+  },
+  "datadog": {
+    "host": "",
+    "port": "8126",
+    "env": "staging|production",
+    "service": "follow.market",
+    "version": "0.1.0"
+  },
+  "markets": {
+    "binance": {
+      "api_key": "test",
+      "secret_key": "test"
+    }
+  }
+}
