@@ -17,7 +17,7 @@ func Test_Strategy(t *testing.T) {
 	strategy, err := NewStrategy(raw)
 	assert.EqualValues(t, nil, err)
 
-	ok := strategy.Evaluate()
+	ok := strategy.Evaluate(nil)
 	assert.EqualValues(t, false, ok)
 
 	for _, c := range strategy.Conditions {
