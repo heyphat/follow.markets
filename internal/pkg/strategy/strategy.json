@@ -1,0 +1,27 @@
+{
+  "name": "sample",
+  "conditions":
+  [
+    {
+    "this":
+      {
+        "time_period": "1m",
+        "time_frame": 1,
+        "candle": {
+          "level": "CLOSE",
+          "effective": 1 
+        }
+      },
+    "that":
+      {
+        "time_period": "1m",
+        "time_frame": 0,
+        "candle": {
+          "level": "CLOSE",
+          "effective": 1 
+        }
+      },
+    "opt": "equal"
+    }
+  ]
+}
