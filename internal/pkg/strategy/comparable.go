@@ -6,7 +6,7 @@ import (
 	"github.com/sdcoffey/big"
 
 	tax "follow.market/internal/pkg/techanex"
-	"follow.market/internal/pkg/util"
+	"follow.market/pkg/util"
 )
 
 type Comparable struct {
