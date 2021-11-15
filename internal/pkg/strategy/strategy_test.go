@@ -17,7 +17,7 @@ func Test_Strategy(t *testing.T) {
 	strategy, err := NewStrategy(raw)
 	assert.EqualValues(t, nil, err)
 
-	ok := strategy.Evaluate()
+	ok := strategy.Evaluate(nil)
 	assert.EqualValues(t, false, ok)
 
 	for _, c := range strategy.Conditions {
@@ -31,6 +31,17 @@ func Test_Strategy(t *testing.T) {
 		assert.EqualValues(t, false, ok)
 
 		ok = c.evaluate(tax.NewSeries(nil))
+		assert.EqualValues(t, true, ok)
+	}
+
+	for _, g := range strategy.ConditionGroups {
+		err := g.validate()
+		assert.EqualValues(t, nil, err)
+
+		ok = g.evaluate(nil)
+		assert.EqualValues(t, false, ok)
+
+		ok = g.evaluate(tax.NewSeries(nil))
 		assert.EqualValues(t, true, ok)
 	}
 }

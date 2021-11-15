@@ -9,7 +9,7 @@ import (
 type Condition struct {
 	This *Comparable `json:"this"`
 	That *Comparable `json:"that"`
-	Opt  *operator   `json:"opt"`
+	Opt  *Operator   `json:"opt"`
 }
 
 type Conditions []*Condition
@@ -39,7 +39,7 @@ func (c *Condition) evaluate(s *tax.Series) bool {
 	if !ok {
 		return ok
 	}
-	switch operator(*c.Opt) {
+	switch Operator(*c.Opt) {
 	case Less:
 		return thisD.LT(thatD)
 	case More:
@@ -54,3 +54,48 @@ func (c *Condition) evaluate(s *tax.Series) bool {
 		return false
 	}
 }
+
+type ConditionGroup struct {
+	Conditions Conditions `json:"conditions"`
+	Opt        *Operator  `json:"opt"`
+}
+
+func (g *ConditionGroup) validate() error {
+	if g.Opt == nil {
+		return errors.New("missing group operator")
+	}
+	if *g.Opt != Or && *g.Opt != And {
+		return errors.New("invalid group condition")
+	}
+	for _, c := range g.Conditions {
+		if err := c.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (g *ConditionGroup) evaluate(s *tax.Series) bool {
+	if s == nil {
+		return false
+	}
+	switch *g.Opt {
+	case And:
+		for _, c := range g.Conditions {
+			if !c.evaluate(s) {
+				return false
+			}
+		}
+	case Or:
+		for _, c := range g.Conditions {
+			if c.evaluate(s) {
+				return true
+			}
+		}
+	default:
+		return false
+	}
+	return true
+}
+
+type ConditionGroups []*ConditionGroup
