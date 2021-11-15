@@ -7,8 +7,9 @@ import (
 )
 
 type Strategy struct {
-	Name       string     `json:"name"`
-	Conditions Conditions `json:"conditions"`
+	Name            string          `json:"name"`
+	Conditions      Conditions      `json:"conditions"`
+	ConditionGroups ConditionGroups `json:"condition_groups"`
 }
 
 func NewStrategy(bytes []byte) (*Strategy, error) {
@@ -23,6 +24,11 @@ func (s *Strategy) Evaluate(series *tax.Series) bool {
 	}
 	for _, c := range s.Conditions {
 		if !c.evaluate(series) {
+			return false
+		}
+	}
+	for _, g := range s.ConditionGroups {
+		if !g.evaluate(series) {
 			return false
 		}
 	}
