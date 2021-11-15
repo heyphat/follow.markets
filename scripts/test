@@ -21,6 +21,10 @@ cd internal/pkg/runner
 go test
 cd ../../.. 
 
+cd internal/pkg/strategy
+go test
+cd ../../.. 
+
 cd internal/cmd/market
 go test
 cd ../../.. 
