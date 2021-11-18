@@ -36,7 +36,6 @@ func newStreamer(participants *sharedParticipants) (*streamer, error) {
 		provider:     participants.provider,
 		communicator: participants.communicator,
 	}
-	s.connect()
 	return s, nil
 }
 

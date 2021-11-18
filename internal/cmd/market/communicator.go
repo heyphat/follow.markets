@@ -7,16 +7,18 @@ import (
 )
 
 type communicator struct {
-	watcher2Streamer chan *message
-	streamer2Watcher chan *message
-	trader2Streamer  chan *message
+	watcher2Streamer  chan *message
+	watcher2Evaluator chan *message
+	streamer2Watcher  chan *message
+	trader2Streamer   chan *message
 }
 
 func newCommunicator() *communicator {
 	return &communicator{
-		watcher2Streamer: make(chan *message),
-		streamer2Watcher: make(chan *message),
-		trader2Streamer:  make(chan *message),
+		watcher2Streamer:  make(chan *message),
+		watcher2Evaluator: make(chan *message),
+		streamer2Watcher:  make(chan *message),
+		trader2Streamer:   make(chan *message),
 	}
 }
 

@@ -19,6 +19,7 @@ func Test_Streamer(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 
 	streamer, err := newStreamer(initSharedParticipants(configs))
+	streamer.connect()
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, streamer.isConnected())
 

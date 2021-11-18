@@ -16,8 +16,8 @@ func Test_Watcher(t *testing.T) {
 
 	watcher, err := newWatcher(initSharedParticipants(configs))
 	assert.EqualValues(t, nil, err)
-	assert.EqualValues(t, false, watcher.IsConnected())
-	assert.EqualValues(t, 0, len(watcher.Watchlist()))
+	assert.EqualValues(t, false, watcher.isConnected())
+	assert.EqualValues(t, 0, len(watcher.watchlist()))
 
 	go func() {
 		for msg := range watcher.communicator.watcher2Streamer {
@@ -28,12 +28,12 @@ func Test_Watcher(t *testing.T) {
 		}
 	}()
 
-	err = watcher.Watch("BTCUSDT")
+	err = watcher.watch("BTCUSDT")
 	assert.EqualValues(t, nil, err)
-	assert.EqualValues(t, true, watcher.IsConnected())
-	assert.EqualValues(t, true, watcher.IsWatchingOn("BTCUSDT"))
-	assert.EqualValues(t, []string{"BTCUSDT"}, watcher.Watchlist())
-	r := watcher.Get("BTCUSDT")
+	assert.EqualValues(t, true, watcher.isConnected())
+	assert.EqualValues(t, true, watcher.isWatchingOn("BTCUSDT"))
+	assert.EqualValues(t, []string{"BTCUSDT"}, watcher.watchlist())
+	r := watcher.get("BTCUSDT")
 	assert.EqualValues(t, "BTCUSDT", r.GetName())
 	for _, d := range r.GetConfigs().LFrames {
 		line, ok := r.GetLines(d)

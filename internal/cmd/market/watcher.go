@@ -13,11 +13,7 @@ import (
 	tax "follow.market/internal/pkg/techanex"
 )
 
-//type WatcherConfigs struct {
-//	Communicator *Communicator
-//}
-
-type Watcher struct {
+type watcher struct {
 	sync.Mutex
 	connected bool
 	runners   *sync.Map
@@ -34,11 +30,11 @@ type member struct {
 	tChann chan *tax.Trade
 }
 
-func newWatcher(participants *sharedParticipants) (*Watcher, error) {
+func newWatcher(participants *sharedParticipants) (*watcher, error) {
 	if participants == nil || participants.communicator == nil || participants.logger == nil {
 		return nil, errors.New("missing shared participants")
 	}
-	return &Watcher{
+	return &watcher{
 		connected: false,
 		runners:   &sync.Map{},
 
@@ -48,19 +44,19 @@ func newWatcher(participants *sharedParticipants) (*Watcher, error) {
 	}, nil
 }
 
-// IsConnected return whether the watcher is connected to other market participants.
-func (w *Watcher) IsConnected() bool { return w.connected }
+// isConnected return whether the watcher is connected to other market participants.
+func (w *watcher) isConnected() bool { return w.connected }
 
 // Get return a runner which is watching on the watchlist
-func (w *Watcher) Get(name string) *runner.Runner {
+func (w *watcher) get(name string) *runner.Runner {
 	if m, ok := w.runners.Load(name); ok {
 		return m.(member).runner
 	}
 	return nil
 }
 
-// Watchlist returns a watchlist where tickers are being closely monitored and reported.
-func (w *Watcher) Watchlist() []string {
+// watchlist returns a watchlist where tickers are being closely monitored and reported.
+func (w *watcher) watchlist() []string {
 	tickers := []string{}
 	w.runners.Range(func(key, value interface{}) bool {
 		tickers = append(tickers, key.(string))
@@ -69,8 +65,8 @@ func (w *Watcher) Watchlist() []string {
 	return tickers
 }
 
-// IsWatchingOn returns whether the ticker is on the watchlist or not.
-func (w *Watcher) IsWatchingOn(ticker string) bool {
+// isWatchingOn returns whether the ticker is on the watchlist or not.
+func (w *watcher) isWatchingOn(ticker string) bool {
 	valid := false
 	w.runners.Range(func(key, value interface{}) bool {
 		valid = key.(string) == ticker
@@ -79,14 +75,14 @@ func (w *Watcher) IsWatchingOn(ticker string) bool {
 	return valid
 }
 
-// Watch initializes the process to add a ticker to the watchlist. The process keep
+// watch initializes the process to add a ticker to the watchlist. The process keep
 // watching the ticker by comsuming the 1-minute candle and trade information boardcasted
 // from the streamer.
-func (w *Watcher) Watch(ticker string) error {
+func (w *watcher) watch(ticker string) error {
 	if !w.connected {
 		w.connect()
 	}
-	if w.IsWatchingOn(ticker) {
+	if w.isWatchingOn(ticker) {
 		return nil
 	}
 	m := member{
@@ -102,11 +98,14 @@ func (w *Watcher) Watch(ticker string) error {
 		return errors.New("failed to sync candles on initialization")
 	}
 	w.runners.Store(ticker, m)
-	go w.watch(m)
+	go w.await(m)
 	return nil
 }
 
-func (w *Watcher) watch(mem member) {
+// await will loop forever to receive streaming data from the streamer. This function is meant
+// to run in a separate go routine. The watcher can close listening channels to stop watching when
+// it receives drop signals from the market.
+func (w *watcher) await(mem member) {
 	for !w.registerStreamingChannel(mem) {
 		w.logger.Error.Println(w.newLog(mem.runner.GetName(), "failed to register streaming data"))
 	}
@@ -125,9 +124,9 @@ func (w *Watcher) watch(mem member) {
 	}()
 }
 
-// Connect connects the watcher to other market participants py listening to
+// connect connects the watcher to other market participants py listening to
 // a decicated channels for the communication.
-func (w *Watcher) connect() {
+func (w *watcher) connect() {
 	w.Lock()
 	defer w.Unlock()
 	if w.connected {
@@ -144,7 +143,7 @@ func (w *Watcher) connect() {
 // registerStreamingChannel registers the runners with the streamer in order to
 // recevie and consume candles broadcasted by data providor. Every time the Watch
 // method is called and the ticker is vallid, it will invoke this method.
-func (w *Watcher) registerStreamingChannel(mem member) bool {
+func (w *watcher) registerStreamingChannel(mem member) bool {
 	doneStreamingRegister := false
 	var maxTries int
 	for !doneStreamingRegister && maxTries <= 3 {
@@ -156,13 +155,13 @@ func (w *Watcher) registerStreamingChannel(mem member) bool {
 	return doneStreamingRegister
 }
 
-func (w *Watcher) processStreamerRequest(msg *message) {
+func (w *watcher) processStreamerRequest(msg *message) {
 	if mem, ok := w.runners.Load(msg.request.what.(string)); ok && msg.response != nil {
 		msg.response <- w.communicator.newPayload(mem)
 		close(msg.response)
 	}
 }
 
-func (w *Watcher) newLog(ticker, message string) string {
+func (w *watcher) newLog(ticker, message string) string {
 	return fmt.Sprintf("[watcher] %s: %s", ticker, message)
 }

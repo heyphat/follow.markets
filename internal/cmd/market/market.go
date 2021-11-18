@@ -27,8 +27,9 @@ func initSharedParticipants(configs *config.Configs) *sharedParticipants {
 }
 
 type MarketStruct struct {
-	Watcher  *Watcher
-	streamer *streamer
+	watcher   *watcher
+	streamer  *streamer
+	evaluator *evaluator
 }
 
 func NewMarket(configPathFile *string) (*MarketStruct, error) {
@@ -49,10 +50,30 @@ func NewMarket(configPathFile *string) (*MarketStruct, error) {
 	if err != nil {
 		return nil, err
 	}
+	evaluator, err := newEvaluator(common)
+	if err != nil {
+		return nil, err
+	}
 	once.Do(func() {
 		Market = &MarketStruct{}
-		Market.Watcher = watcher
+		Market.watcher = watcher
 		Market.streamer = streamer
+		Market.evaluator = evaluator
+		Market.connect()
 	})
 	return Market, nil
+}
+
+func (m *MarketStruct) connect() {
+	m.watcher.connect()
+	m.streamer.connect()
+	m.evaluator.connect()
+}
+
+func (m *MarketStruct) Watch(name string) error {
+	return m.watcher.watch(name)
+}
+
+func (m *MarketStruct) Watchlist() []string {
+	return m.watcher.watchlist()
 }
