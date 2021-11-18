@@ -18,8 +18,8 @@ func Test_Streamer(t *testing.T) {
 	configs, err := config.NewConfigs(&path)
 	assert.EqualValues(t, nil, err)
 
-	marketConfigs := NewMarketConfigs(configs)
-	streamer := newStreamer(marketConfigs)
+	streamer, err := newStreamer(initSharedParticipants(configs))
+	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, streamer.isConnected())
 
 	btcT := "BTCUSDT"

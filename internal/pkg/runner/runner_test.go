@@ -17,7 +17,7 @@ func Test_NewRunner(t *testing.T) {
 			time.Minute,
 			10 * time.Minute,
 		},
-		IConfigs: tax.NewIndicatorDefaultConfigs(),
+		IConfigs: tax.NewDefaultIndicatorConfigs(),
 	}
 	runner := NewRunner("BTCUSDT", configs)
 	returnedConfigs := runner.GetConfigs()
@@ -31,7 +31,7 @@ func Test_SyncCandle(t *testing.T) {
 			5 * time.Minute,
 			15 * time.Minute,
 		},
-		IConfigs: tax.NewIndicatorDefaultConfigs(),
+		IConfigs: tax.NewDefaultIndicatorConfigs(),
 	}
 	runner := NewRunner("BTCUSDT", configs)
 
@@ -91,7 +91,7 @@ func Test_AddNewLine(t *testing.T) {
 			time.Minute,
 			5 * time.Minute,
 		},
-		IConfigs: tax.NewIndicatorDefaultConfigs(),
+		IConfigs: tax.NewDefaultIndicatorConfigs(),
 	}
 	runner := NewRunner("BTCUSDT", configs)
 
@@ -146,8 +146,9 @@ func Test_AddNewLineWithNewTimeSeries(t *testing.T) {
 		LFrames: []time.Duration{
 			time.Minute,
 			5 * time.Minute,
+			//10 * time.Minute,
 		},
-		IConfigs: tax.NewIndicatorDefaultConfigs(),
+		IConfigs: tax.NewDefaultIndicatorConfigs(),
 	}
 	runner := NewRunner("BTCUSDT", configs)
 
@@ -163,14 +164,8 @@ func Test_AddNewLineWithNewTimeSeries(t *testing.T) {
 
 	candle1 := tax.ConvertBinanceKline(kline, nil)
 
-	//ok := runner.SyncCandle(candle1)
-	//assert.EqualValues(t, true, ok)
-
 	candle2 := tax.ConvertBinanceKline(kline, nil)
 	candle2.Period = candle2.Period.Advance(1)
-
-	//ok = runner.SyncCandle(candle2)
-	//assert.EqualValues(t, true, ok)
 
 	series := ta.TimeSeries{
 		Candles: []*ta.Candle{candle1, candle2},

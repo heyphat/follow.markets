@@ -14,14 +14,13 @@ func Test_Watcher(t *testing.T) {
 	configs, err := config.NewConfigs(&path)
 	assert.EqualValues(t, nil, err)
 
-	marketConfigs := NewMarketConfigs(configs)
-	watcher := NewWatcher(marketConfigs)
-
+	watcher, err := newWatcher(initSharedParticipants(configs))
+	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, false, watcher.IsConnected())
 	assert.EqualValues(t, 0, len(watcher.Watchlist()))
 
 	go func() {
-		for msg := range marketConfigs.communicator.watcher2Streamer {
+		for msg := range watcher.communicator.watcher2Streamer {
 			mem := msg.request.what.(member)
 			assert.EqualValues(t, "BTCUSDT", mem.runner.GetName())
 			msg.response <- watcher.communicator.newPayload(true)

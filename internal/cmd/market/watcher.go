@@ -34,18 +34,18 @@ type member struct {
 	tChann chan *tax.Trade
 }
 
-func NewWatcher(configs *MarketConfigs) *Watcher {
-	if configs == nil || configs.communicator == nil || configs.logger == nil {
-		return nil
+func newWatcher(participants *sharedParticipants) (*Watcher, error) {
+	if participants == nil || participants.communicator == nil || participants.logger == nil {
+		return nil, errors.New("missing shared participants")
 	}
 	return &Watcher{
 		connected: false,
 		runners:   &sync.Map{},
 
-		logger:       configs.logger,
-		provider:     configs.provider,
-		communicator: configs.communicator,
-	}
+		logger:       participants.logger,
+		provider:     participants.provider,
+		communicator: participants.communicator,
+	}, nil
 }
 
 // IsConnected return whether the watcher is connected to other market participants.
