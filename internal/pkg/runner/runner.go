@@ -26,7 +26,7 @@ var (
 
 type RunnerConfigs struct {
 	LFrames  []time.Duration
-	IConfigs *tax.IndicatorConfigs
+	IConfigs tax.IndicatorConfigs
 }
 
 func NewRunnerDefaultConfigs() *RunnerConfigs {
@@ -37,7 +37,7 @@ func NewRunnerDefaultConfigs() *RunnerConfigs {
 	}
 	return &RunnerConfigs{
 		LFrames:  lineFrames,
-		IConfigs: tax.NewIndicatorDefaultConfigs(),
+		IConfigs: tax.NewDefaultIndicatorConfigs(),
 	}
 }
 
