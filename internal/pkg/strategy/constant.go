@@ -1,4 +1,4 @@
-package builder
+package strategy
 
 type CandleLevel string
 
@@ -6,19 +6,12 @@ const (
 	CandleOpen      CandleLevel = "OPEN"
 	CandleClose     CandleLevel = "CLOSE"
 	CandleHigh      CandleLevel = "HIGH"
-	CandleLow       CandleLevel = "HIGH"
+	CandleLow       CandleLevel = "LOW"
 	CandleVolume    CandleLevel = "VOLUME"
 	CandleTrade     CandleLevel = "TRADE_NUM"
 	CandleHighLow   CandleLevel = "HIGH_LOW"
 	CandleCloseOpen CandleLevel = "CLOSE_OPEN"
 	CandleHighOpen  CandleLevel = "HIGH_OPEN"
-)
-
-type IndicatorName string
-
-const (
-	IndicatorEMA IndicatorName = "EMA"
-	IndicatorBB  IndicatorName = "BollingerBand"
 )
 
 const (
@@ -36,8 +29,5 @@ var (
 	candleLevels = []string{
 		"CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_NUM",
 		"TRADE_NUM", "HIGH_LOW", "CLOSE_OPEN", "HIGH_OPEN",
-	}
-	indicatorNames = []string{
-		"EMA", "MA",
 	}
 )

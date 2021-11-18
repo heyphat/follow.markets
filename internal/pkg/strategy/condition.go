@@ -1,9 +1,9 @@
-package builder
+package strategy
 
 import (
 	"errors"
 
-	tax "follow.market/internal/pkg/techanex"
+	"follow.market/internal/pkg/runner"
 )
 
 type Condition struct {
@@ -27,15 +27,15 @@ func (c *Condition) validate() error {
 	return nil
 }
 
-func (c *Condition) evaluate(s *tax.Series) bool {
-	if s == nil {
+func (c *Condition) evaluate(r *runner.Runner) bool {
+	if r == nil {
 		return false
 	}
-	thisD, ok := c.This.mapDecimal(s)
+	thisD, ok := c.This.mapDecimal(r)
 	if !ok {
 		return ok
 	}
-	thatD, ok := c.That.mapDecimal(s)
+	thatD, ok := c.That.mapDecimal(r)
 	if !ok {
 		return ok
 	}
@@ -75,20 +75,20 @@ func (g *ConditionGroup) validate() error {
 	return nil
 }
 
-func (g *ConditionGroup) evaluate(s *tax.Series) bool {
-	if s == nil {
+func (g *ConditionGroup) evaluate(r *runner.Runner) bool {
+	if r == nil {
 		return false
 	}
 	switch *g.Opt {
 	case And:
 		for _, c := range g.Conditions {
-			if !c.evaluate(s) {
+			if !c.evaluate(r) {
 				return false
 			}
 		}
 	case Or:
 		for _, c := range g.Conditions {
-			if c.evaluate(s) {
+			if c.evaluate(r) {
 				return true
 			}
 		}

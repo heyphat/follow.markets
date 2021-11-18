@@ -1,9 +1,9 @@
-package builder
+package strategy
 
 import (
 	"encoding/json"
 
-	tax "follow.market/internal/pkg/techanex"
+	"follow.market/internal/pkg/runner"
 )
 
 type Strategy struct {
@@ -12,23 +12,25 @@ type Strategy struct {
 	ConditionGroups ConditionGroups `json:"condition_groups"`
 }
 
+type Strategies []*Strategy
+
 func NewStrategy(bytes []byte) (*Strategy, error) {
 	stg := Strategy{}
 	err := json.Unmarshal(bytes, &stg)
 	return &stg, err
 }
 
-func (s *Strategy) Evaluate(series *tax.Series) bool {
-	if series == nil {
+func (s *Strategy) Evaluate(r *runner.Runner) bool {
+	if r == nil {
 		return false
 	}
 	for _, c := range s.Conditions {
-		if !c.evaluate(series) {
+		if !c.evaluate(r) {
 			return false
 		}
 	}
 	for _, g := range s.ConditionGroups {
-		if !g.evaluate(series) {
+		if !g.evaluate(r) {
 			return false
 		}
 	}

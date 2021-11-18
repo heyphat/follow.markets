@@ -1,4 +1,4 @@
-package builder
+package strategy
 
 import (
 	"io/ioutil"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	tax "follow.market/internal/pkg/techanex"
+	"follow.market/internal/pkg/runner"
 )
 
 func Test_Strategy(t *testing.T) {
@@ -30,8 +30,9 @@ func Test_Strategy(t *testing.T) {
 		ok := c.evaluate(nil)
 		assert.EqualValues(t, false, ok)
 
-		ok = c.evaluate(tax.NewSeries(nil))
-		assert.EqualValues(t, true, ok)
+		ok = c.evaluate(runner.NewRunner("BTCUSDT", nil))
+		assert.EqualValues(t, false, ok)
+		//TODO: init the runner and test
 	}
 
 	for _, g := range strategy.ConditionGroups {
@@ -41,7 +42,7 @@ func Test_Strategy(t *testing.T) {
 		ok = g.evaluate(nil)
 		assert.EqualValues(t, false, ok)
 
-		ok = g.evaluate(tax.NewSeries(nil))
+		ok = g.evaluate(runner.NewRunner("BTCUSDT", nil))
 		assert.EqualValues(t, true, ok)
 	}
 }

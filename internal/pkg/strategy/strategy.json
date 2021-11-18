@@ -5,7 +5,7 @@
     {
     "this":
       {
-        "time_period": "1m",
+        "time_period": 60,
         "time_frame": 1,
         "candle": {
           "level": "CLOSE",
@@ -14,7 +14,7 @@
       },
     "that":
       {
-        "time_period": "1m",
+        "time_period": 60,
         "time_frame": 0,
         "candle": {
           "level": "CLOSE",
@@ -30,7 +30,7 @@
         {
           "this":
             {
-              "time_period": "1m",
+              "time_period": 60,
               "time_frame": 1,
               "candle": {
                 "level": "CLOSE",
@@ -39,10 +39,13 @@
             },
           "that":
             {
-              "time_period": "1m",
+              "time_period": 60,
               "time_frame": 0,
-              "candle": {
-                "level": "CLOSE",
+              "indicator": {
+                "name": "MovingAverge",
+                "config": {
+                  "window": 9
+                },
                 "effective": 1 
               }
             },

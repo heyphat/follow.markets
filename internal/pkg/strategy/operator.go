@@ -1,4 +1,4 @@
-package builder
+package strategy
 
 type Operator string
 
