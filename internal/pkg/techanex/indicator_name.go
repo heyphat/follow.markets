@@ -31,10 +31,19 @@ func (n IndicatorName) getIndicator(indicator ta.Indicator, window int) ta.Indic
 	}
 }
 
-func (n IndicatorName) toKey(i int) string {
+func (n IndicatorName) ToKey(i int) string {
 	return string(n) + "-" + strconv.Itoa(i)
 }
 
-func (n IndicatorName) toString() string {
+func (n IndicatorName) ToString() string {
 	return string(n)
+}
+
+func AvailableIndicators() []string {
+	return []string{
+		MA.ToString(),
+		EMA.ToString(),
+		BBU.ToString(),
+		BBD.ToString(),
+		ATR.ToString()}
 }

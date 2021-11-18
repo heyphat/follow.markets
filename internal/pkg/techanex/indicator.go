@@ -29,10 +29,10 @@ func NewIndicator(period ta.TimePeriod, configs IndicatorConfigs) *Indicator {
 	inds := make(map[string]big.Decimal)
 	for k, v := range configs {
 		if len(v) == 0 {
-			inds[k.toString()] = big.ZERO
+			inds[k.ToString()] = big.ZERO
 		}
 		for _, window := range v {
-			inds[k.toKey(window)] = big.ZERO
+			inds[k.ToKey(window)] = big.ZERO
 		}
 	}
 	return &Indicator{
@@ -50,7 +50,7 @@ func (i *Indicator) Calculate(configs IndicatorConfigs, candles *ta.TimeSeries, 
 		}
 		for _, window := range v {
 			ind = k.getIndicator(closePrices, window)
-			i.IndiMap[k.toKey(window)] = ind.Calculate(index)
+			i.IndiMap[k.ToKey(window)] = ind.Calculate(index)
 		}
 	}
 }
@@ -96,20 +96,20 @@ func (is *IndicatorSeries) newIndicatorsFromCandleSeries(s *ta.TimeSeries) bool 
 	inds := map[string]ta.Indicator{}
 	for k, v := range is.Configs {
 		if len(v) == 0 {
-			inds[k.toString()] = k.getIndicator(closePrices, 0)
+			inds[k.ToString()] = k.getIndicator(closePrices, 0)
 		}
 		for _, window := range v {
-			inds[k.toKey(window)] = k.getIndicator(closePrices, window)
+			inds[k.ToKey(window)] = k.getIndicator(closePrices, window)
 		}
 	}
 	for index := 0; index < len(s.Candles); index++ {
 		i := NewIndicator(s.Candles[index].Period, is.Configs)
 		for k, v := range is.Configs {
 			if len(v) == 0 {
-				i.IndiMap[k.toString()] = inds[k.toString()].Calculate(index)
+				i.IndiMap[k.ToString()] = inds[k.ToString()].Calculate(index)
 			}
 			for _, window := range v {
-				i.IndiMap[k.toKey(window)] = inds[k.toKey(window)].Calculate(index)
+				i.IndiMap[k.ToKey(window)] = inds[k.ToKey(window)].Calculate(index)
 			}
 		}
 		if !is.addIndicator(i) {

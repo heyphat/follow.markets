@@ -99,3 +99,23 @@ func (s *Series) UpdateCandle(candle *ta.Candle) bool {
 	s.Indicators.Indicators[len(s.Indicators.Indicators)-1] = indicator
 	return true
 }
+
+func (ts *Series) CandleByIndex(index int) *ta.Candle {
+	if len(ts.Candles.Candles) == 0 || index < 0 {
+		return nil
+	}
+	if len(ts.Candles.Candles) > index {
+		return ts.Candles.Candles[index]
+	}
+	return nil
+}
+
+func (ts *Series) IndicatorByIndex(index int) *Indicator {
+	if len(ts.Indicators.Indicators) == 0 || index < 0 {
+		return nil
+	}
+	if len(ts.Indicators.Indicators) > index {
+		return ts.Indicators.Indicators[index]
+	}
+	return nil
+}
