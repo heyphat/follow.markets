@@ -12,10 +12,10 @@ type Series struct {
 	Indicators *IndicatorSeries
 }
 
-func NewSeries(configs *IndicatorConfigs) *Series {
+func NewSeries(configs IndicatorConfigs) *Series {
 	return &Series{
 		Candles:    ta.NewTimeSeries(),
-		Indicators: NewIndicators(configs),
+		Indicators: NewIndicatorSeries(configs),
 	}
 }
 
