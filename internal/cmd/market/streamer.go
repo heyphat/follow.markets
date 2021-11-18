@@ -1,6 +1,7 @@
 package market
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -23,20 +24,20 @@ type streamer struct {
 	communicator *communicator
 }
 
-func newStreamer(configs *MarketConfigs) *streamer {
-	if configs == nil || configs.communicator == nil || configs.logger == nil {
-		return nil
+func newStreamer(participants *sharedParticipants) (*streamer, error) {
+	if participants == nil || participants.communicator == nil || participants.logger == nil {
+		return nil, errors.New("missing shared participants")
 	}
 	s := &streamer{
 		connected:   false,
 		controllers: &sync.Map{},
 
-		logger:       configs.logger,
-		provider:     configs.provider,
-		communicator: configs.communicator,
+		logger:       participants.logger,
+		provider:     participants.provider,
+		communicator: participants.communicator,
 	}
 	s.connect()
-	return s
+	return s, nil
 }
 
 type controller struct {
