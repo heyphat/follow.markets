@@ -4,6 +4,8 @@ go 1.17
 
 require (
 	github.com/adshao/go-binance/v2 v2.3.2
+	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.4.0-beta.0
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/itsphat/techan v0.12.2-0.20211105102610-8a483a2fe288
 	github.com/sdcoffey/big v0.7.0
@@ -20,7 +22,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/google/pprof v0.0.0-20210423192551-a2663126120b // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/klauspost/compress v1.13.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
