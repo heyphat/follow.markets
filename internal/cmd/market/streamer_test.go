@@ -16,7 +16,7 @@ import (
 
 func Test_Streamer(t *testing.T) {
 	// comment return to test streamer
-	//return
+	return
 	path := "./../../../configs/dev_configs.json"
 	configs, err := config.NewConfigs(&path)
 	assert.EqualValues(t, nil, err)

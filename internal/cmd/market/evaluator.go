@@ -71,17 +71,19 @@ func (e *evaluator) add(ticker string, s *strategy.Strategy) {
 		mem.strategies = append(mem.strategies, s)
 		e.runners.Store(ticker, mem)
 	}
+	fmt.Println(s.IsOnTrade())
 	if s.IsOnTrade() {
 		go e.await(mem, s)
 	}
 }
 
 func (e *evaluator) await(mem emember, s *strategy.Strategy) {
-	for !e.registerStreamingChannel(&mem) {
+	for !e.registerStreamingChannel(mem) {
 		e.logger.Error.Println(e.newLog(mem.name, "failed to register streaming data"))
 	}
 	go func() {
 		for msg := range mem.tChann {
+			//TODO: something wrong here, the strategy validation didn't pass
 			if s.Evaluate(nil, msg) {
 				e.communicator.evaluator2Notifier <- e.communicator.newMessage(s, nil)
 			}
@@ -89,7 +91,7 @@ func (e *evaluator) await(mem emember, s *strategy.Strategy) {
 	}()
 }
 
-func (e *evaluator) registerStreamingChannel(mem *emember) bool {
+func (e *evaluator) registerStreamingChannel(mem emember) bool {
 	doneStreamingRegister := false
 	var maxTries int
 	for !doneStreamingRegister && maxTries <= 3 {

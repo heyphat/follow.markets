@@ -1,9 +1,14 @@
 package market
 
 import (
+	"fmt"
+	"io/ioutil"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+
+	"follow.market/internal/pkg/strategy"
 )
 
 func Test_Market(t *testing.T) {
@@ -24,4 +29,18 @@ func Test_Market(t *testing.T) {
 
 	watchlist = market.Watchlist()
 	assert.EqualValues(t, 2, len(watchlist))
+
+	strategyPath := "./../../pkg/strategy/strategy_trade.json"
+	sraw, err := ioutil.ReadFile(strategyPath)
+	assert.EqualValues(t, nil, err)
+
+	s, err := strategy.NewStrategyFromBytes(sraw)
+	assert.EqualValues(t, nil, err)
+
+	market.evaluator.add("ETHUSDT", s)
+
+	fmt.Println("here")
+
+	time.Sleep(time.Minute)
+
 }
