@@ -17,6 +17,7 @@ func NewDefaultIndicatorConfigs() IndicatorConfigs {
 	configs[BBU] = []int{25}
 	configs[BBD] = []int{25}
 	configs[ATR] = []int{10}
+	//configs[LEVL] = []float64{}
 	return configs
 }
 
