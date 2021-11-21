@@ -22,5 +22,15 @@
       "api_key": "test",
       "secret_key": "test"
     }
-  }
+  },
+  "telegram": {
+    "bot_token": "telegram_bot_token",
+    "chat_ids": [
+      "telegrame_chat_id_1",
+      "telegrame_chat_id_2"
+    ] 
+  },
+  "watchlist": [
+    "BTCUSDT"
+  ]
 }
