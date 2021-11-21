@@ -21,7 +21,7 @@ func Test_Watcher(t *testing.T) {
 
 	go func() {
 		for msg := range watcher.communicator.watcher2Streamer {
-			mem := msg.request.what.(member)
+			mem := msg.request.what.(wmember)
 			assert.EqualValues(t, "BTCUSDT", mem.runner.GetName())
 			msg.response <- watcher.communicator.newPayload(true)
 			close(msg.response)

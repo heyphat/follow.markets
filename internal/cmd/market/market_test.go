@@ -14,4 +14,14 @@ func Test_Market(t *testing.T) {
 	assert.EqualValues(t, true, market.watcher.connected)
 	assert.EqualValues(t, true, market.streamer.connected)
 	assert.EqualValues(t, true, market.evaluator.connected)
+	assert.EqualValues(t, true, market.notifier.connected)
+
+	watchlist := market.Watchlist()
+	assert.EqualValues(t, 1, len(watchlist))
+
+	err = market.Watch("ETHUSDT")
+	assert.EqualValues(t, nil, err)
+
+	watchlist = market.Watchlist()
+	assert.EqualValues(t, 2, len(watchlist))
 }

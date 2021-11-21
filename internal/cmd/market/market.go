@@ -3,6 +3,7 @@ package market
 import (
 	"sync"
 
+	"follow.market/internal/pkg/strategy"
 	"follow.market/pkg/config"
 	"follow.market/pkg/log"
 )
@@ -30,6 +31,7 @@ type MarketStruct struct {
 	watcher   *watcher
 	streamer  *streamer
 	evaluator *evaluator
+	notifier  *notifier
 }
 
 func NewMarket(configPathFile *string) (*MarketStruct, error) {
@@ -54,26 +56,52 @@ func NewMarket(configPathFile *string) (*MarketStruct, error) {
 	if err != nil {
 		return nil, err
 	}
+	notifier, err := newNotifier(common, configs)
+	if err != nil {
+		return nil, err
+	}
 	once.Do(func() {
 		Market = &MarketStruct{}
 		Market.watcher = watcher
 		Market.streamer = streamer
 		Market.evaluator = evaluator
+		Market.notifier = notifier
+
 		Market.connect()
+		Market.watch(configs)
 	})
 	return Market, nil
+}
+
+func (m *MarketStruct) watch(configs *config.Configs) {
+	for _, t := range configs.Watchlist {
+		m.watcher.watch(t)
+	}
 }
 
 func (m *MarketStruct) connect() {
 	m.watcher.connect()
 	m.streamer.connect()
 	m.evaluator.connect()
+	m.notifier.connect()
 }
 
-func (m *MarketStruct) Watch(name string) error {
-	return m.watcher.watch(name)
+func (m *MarketStruct) Watch(ticker string) error {
+	return m.watcher.watch(ticker)
 }
 
 func (m *MarketStruct) Watchlist() []string {
 	return m.watcher.watchlist()
+}
+
+func (m *MarketStruct) IsWatchingOn(ticker string) bool {
+	return m.watcher.isWatchingOn(ticker)
+}
+
+func (m *MarketStruct) AddStrategy(ticker string, s strategy.Strategy) {
+	m.evaluator.add(ticker, &s)
+}
+
+func (m *MarketStruct) AddChatID(cids []int64) {
+	m.notifier.add(cids)
 }

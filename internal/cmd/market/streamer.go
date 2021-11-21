@@ -11,6 +11,7 @@ import (
 
 	tax "follow.market/internal/pkg/techanex"
 	"follow.market/pkg/log"
+	"follow.market/pkg/util"
 )
 
 type streamer struct {
@@ -41,7 +42,7 @@ func newStreamer(participants *sharedParticipants) (*streamer, error) {
 
 type controller struct {
 	name  string
-	from  string
+	from  []string
 	stops []chan struct{}
 }
 
@@ -58,22 +59,37 @@ func (s *streamer) connect() {
 			go s.processingWatcherRequest(msg)
 		}
 	}()
+	go func() {
+		for msg := range s.communicator.evaluator2Streamer {
+			go s.processingEvaluatorRequest(msg)
+		}
+	}()
 	s.connected = true
 }
 
+// isConnected returns true if the streamer is connected to the system, false otherwise.
+func (s *streamer) isConnected() bool { return s.connected }
+
+// isStreamingOn returns true if the given ticker is actually being streamed for the market
+// participant given by the from parameter.
 func (s *streamer) isStreamingOn(ticker, from string) bool {
+	s.Lock()
+	defer s.Unlock()
 	valid := false
 	s.controllers.Range(func(key, value interface{}) bool {
-		valid = key.(string) == ticker && from == value.(controller).from
+		valid = key.(string) == ticker && util.StringSliceContains(value.(controller).from, from)
 		return !valid
 	})
 	return valid
 }
 
-func (s *streamer) streamList() []string {
+// streamList returns a list of streamed tickers for a market participant given by the from parameter.
+func (s *streamer) streamList(from string) []string {
+	s.Lock()
+	defer s.Unlock()
 	tickers := []string{}
 	s.controllers.Range(func(key, value interface{}) bool {
-		if value.(controller).from == WATCHER {
+		if util.StringSliceContains(value.(controller).from, from) {
 			tickers = append(tickers, key.(string))
 		}
 		return true
@@ -81,28 +97,87 @@ func (s *streamer) streamList() []string {
 	return tickers
 }
 
-func (s *streamer) isConnected() bool { return s.connected }
+// get returns a controller struct where it hass on information the streamer holds for a ticker.
+func (s *streamer) get(name string) *controller {
+	if val, ok := s.controllers.Load(name); ok {
+		c := val.(controller)
+		return &c
+	}
+	return nil
+}
 
 func (s *streamer) processingWatcherRequest(msg *message) {
-	m := msg.request.what.(member)
+	m := msg.request.what.(wmember)
 	if s.isStreamingOn(m.runner.GetName(), WATCHER) {
-		return
+		s.logger.Info.Println(s.newLog(m.runner.GetName(), "already streaming this ticker"))
+	} else {
+		// TODO: need to check if it is streaming for other participants
+		bStopC, tStopC := s.subscribe(m.runner.GetName(),
+			[]chan *ta.Candle{m.bChann},
+			[]chan *tax.Trade{m.tChann})
+		s.controllers.Store(m.runner.GetName(),
+			controller{
+				name:  m.runner.GetName(),
+				from:  []string{WATCHER},
+				stops: []chan struct{}{bStopC, tStopC},
+			},
+		)
 	}
-	// TODO: need to check if it is streaming for other participants
-	bStopC, tStopC := s.subscribe(m.runner.GetName(),
-		[]chan *ta.Candle{m.bChann},
-		[]chan *tax.Trade{m.tChann})
-	s.controllers.Store(m.runner.GetName(),
-		controller{
-			name:  m.runner.GetName(),
-			from:  WATCHER,
-			stops: []chan struct{}{bStopC, tStopC},
-		},
-	)
 	if msg.response != nil {
 		msg.response <- s.communicator.newPayload(true)
 		close(msg.response)
 	}
+}
+
+func (s *streamer) processingEvaluatorRequest(msg *message) {
+	m := msg.request.what.(emember)
+	if s.isStreamingOn(m.name, EVALUATOR) {
+		s.logger.Info.Println(s.newLog(m.name, "already streaming this ticker"))
+	} else {
+		bChann := []chan *ta.Candle{}
+		tChann := []chan *tax.Trade{m.tChann}
+		from := []string{}
+		c := s.get(m.name)
+		if c != nil {
+			for _, f := range c.from {
+				bc, tc := s.collectStreamingChannels(m.name, f)
+				if bc != nil {
+					bChann = append(bChann, bc)
+				}
+				if tc != nil {
+					tChann = append(tChann, tc)
+				}
+			}
+			from = c.from
+			s.unsubscribe(m.name)
+		}
+		bStopC, tStopC := s.subscribe(m.name, bChann, tChann)
+		s.controllers.Store(m.name,
+			controller{
+				name:  m.name,
+				from:  append(from, EVALUATOR),
+				stops: []chan struct{}{bStopC, tStopC},
+			},
+		)
+	}
+	if msg.response != nil {
+		msg.response <- s.communicator.newPayload(true)
+		close(msg.response)
+	}
+}
+
+func (s *streamer) collectStreamingChannels(name string, from string) (chan *ta.Candle, chan *tax.Trade) {
+	var bChann chan *ta.Candle
+	var tChann chan *tax.Trade
+	switch from {
+	case WATCHER:
+		resC := make(chan *payload)
+		s.communicator.streamer2Watcher <- s.communicator.newMessage(name, resC)
+		mem := (<-resC).what.(wmember)
+		bChann = mem.bChann
+		tChann = mem.tChann
+	}
+	return bChann, tChann
 }
 
 func (s *streamer) subscribe(name string,
@@ -180,6 +255,6 @@ func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
 	return stop
 }
 
-func (s *streamer) newLog(ticker, message string) string {
-	return fmt.Sprintf("[watcher] %s: %s", ticker, message)
+func (s *streamer) newLog(name, message string) string {
+	return fmt.Sprintf("[streamer] %s: %s", name, message)
 }

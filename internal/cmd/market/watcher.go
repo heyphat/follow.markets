@@ -24,7 +24,7 @@ type watcher struct {
 	communicator *communicator
 }
 
-type member struct {
+type wmember struct {
 	runner *runner.Runner
 	bChann chan *ta.Candle
 	tChann chan *tax.Trade
@@ -44,13 +44,13 @@ func newWatcher(participants *sharedParticipants) (*watcher, error) {
 	}, nil
 }
 
-// isConnected return whether the watcher is connected to other market participants.
+// isConnected returns true when the watcher is connected to other market participants, false otherwise.
 func (w *watcher) isConnected() bool { return w.connected }
 
 // Get return a runner which is watching on the watchlist
 func (w *watcher) get(name string) *runner.Runner {
 	if m, ok := w.runners.Load(name); ok {
-		return m.(member).runner
+		return m.(wmember).runner
 	}
 	return nil
 }
@@ -85,7 +85,7 @@ func (w *watcher) watch(ticker string) error {
 	if w.isWatchingOn(ticker) {
 		return nil
 	}
-	m := member{
+	m := wmember{
 		runner: runner.NewRunner(ticker, nil),
 		bChann: make(chan *ta.Candle, 10),
 		tChann: make(chan *tax.Trade, 10),
@@ -105,27 +105,27 @@ func (w *watcher) watch(ticker string) error {
 // await will loop forever to receive streaming data from the streamer. This function is meant
 // to run in a separate go routine. The watcher can close listening channels to stop watching when
 // it receives drop signals from the market.
-func (w *watcher) await(mem member) {
+func (w *watcher) await(mem wmember) {
 	for !w.registerStreamingChannel(mem) {
 		w.logger.Error.Println(w.newLog(mem.runner.GetName(), "failed to register streaming data"))
 	}
 	go func() {
 		for msg := range mem.bChann {
-			if ok := mem.runner.SyncCandle(msg); ok {
+			if !mem.runner.SyncCandle(msg) {
 				w.logger.Error.Println(w.newLog(mem.runner.GetName(), "failed to sync new candle on watching"))
 				continue
 			}
 		}
 	}()
 	go func() {
-		for msg := range mem.tChann {
-			w.logger.Info.Println(msg)
+		for _ = range mem.tChann {
+			//w.logger.Info.Println(msg)
 		}
 	}()
 }
 
 // connect connects the watcher to other market participants py listening to
-// a decicated channels for the communication.
+// decicated channels for the communication.
 func (w *watcher) connect() {
 	w.Lock()
 	defer w.Unlock()
@@ -143,7 +143,7 @@ func (w *watcher) connect() {
 // registerStreamingChannel registers the runners with the streamer in order to
 // recevie and consume candles broadcasted by data providor. Every time the Watch
 // method is called and the ticker is vallid, it will invoke this method.
-func (w *watcher) registerStreamingChannel(mem member) bool {
+func (w *watcher) registerStreamingChannel(mem wmember) bool {
 	doneStreamingRegister := false
 	var maxTries int
 	for !doneStreamingRegister && maxTries <= 3 {
@@ -155,6 +155,8 @@ func (w *watcher) registerStreamingChannel(mem member) bool {
 	return doneStreamingRegister
 }
 
+// This processes the request from the streamer, currently the streamer only requests
+// for the `mem` channels in order to reinitialize the streaming data if necessary.
 func (w *watcher) processStreamerRequest(msg *message) {
 	if mem, ok := w.runners.Load(msg.request.what.(string)); ok && msg.response != nil {
 		msg.response <- w.communicator.newPayload(mem)
