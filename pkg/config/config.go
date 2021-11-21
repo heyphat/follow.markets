@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"regexp"
 	"strings"
@@ -34,6 +35,11 @@ type Configs struct {
 			SecretKey string `json:"secret_key"`
 		} `json:"binance"`
 	} `json:"markets"`
+	Telegram struct {
+		BotToken string   `json:"bot_token"`
+		ChatIDs  []string `json:"chat_ids"`
+	} `json:"telegram"`
+	Watchlist []string `json:"watchlist"`
 }
 
 func (c Configs) IsProduction() bool {
@@ -53,6 +59,21 @@ func NewConfigs(filePath *string) (*Configs, error) {
 		return nil, err
 	}
 	configs := Configs{}
-	err = json.Unmarshal(raw, &configs)
+	if err = json.Unmarshal(raw, &configs); err != nil {
+		return &configs, err
+	}
+	if configs.Server.Port == 0 {
+		configs.Server.Port = 6868
+	}
+	if configs.Server.Timeout.Read == 0 {
+		configs.Server.Timeout.Read = 10
+	}
+	if configs.Server.Timeout.Write == 0 {
+		configs.Server.Timeout.Write = 10
+		configs.Server.Timeout.Idle = 10
+	}
+	if len(configs.Markets.Binance.APIKey) == 0 {
+		return &configs, errors.New("missing binance api key and secret")
+	}
 	return &configs, err
 }
