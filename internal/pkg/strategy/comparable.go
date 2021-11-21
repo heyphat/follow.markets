@@ -30,7 +30,7 @@ type ComparableObject struct {
 }
 
 func (c *Comparable) validate() error {
-	if c.Candle == nil && c.Indicator == nil {
+	if c.Candle == nil && c.Indicator == nil && c.Trade == nil {
 		return errors.New("missing comparable values")
 	}
 	if c.Candle != nil && !util.StringSliceContains(candleLevels, string(c.Candle.Name)) {
@@ -39,7 +39,7 @@ func (c *Comparable) validate() error {
 	if c.Indicator != nil && (!util.StringSliceContains(tax.AvailableIndicators(), string(c.Indicator.Name)) || len(c.Indicator.Config) == 0) {
 		return errors.New("invalid indicator name or config")
 	}
-	if c.Trade != nil && !(!util.StringSliceContains(tradeLevels, c.Trade.Name)) {
+	if c.Trade != nil && !util.StringSliceContains(tradeLevels, string(c.Trade.Name)) {
 		return errors.New("invalid trade name")
 	}
 	return nil

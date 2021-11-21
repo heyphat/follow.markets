@@ -1,0 +1,19 @@
+{
+  "name": "trade",
+  "conditions": [
+    {
+      "this": {
+        "trade": {
+          "name": "AMOUNT"
+        }
+      },
+      "that": {
+         "trade": {
+           "name": "FIXED",
+           "amount": "5"
+         }
+      },
+      "opt": "less_equal"
+    }
+  ]
+}

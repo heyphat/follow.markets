@@ -66,7 +66,7 @@ func (s Strategy) IsOnTrade() bool {
 		if err := c.validate(); err != nil {
 			return false
 		}
-		if c.This.Trade != nil || c.That.Trade != nil {
+		if c.This.Trade == nil || c.That.Trade == nil {
 			return false
 		}
 	}

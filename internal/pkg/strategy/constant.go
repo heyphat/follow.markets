@@ -40,6 +40,6 @@ var (
 		"TRADE_NUM", "HIGH_LOW", "CLOSE_OPEN", "HIGH_OPEN",
 	}
 	tradeLevels = []string{
-		"VOLUME", "PRICE", "FIXED",
+		"AMOUNT", "PRICE", "FIXED",
 	}
 )
