@@ -4,12 +4,14 @@ import (
 	"errors"
 
 	"follow.market/internal/pkg/runner"
+	tax "follow.market/internal/pkg/techanex"
 )
 
 type Condition struct {
 	This *Comparable `json:"this"`
 	That *Comparable `json:"that"`
 	Opt  *Operator   `json:"opt"`
+	Msg  *string     `json:"message"`
 }
 
 type Conditions []*Condition
@@ -27,38 +29,44 @@ func (c *Condition) validate() error {
 	return nil
 }
 
-func (c *Condition) evaluate(r *runner.Runner) bool {
+func (c *Condition) evaluate(r *runner.Runner, t *tax.Trade) bool {
 	if r == nil {
 		return false
 	}
-	thisD, ok := c.This.mapDecimal(r)
+	thisM, thisD, ok := c.This.mapDecimal(r, t)
 	if !ok {
 		return ok
 	}
-	thatD, ok := c.That.mapDecimal(r)
+	thatM, thatD, ok := c.That.mapDecimal(r, t)
 	if !ok {
 		return ok
 	}
+	mess := thisM + " " + c.Opt.toString() + " " + thatM
+	valid := false
 	switch Operator(*c.Opt) {
 	case Less:
-		return thisD.LT(thatD)
+		valid = thisD.LT(thatD)
 	case More:
-		return thisD.GT(thatD)
+		valid = thisD.GT(thatD)
 	case LessEqual:
-		return thisD.LTE(thatD)
+		valid = thisD.LTE(thatD)
 	case MoreEqual:
-		return thisD.GTE(thatD)
+		valid = thisD.GTE(thatD)
 	case Equal:
-		return thisD.EQ(thatD)
-	default:
-		return false
+		valid = thisD.GTE(thatD)
 	}
+	if valid {
+		c.Msg = &mess
+	}
+	return valid
 }
 
 type ConditionGroup struct {
 	Conditions Conditions `json:"conditions"`
 	Opt        *Operator  `json:"opt"`
 }
+
+type ConditionGroups []*ConditionGroup
 
 func (g *ConditionGroup) validate() error {
 	if g.Opt == nil {
@@ -75,20 +83,20 @@ func (g *ConditionGroup) validate() error {
 	return nil
 }
 
-func (g *ConditionGroup) evaluate(r *runner.Runner) bool {
+func (g *ConditionGroup) evaluate(r *runner.Runner, t *tax.Trade) bool {
 	if r == nil {
 		return false
 	}
 	switch *g.Opt {
 	case And:
 		for _, c := range g.Conditions {
-			if !c.evaluate(r) {
+			if !c.evaluate(r, t) {
 				return false
 			}
 		}
 	case Or:
 		for _, c := range g.Conditions {
-			if c.evaluate(r) {
+			if c.evaluate(r, t) {
 				return true
 			}
 		}
@@ -97,5 +105,3 @@ func (g *ConditionGroup) evaluate(r *runner.Runner) bool {
 	}
 	return true
 }
-
-type ConditionGroups []*ConditionGroup

@@ -3,6 +3,7 @@ package strategy
 type CandleLevel string
 
 const (
+	CandleFixed     CandleLevel = "FIXED"
 	CandleOpen      CandleLevel = "OPEN"
 	CandleClose     CandleLevel = "CLOSE"
 	CandleHigh      CandleLevel = "HIGH"
@@ -12,6 +13,14 @@ const (
 	CandleHighLow   CandleLevel = "HIGH_LOW"
 	CandleCloseOpen CandleLevel = "CLOSE_OPEN"
 	CandleHighOpen  CandleLevel = "HIGH_OPEN"
+)
+
+type TradeLevel string
+
+const (
+	TradeAmount TradeLevel = "AMOUNT"
+	TradePrice  TradeLevel = "PRICE"
+	TradeFixed  TradeLevel = "FIXED"
 )
 
 const (
@@ -27,7 +36,10 @@ const (
 
 var (
 	candleLevels = []string{
-		"CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_NUM",
+		"FIXED", "CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_NUM",
 		"TRADE_NUM", "HIGH_LOW", "CLOSE_OPEN", "HIGH_OPEN",
+	}
+	tradeLevels = []string{
+		"VOLUME", "PRICE", "FIXED",
 	}
 )

@@ -8,8 +8,8 @@
         "time_period": 60,
         "time_frame": 1,
         "candle": {
-          "level": "CLOSE",
-          "effective": 1 
+          "name": "CLOSE",
+          "multiplier": 1 
         }
       },
     "that":
@@ -17,8 +17,8 @@
         "time_period": 60,
         "time_frame": 0,
         "candle": {
-          "level": "CLOSE",
-          "effective": 1 
+          "name": "CLOSE",
+          "multiplier": 1 
         }
       },
     "opt": "equal"
@@ -33,8 +33,10 @@
               "time_period": 60,
               "time_frame": 1,
               "candle": {
-                "level": "CLOSE",
-                "effective": 1 
+                "name": "CLOSE",
+                "config": {
+                  "level": 10.3
+                }
               }
             },
           "that":
@@ -44,9 +46,10 @@
               "indicator": {
                 "name": "MovingAverge",
                 "config": {
-                  "window": 9
+                  "window": 9,
+                  "level": 10.2
                 },
-                "effective": 1 
+                "multiplier": 1 
               }
             },
           "opt": "equal"

@@ -14,10 +14,10 @@ func Test_Strategy(t *testing.T) {
 	raw, err := ioutil.ReadFile(path)
 	assert.EqualValues(t, nil, err)
 
-	strategy, err := NewStrategy(raw)
+	strategy, err := NewStrategyFromBytes(raw)
 	assert.EqualValues(t, nil, err)
 
-	ok := strategy.Evaluate(nil)
+	ok := strategy.Evaluate(nil, nil)
 	assert.EqualValues(t, false, ok)
 
 	for _, c := range strategy.Conditions {
@@ -27,10 +27,10 @@ func Test_Strategy(t *testing.T) {
 		err = c.That.validate()
 		assert.EqualValues(t, nil, err)
 
-		ok := c.evaluate(nil)
+		ok := c.evaluate(nil, nil)
 		assert.EqualValues(t, false, ok)
 
-		ok = c.evaluate(runner.NewRunner("BTCUSDT", nil))
+		ok = c.evaluate(runner.NewRunner("BTCUSDT", nil), nil)
 		assert.EqualValues(t, false, ok)
 		//TODO: init the runner and test
 	}
@@ -39,10 +39,10 @@ func Test_Strategy(t *testing.T) {
 		err := g.validate()
 		assert.EqualValues(t, nil, err)
 
-		ok = g.evaluate(nil)
+		ok = g.evaluate(nil, nil)
 		assert.EqualValues(t, false, ok)
 
-		ok = g.evaluate(runner.NewRunner("BTCUSDT", nil))
+		ok = g.evaluate(runner.NewRunner("BTCUSDT", nil), nil)
 		assert.EqualValues(t, true, ok)
 	}
 }
