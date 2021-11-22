@@ -10,7 +10,9 @@
       "that": {
          "trade": {
            "name": "FIXED",
-           "amount": "5"
+           "config": {
+            "amount": 5 
+           }
          }
       },
       "opt": "less_equal"

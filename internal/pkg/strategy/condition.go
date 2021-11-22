@@ -30,7 +30,7 @@ func (c *Condition) validate() error {
 }
 
 func (c *Condition) evaluate(r *runner.Runner, t *tax.Trade) bool {
-	if r == nil {
+	if r == nil && t == nil {
 		return false
 	}
 	thisM, thisD, ok := c.This.mapDecimal(r, t)

@@ -23,7 +23,7 @@ func NewStrategyFromBytes(bytes []byte) (*Strategy, error) {
 }
 
 func (s *Strategy) Evaluate(r *runner.Runner, t *tax.Trade) bool {
-	if r == nil {
+	if r == nil && t == nil {
 		return false
 	}
 	for _, c := range s.Conditions {

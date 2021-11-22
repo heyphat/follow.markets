@@ -2,6 +2,7 @@ package strategy
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -50,8 +51,14 @@ func (c *Comparable) convertTimePeriod() time.Duration {
 }
 
 func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Decimal, bool) {
+	if c.Trade != nil {
+		val, ok := c.mapTrade(t)
+		mess := c.Trade.Name + " trade level @" + val.FormattedString(2)
+		fmt.Println(t, val)
+		return mess, val, ok
+	}
 	line, ok := r.GetLines(c.convertTimePeriod())
-	if !ok {
+	if !ok || line == nil {
 		return "", big.ZERO, ok
 	}
 	if c.Candle != nil {
@@ -64,11 +71,7 @@ func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Dec
 		mess := c.Indicator.Name + " indicator level @" + val.FormattedString(2)
 		return mess, val, ok
 	}
-	if c.Trade != nil {
-		val, ok := c.mapTrade(t)
-		mess := c.Trade.Name + " trade level @" + val.FormattedString(2)
-		return mess, val, ok
-	}
+
 	return "", big.ZERO, false
 }
 
