@@ -1,7 +1,6 @@
 package market
 
 import (
-	"fmt"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -38,8 +37,6 @@ func Test_Market(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 
 	market.evaluator.add("ETHUSDT", s)
-
-	fmt.Println("here")
 
 	time.Sleep(time.Minute)
 

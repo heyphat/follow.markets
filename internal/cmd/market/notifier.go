@@ -84,7 +84,7 @@ func (n *notifier) add(cids []int64) {
 }
 
 func (n *notifier) processEvaluatorRequest(msg *message) {
-	s := msg.request.what.(strategy.Strategy)
+	s := msg.request.what.(*strategy.Strategy)
 	n.notify(s.Description())
 }
 

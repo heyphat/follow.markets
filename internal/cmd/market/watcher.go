@@ -87,7 +87,7 @@ func (w *watcher) watch(ticker string) error {
 	}
 	m := wmember{
 		runner: runner.NewRunner(ticker, nil),
-		bChann: make(chan *ta.Candle, 10),
+		bChann: make(chan *ta.Candle, 3),
 		tChann: make(chan *tax.Trade, 10),
 	}
 	candles, err := w.provider.fetchBinanceKlines(ticker, time.Minute)
@@ -164,6 +164,7 @@ func (w *watcher) processStreamerRequest(msg *message) {
 	}
 }
 
+// returns a log for the watcher
 func (w *watcher) newLog(ticker, message string) string {
 	return fmt.Sprintf("[watcher] %s: %s", ticker, message)
 }

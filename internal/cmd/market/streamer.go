@@ -46,7 +46,7 @@ type controller struct {
 	stops []chan struct{}
 }
 
-// Connect connects the streamer to other market participants py listening to
+// connect connects the streamer to other market participants py listening to
 // a decicated channels for the communication.
 func (s *streamer) connect() {
 	s.Lock()
@@ -107,18 +107,35 @@ func (s *streamer) get(name string) *controller {
 }
 
 func (s *streamer) processingWatcherRequest(msg *message) {
+	//s.Lock()
+	//defer s.Unlock()
 	m := msg.request.what.(wmember)
 	if s.isStreamingOn(m.runner.GetName(), WATCHER) {
 		s.logger.Info.Println(s.newLog(m.runner.GetName(), "already streaming this ticker"))
 	} else {
 		// TODO: need to check if it is streaming for other participants
-		bStopC, tStopC := s.subscribe(m.runner.GetName(),
-			[]chan *ta.Candle{m.bChann},
-			[]chan *tax.Trade{m.tChann})
+		bChann := []chan *ta.Candle{m.bChann}
+		tChann := []chan *tax.Trade{m.tChann}
+		from := []string{}
+		c := s.get(m.runner.GetName())
+		if c != nil {
+			for _, f := range c.from {
+				bc, tc := s.collectStreamingChannels(m.runner.GetName(), f)
+				if bc != nil {
+					bChann = append(bChann, bc)
+				}
+				if tc != nil {
+					tChann = append(tChann, tc)
+				}
+			}
+			from = c.from
+			s.unsubscribe(m.runner.GetName())
+		}
+		bStopC, tStopC := s.subscribe(m.runner.GetName(), bChann, tChann)
 		s.controllers.Store(m.runner.GetName(),
 			controller{
 				name:  m.runner.GetName(),
-				from:  []string{WATCHER},
+				from:  append(from, WATCHER),
 				stops: []chan struct{}{bStopC, tStopC},
 			},
 		)
@@ -169,12 +186,16 @@ func (s *streamer) processingEvaluatorRequest(msg *message) {
 func (s *streamer) collectStreamingChannels(name string, from string) (chan *ta.Candle, chan *tax.Trade) {
 	var bChann chan *ta.Candle
 	var tChann chan *tax.Trade
+	resC := make(chan *payload)
 	switch from {
 	case WATCHER:
-		resC := make(chan *payload)
 		s.communicator.streamer2Watcher <- s.communicator.newMessage(name, resC)
 		mem := (<-resC).what.(wmember)
 		bChann = mem.bChann
+		tChann = mem.tChann
+	case EVALUATOR:
+		s.communicator.streamer2Evaluator <- s.communicator.newMessage(name, resC)
+		mem := (<-resC).what.(emember)
 		tChann = mem.tChann
 	}
 	return bChann, tChann
@@ -185,9 +206,9 @@ func (s *streamer) subscribe(name string,
 	tChann []chan *tax.Trade) (chan struct{}, chan struct{}) {
 	s.Lock()
 	defer s.Unlock()
-	tradeHandler := func(event *bn.WsTradeEvent) {
+	tradeHandler := func(event *bn.WsAggTradeEvent) {
 		for _, c := range tChann {
-			c <- tax.ConvertBinanceStreamingTrade(event)
+			c <- tax.ConvertBinanceStreamingAggTrade(event)
 		}
 	}
 	klineHandler := func(event *bn.WsKlineEvent) {
@@ -238,13 +259,13 @@ func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 }
 
 func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
-	tradeHandler func(e *bn.WsTradeEvent)) chan struct{} {
+	tradeHandler func(e *bn.WsAggTradeEvent)) chan struct{} {
 	go func(stopC chan struct{}) {
 		errorHandler := func(err error) { s.logger.Error.Println(err) }
 		var err error
 		var done chan struct{}
 		for {
-			done, stop, err = bn.WsTradeServe(name, tradeHandler, errorHandler)
+			done, stop, err = bn.WsAggTradeServe(name, tradeHandler, errorHandler)
 			if err != nil {
 				s.logger.Error.Println(s.newLog(name, err.Error()))
 			}
@@ -255,6 +276,7 @@ func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
 	return stop
 }
 
+// returns a log for the streamer
 func (s *streamer) newLog(name, message string) string {
 	return fmt.Sprintf("[streamer] %s: %s", name, message)
 }

@@ -53,6 +53,11 @@ func (e *evaluator) connect() {
 			go e.processingWatcherReques(msg)
 		}
 	}()
+	go func() {
+		for msg := range e.communicator.streamer2Evaluator {
+			go e.processStreamerRequest(msg)
+		}
+	}()
 	e.connected = true
 }
 
@@ -71,7 +76,6 @@ func (e *evaluator) add(ticker string, s *strategy.Strategy) {
 		mem.strategies = append(mem.strategies, s)
 		e.runners.Store(ticker, mem)
 	}
-	fmt.Println(s.IsOnTrade())
 	if s.IsOnTrade() {
 		go e.await(mem, s)
 	}
@@ -83,7 +87,6 @@ func (e *evaluator) await(mem emember, s *strategy.Strategy) {
 	}
 	go func() {
 		for msg := range mem.tChann {
-			//TODO: something wrong here, the strategy validation didn't pass
 			if s.Evaluate(nil, msg) {
 				e.communicator.evaluator2Notifier <- e.communicator.newMessage(s, nil)
 			}
@@ -113,6 +116,13 @@ func (e *evaluator) processingWatcherReques(msg *message) {
 		if s.Evaluate(r, nil) {
 			e.communicator.evaluator2Notifier <- e.communicator.newMessage(s, nil)
 		}
+	}
+}
+
+func (e *evaluator) processStreamerRequest(msg *message) {
+	if mem, ok := e.runners.Load(msg.request.what.(string)); ok && msg.response != nil {
+		msg.response <- e.communicator.newPayload(mem)
+		close(msg.response)
 	}
 }
 
