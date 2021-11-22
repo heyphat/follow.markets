@@ -49,6 +49,15 @@ func ConvertBinanceStreamingTrade(t *bn.WsTradeEvent) *Trade {
 	return trade
 }
 
+func ConvertBinanceStreamingAggTrade(t *bn.WsAggTradeEvent) *Trade {
+	trade := NewTrade()
+	trade.Price = big.NewFromString(t.Price)
+	trade.Quantity = big.NewFromString(t.Quantity)
+	trade.TradeTime = t.TradeTime
+	trade.IsBuyerMaker = t.IsBuyerMaker
+	return trade
+}
+
 func NewCandleFromCandle(candle *ta.Candle, duration *time.Duration) *ta.Candle {
 	d := time.Minute
 	if duration != nil {
