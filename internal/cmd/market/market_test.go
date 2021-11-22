@@ -23,21 +23,22 @@ func Test_Market(t *testing.T) {
 	watchlist := market.Watchlist()
 	assert.EqualValues(t, 1, len(watchlist))
 
+	strategyPath := "./../../pkg/strategy/signal_trade.json"
+	sraw, err := ioutil.ReadFile(strategyPath)
+	assert.EqualValues(t, nil, err)
+
+	s, err := strategy.NewSignalFromBytes(sraw)
+	assert.EqualValues(t, nil, err)
+
+	market.evaluator.add("ETHUSDT", s)
+
+	time.Sleep(time.Second * 5)
+
 	err = market.Watch("ETHUSDT")
 	assert.EqualValues(t, nil, err)
 
 	watchlist = market.Watchlist()
 	assert.EqualValues(t, 2, len(watchlist))
 
-	strategyPath := "./../../pkg/strategy/strategy_trade.json"
-	sraw, err := ioutil.ReadFile(strategyPath)
-	assert.EqualValues(t, nil, err)
-
-	s, err := strategy.NewStrategyFromBytes(sraw)
-	assert.EqualValues(t, nil, err)
-
-	market.evaluator.add("ETHUSDT", s)
-
 	time.Sleep(time.Minute)
-
 }

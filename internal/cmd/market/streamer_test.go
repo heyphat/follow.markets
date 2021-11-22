@@ -80,9 +80,9 @@ func Test_Streamer(t *testing.T) {
 	}()
 
 	btcE := emember{
-		name:       btcT,
-		tChann:     make(chan *tax.Trade, 2),
-		strategies: strategy.Strategies{},
+		name:    btcT,
+		tChann:  make(chan *tax.Trade, 2),
+		signals: strategy.Signals{},
 	}
 
 	go func() {
@@ -96,9 +96,9 @@ func Test_Streamer(t *testing.T) {
 	assert.EqualValues(t, 1, len(streamer.streamList(EVALUATOR)))
 
 	manaE := emember{
-		name:       manaT,
-		tChann:     make(chan *tax.Trade, 2),
-		strategies: strategy.Strategies{},
+		name:    manaT,
+		tChann:  make(chan *tax.Trade, 2),
+		signals: strategy.Signals{},
 	}
 
 	go func() {

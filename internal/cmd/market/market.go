@@ -98,7 +98,7 @@ func (m *MarketStruct) IsWatchingOn(ticker string) bool {
 	return m.watcher.isWatchingOn(ticker)
 }
 
-func (m *MarketStruct) AddStrategy(ticker string, s strategy.Strategy) {
+func (m *MarketStruct) AddStrategy(ticker string, s strategy.Signal) {
 	m.evaluator.add(ticker, &s)
 }
 

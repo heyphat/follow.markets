@@ -22,9 +22,9 @@ type evaluator struct {
 }
 
 type emember struct {
-	name       string
-	tChann     chan *tax.Trade
-	strategies strategy.Strategies
+	name    string
+	tChann  chan *tax.Trade
+	signals strategy.Signals
 }
 
 func newEvaluator(participants *sharedParticipants) (*evaluator, error) {
@@ -61,19 +61,19 @@ func (e *evaluator) connect() {
 	e.connected = true
 }
 
-func (e *evaluator) add(ticker string, s *strategy.Strategy) {
+func (e *evaluator) add(ticker string, s *strategy.Signal) {
 	var mem emember
 	val, ok := e.runners.Load(ticker)
 	if !ok {
 		mem = emember{
-			name:       ticker,
-			tChann:     make(chan *tax.Trade),
-			strategies: strategy.Strategies{s},
+			name:    ticker,
+			tChann:  make(chan *tax.Trade),
+			signals: strategy.Signals{s},
 		}
-		e.runners.Store(ticker, e)
+		e.runners.Store(ticker, mem)
 	} else {
 		mem = val.(emember)
-		mem.strategies = append(mem.strategies, s)
+		mem.signals = append(mem.signals, s)
 		e.runners.Store(ticker, mem)
 	}
 	if s.IsOnTrade() {
@@ -81,7 +81,7 @@ func (e *evaluator) add(ticker string, s *strategy.Strategy) {
 	}
 }
 
-func (e *evaluator) await(mem emember, s *strategy.Strategy) {
+func (e *evaluator) await(mem emember, s *strategy.Signal) {
 	for !e.registerStreamingChannel(mem) {
 		e.logger.Error.Println(e.newLog(mem.name, "failed to register streaming data"))
 	}
@@ -112,7 +112,7 @@ func (e *evaluator) processingWatcherReques(msg *message) {
 	if !ok {
 		return
 	}
-	for _, s := range val.(emember).strategies {
+	for _, s := range val.(emember).signals {
 		if s.Evaluate(r, nil) {
 			e.communicator.evaluator2Notifier <- e.communicator.newMessage(s, nil)
 		}

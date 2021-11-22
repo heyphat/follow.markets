@@ -84,10 +84,11 @@ func (n *notifier) add(cids []int64) {
 }
 
 func (n *notifier) processEvaluatorRequest(msg *message) {
-	s := msg.request.what.(*strategy.Strategy)
+	s := msg.request.what.(*strategy.Signal)
 	n.notify(s.Description())
 }
 
+// notify sends tele message to all chatIDs for a given content.
 func (n *notifier) notify(content string) {
 	for _, cid := range n.chatIDs {
 		message := tele.NewMessage(cid, content)
