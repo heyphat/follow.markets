@@ -18,9 +18,10 @@ const (
 type TradeLevel string
 
 const (
-	TradeAmount TradeLevel = "AMOUNT"
-	TradePrice  TradeLevel = "PRICE"
-	TradeFixed  TradeLevel = "FIXED"
+	TradeFixed     TradeLevel = "FIXED"
+	TradePrice     TradeLevel = "PRICE"
+	TradeVolume    TradeLevel = "VOLUME"
+	TradeUSDVolume TradeLevel = "USD_VOLUME"
 )
 
 const (
@@ -40,6 +41,6 @@ var (
 		"TRADE_NUM", "HIGH_LOW", "CLOSE_OPEN", "HIGH_OPEN",
 	}
 	tradeLevels = []string{
-		"AMOUNT", "PRICE", "FIXED",
+		"USD_VOLUME", "VOLUME", "PRICE", "FIXED",
 	}
 )

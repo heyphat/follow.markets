@@ -8,21 +8,21 @@ import (
 	tax "follow.market/internal/pkg/techanex"
 )
 
-type Strategy struct {
+type Signal struct {
 	Name            string          `json:"name"`
 	Conditions      Conditions      `json:"conditions"`
 	ConditionGroups ConditionGroups `json:"condition_groups"`
 }
 
-type Strategies []*Strategy
+type Signals []*Signal
 
-func NewStrategyFromBytes(bytes []byte) (*Strategy, error) {
-	stg := Strategy{}
+func NewSignalFromBytes(bytes []byte) (*Signal, error) {
+	stg := Signal{}
 	err := json.Unmarshal(bytes, &stg)
 	return &stg, err
 }
 
-func (s *Strategy) Evaluate(r *runner.Runner, t *tax.Trade) bool {
+func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 	if r == nil && t == nil {
 		return false
 	}
@@ -40,7 +40,7 @@ func (s *Strategy) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 }
 
 // Description returns a text description of all valid(true) conditions.
-func (s Strategy) Description() string {
+func (s Signal) Description() string {
 	var out []string
 	for _, c := range s.Conditions {
 		if c.Msg != nil {
@@ -61,7 +61,7 @@ func (s Strategy) Description() string {
 // A valid trade strategy is the one which has conditions only on `s.Trade` or condition
 // groups only on `s.Trade`. Currently the system doesn't support a strategy which
 // is a combination of `Candle` and `Trade` or `Indicator` and `Trade`.
-func (s Strategy) IsOnTrade() bool {
+func (s Signal) IsOnTrade() bool {
 	for _, c := range s.Conditions {
 		if err := c.validate(); err != nil {
 			return false

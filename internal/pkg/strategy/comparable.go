@@ -53,7 +53,7 @@ func (c *Comparable) convertTimePeriod() time.Duration {
 func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Decimal, bool) {
 	if c.Trade != nil {
 		val, ok := c.mapTrade(t)
-		mess := c.Trade.Name + " trade level @" + val.FormattedString(2)
+		mess := "Trade: " + c.Trade.Name + "@" + val.FormattedString(2)
 		fmt.Println(t, val)
 		return mess, val, ok
 	}
@@ -63,12 +63,12 @@ func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Dec
 	}
 	if c.Candle != nil {
 		val, ok := c.mapCandle(line.CandleByIndex(len(line.Candles.Candles) - c.TimeFrame))
-		mess := c.Candle.Name + " candle level @" + val.FormattedString(2)
+		mess := "Candle: " + c.Candle.Name + "@" + val.FormattedString(2)
 		return mess, val, ok
 	}
 	if c.Indicator != nil {
 		val, ok := c.mapIndicator(line.IndicatorByIndex(len(line.Indicators.Indicators) - c.TimeFrame))
-		mess := c.Indicator.Name + " indicator level @" + val.FormattedString(2)
+		mess := "Indicator: " + c.Indicator.Name + "@" + val.FormattedString(2)
 		return mess, val, ok
 	}
 
@@ -108,16 +108,18 @@ func (c *Comparable) mapTrade(td *tax.Trade) (big.Decimal, bool) {
 		return big.ZERO, false
 	}
 	switch TradeLevel(c.Trade.Name) {
-	case TradeAmount:
+	case TradeVolume:
 		return td.Quantity, true
 	case TradePrice:
 		return td.Price, true
 	case TradeFixed:
-		value, ok := c.Trade.Config["amount"]
+		value, ok := c.Trade.Config["level"]
 		if !ok {
 			return big.ZERO, false
 		}
 		return big.NewDecimal(value), true
+	case TradeUSDVolume:
+		return td.Quantity.Mul(td.Price), true
 	default:
 		return big.ZERO, false
 	}

@@ -9,18 +9,18 @@ import (
 	"follow.market/internal/pkg/runner"
 )
 
-func Test_Strategy(t *testing.T) {
-	path := "./strategy.json"
+func Test_Signal(t *testing.T) {
+	path := "./signal.json"
 	raw, err := ioutil.ReadFile(path)
 	assert.EqualValues(t, nil, err)
 
-	strategy, err := NewStrategyFromBytes(raw)
+	signal, err := NewSignalFromBytes(raw)
 	assert.EqualValues(t, nil, err)
 
-	ok := strategy.Evaluate(nil, nil)
+	ok := signal.Evaluate(nil, nil)
 	assert.EqualValues(t, false, ok)
 
-	for _, c := range strategy.Conditions {
+	for _, c := range signal.Conditions {
 		err := c.This.validate()
 		assert.EqualValues(t, nil, err)
 
@@ -35,7 +35,7 @@ func Test_Strategy(t *testing.T) {
 		//TODO: init the runner and test
 	}
 
-	for _, g := range strategy.ConditionGroups {
+	for _, g := range signal.ConditionGroups {
 		err := g.validate()
 		assert.EqualValues(t, nil, err)
 

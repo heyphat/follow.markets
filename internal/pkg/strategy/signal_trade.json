@@ -4,18 +4,18 @@
     {
       "this": {
         "trade": {
-          "name": "AMOUNT"
+          "name": "USD_VOLUME"
         }
       },
       "that": {
          "trade": {
            "name": "FIXED",
            "config": {
-            "amount": 5 
+            "level": 1000 
            }
          }
       },
-      "opt": "less_equal"
+      "opt": "more_equal"
     }
   ]
 }
