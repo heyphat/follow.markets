@@ -10,9 +10,12 @@ const (
 	CandleLow       CandleLevel = "LOW"
 	CandleVolume    CandleLevel = "VOLUME"
 	CandleTrade     CandleLevel = "TRADE_NUM"
-	CandleHighLow   CandleLevel = "HIGH_LOW"
-	CandleCloseOpen CandleLevel = "CLOSE_OPEN"
-	CandleHighOpen  CandleLevel = "HIGH_OPEN"
+	CandleLowHigh   CandleLevel = "LOW_HIGH"
+	CandleOpenClose CandleLevel = "OPEN_CLOSE"
+	CandleOpenHigh  CandleLevel = "OPEN_HIGH"
+	CandleOpenLow   CandleLevel = "OPEN_LOW"
+	CandleHighClose CandleLevel = "HIGH_CLOSE"
+	CandleLowClose  CandleLevel = "LOW_CLOSE"
 )
 
 type TradeLevel string
@@ -38,7 +41,7 @@ const (
 var (
 	candleLevels = []string{
 		"FIXED", "CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_NUM",
-		"TRADE_NUM", "HIGH_LOW", "CLOSE_OPEN", "HIGH_OPEN",
+		"LOW_HIGH", "OPEN_CLOSE", "OPEN_HIGH", "OPEN_LOW", "HIGH_CLOSE", "LOW_CLOSE",
 	}
 	tradeLevels = []string{
 		"USD_VOLUME", "VOLUME", "PRICE", "FIXED",

@@ -2,7 +2,6 @@ package strategy
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -54,8 +53,10 @@ func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Dec
 	if c.Trade != nil {
 		val, ok := c.mapTrade(t)
 		mess := "Trade: " + c.Trade.Name + "@" + val.FormattedString(2)
-		fmt.Println(t, val)
 		return mess, val, ok
+	}
+	if r == nil {
+		return "", big.ZERO, false
 	}
 	line, ok := r.GetLines(c.convertTimePeriod())
 	if !ok || line == nil {
@@ -92,6 +93,18 @@ func (c *Comparable) mapCandle(cd *ta.Candle) (big.Decimal, bool) {
 		return cd.Volume, true
 	case CandleTrade:
 		return big.NewFromInt(int(cd.TradeCount)), true
+	case CandleLowHigh:
+		return tax.LowHigh(cd.MinPrice, cd.MaxPrice), true
+	case CandleOpenClose:
+		return tax.OpenClose(cd.OpenPrice, cd.ClosePrice), true
+	case CandleOpenHigh:
+		return tax.OpenClose(cd.OpenPrice, cd.MaxPrice), true
+	case CandleOpenLow:
+		return tax.OpenLow(cd.OpenPrice, cd.MinPrice), true
+	case CandleHighClose:
+		return tax.HighClose(cd.MaxPrice, cd.ClosePrice), true
+	case CandleLowClose:
+		return tax.LowClose(cd.MinPrice, cd.ClosePrice), true
 	case CandleFixed:
 		value, ok := c.Candle.Config["level"]
 		if !ok {

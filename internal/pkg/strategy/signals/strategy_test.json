@@ -1,0 +1,27 @@
+{
+  "name": "strategy_test",
+  "conditions":
+  [
+    {
+    "this":
+      {
+        "time_period": 60,
+        "time_frame": 1,
+        "candle": {
+          "name": "CLOSE",
+          "multiplier": 1 
+        }
+      },
+    "that":
+      {
+        "time_period": 60,
+        "time_frame": 1,
+        "candle": {
+          "name": "CLOSE",
+          "multiplier": 1 
+        }
+      },
+    "opt": "equal"
+    }
+  ]
+}
