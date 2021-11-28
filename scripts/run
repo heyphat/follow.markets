@@ -1,4 +1,7 @@
 #!/bin/bash
 
 docker kill fm
-docker run -d --rm --name fm -p 6868:6868 phat/followmarket:latest
+docker run -d --rm --name fm \
+  -p 6868:6868 \
+  -v $(pwd)/configs/dev_configs.json:/configs/configs.json \
+  phat/followmarket:latest
