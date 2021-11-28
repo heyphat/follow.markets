@@ -99,6 +99,15 @@ func (r *Runner) SyncCandle(c *ta.Candle) bool {
 	return true
 }
 
+// LastCandle returns last candle on the given time frame of the runner.
+func (r *Runner) LastCandle(d time.Duration) *ta.Candle {
+	line, ok := r.GetLines(d)
+	if !ok || line == nil {
+		return nil
+	}
+	return line.Candles.LastCandle()
+}
+
 // AddNewLine adds a new price timeseries and indicator timeseries to the runner.
 // The newly created timeseries will be aggregated from the 1-minute time series
 // if the candles is not given (nil). Otherwise, it uses the given candles.
