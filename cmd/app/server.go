@@ -14,24 +14,16 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/contrib/gorilla/mux"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
-
-	"follow.market/pkg/config"
-	"follow.market/pkg/log"
 )
 
 func main() {
-	logger := log.NewLogger()
-	configs, err := config.NewConfigs(nil)
-	if err != nil {
-		panic(err)
-	}
 	tracer.Start(
 		tracer.WithEnv(configs.Datadog.Env),
 		tracer.WithService(configs.Datadog.Service),
 		tracer.WithServiceVersion(configs.Datadog.Version),
 	)
 	defer tracer.Stop()
-	err = profiler.Start(
+	err := profiler.Start(
 		profiler.WithEnv(configs.Datadog.Env),
 		profiler.WithService(configs.Datadog.Service),
 		profiler.WithVersion(configs.Datadog.Version))
@@ -107,8 +99,16 @@ func Logging() Func {
 func Mux(middleware Func) *mux.Router {
 	router := mux.NewRouter()
 
+	// check if server is alive
 	router.Handle("/ping",
 		middleware(http.HandlerFunc(pong))).Methods("GET")
+
+	// watcher endpoints
+	router.Handle("/watcher/list",
+		middleware(http.HandlerFunc(watchlist))).Methods("GET")
+	router.Handle("/watcher/watch/{ticker}",
+		middleware(http.HandlerFunc(watch))).Methods("POST")
+
 	return router
 }
 
