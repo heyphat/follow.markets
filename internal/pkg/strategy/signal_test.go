@@ -10,7 +10,7 @@ import (
 )
 
 func Test_Signal(t *testing.T) {
-	path := "./signal.json"
+	path := "./signals/signal.json"
 	raw, err := ioutil.ReadFile(path)
 	assert.EqualValues(t, nil, err)
 

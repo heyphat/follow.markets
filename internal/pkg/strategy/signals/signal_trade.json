@@ -11,7 +11,7 @@
          "trade": {
            "name": "FIXED",
            "config": {
-            "level": 1000 
+            "level": 100000 
            }
          }
       },
