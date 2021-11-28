@@ -6,6 +6,7 @@ import (
 	"follow.market/internal/pkg/strategy"
 	"follow.market/pkg/config"
 	"follow.market/pkg/log"
+	ta "github.com/itsphat/techan"
 )
 
 var (
@@ -73,6 +74,8 @@ func NewMarket(configPathFile *string) (*MarketStruct, error) {
 	return Market, nil
 }
 
+// watch will initialization the watching process from watcher on watchlist specified
+// in the config file.
 func (m *MarketStruct) watch(configs *config.Configs) {
 	for _, t := range configs.Watchlist {
 		m.watcher.watch(t)
@@ -86,6 +89,7 @@ func (m *MarketStruct) connect() {
 	m.notifier.connect()
 }
 
+// watcher endpoints
 func (m *MarketStruct) Watch(ticker string) error {
 	return m.watcher.watch(ticker)
 }
@@ -98,10 +102,16 @@ func (m *MarketStruct) IsWatchingOn(ticker string) bool {
 	return m.watcher.isWatchingOn(ticker)
 }
 
-func (m *MarketStruct) AddStrategy(ticker string, s strategy.Signal) {
+func (m *MarketStruct) LastCandles(ticker string) []*ta.Candle {
+	return m.watcher.lastCandles(ticker)
+}
+
+// evaluator endpoints
+func (m *MarketStruct) AddSignal(ticker string, s strategy.Signal) {
 	m.evaluator.add(ticker, &s)
 }
 
+// notifier endpoints
 func (m *MarketStruct) AddChatID(cids []int64) {
 	m.notifier.add(cids)
 }

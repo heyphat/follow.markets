@@ -50,7 +50,7 @@ func (e *evaluator) connect() {
 	}
 	go func() {
 		for msg := range e.communicator.watcher2Evaluator {
-			go e.processingWatcherReques(msg)
+			go e.processingWatcherRequest(msg)
 		}
 	}()
 	go func() {
@@ -106,7 +106,7 @@ func (e *evaluator) registerStreamingChannel(mem emember) bool {
 	return doneStreamingRegister
 }
 
-func (e *evaluator) processingWatcherReques(msg *message) {
+func (e *evaluator) processingWatcherRequest(msg *message) {
 	r := msg.request.what.(wmember).runner
 	val, ok := e.runners.Load(r.GetName())
 	if !ok {

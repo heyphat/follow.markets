@@ -124,6 +124,22 @@ func (w *watcher) await(mem wmember) {
 	}()
 }
 
+// lastCandles returns all last candles from all time frame of a member in the watchlist
+func (w *watcher) lastCandles(ticker string) []*ta.Candle {
+	candles := make([]*ta.Candle, 0)
+	r := w.get(ticker)
+	if r == nil {
+		return candles
+	}
+	for _, d := range r.GetConfigs().LFrames {
+		c := r.LastCandle(d)
+		if r != nil {
+			candles = append(candles, c)
+		}
+	}
+	return candles
+}
+
 // connect connects the watcher to other market participants py listening to
 // decicated channels for the communication.
 func (w *watcher) connect() {
