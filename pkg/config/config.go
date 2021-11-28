@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -40,6 +41,8 @@ type Configs struct {
 		ChatIDs  []string `json:"chat_ids"`
 	} `json:"telegram"`
 	Watchlist []string `json:"watchlist"`
+
+	MarketConfigPath string `json:"market_config_path"`
 }
 
 func (c Configs) IsProduction() bool {
@@ -71,6 +74,9 @@ func NewConfigs(filePath *string) (*Configs, error) {
 	if configs.Server.Timeout.Write == 0 {
 		configs.Server.Timeout.Write = 10
 		configs.Server.Timeout.Idle = 10
+	}
+	if len(configs.Datadog.Host) > 0 {
+		os.Setenv("DD_AGENT_HOST", configs.Datadog.Host)
 	}
 	if len(configs.Markets.Binance.APIKey) == 0 {
 		return &configs, errors.New("missing binance api key and secret")
