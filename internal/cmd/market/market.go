@@ -1,6 +1,7 @@
 package market
 
 import (
+	"context"
 	"sync"
 
 	"follow.market/internal/pkg/strategy"
@@ -77,8 +78,11 @@ func NewMarket(configPathFile *string) (*MarketStruct, error) {
 // watch will initialization the watching process from watcher on watchlist specified
 // in the config file.
 func (m *MarketStruct) watch(configs *config.Configs) {
-	for _, t := range configs.Watchlist {
-		m.watcher.watch(t)
+	stats, err := m.watcher.providor.binSpot.NewListPriceChangeStatsService().Do(context.Background())
+	for _, s := range stats {
+		for _, t := range configs.Watchlist {
+			m.watcher.watch(t)
+		}
 	}
 }
 
