@@ -1,4 +1,10 @@
 #!/bin/bash
 
-docker build --rm -t phat/followmarket:$(git rev-parse HEAD) -f deployments/Dockerfile .
-docker tag phat/followmarket:$(git rev-parse HEAD) phat/followmarket:latest
+
+STAGE=$1
+if [ -z "$1" ]; then
+    STAGE=dev
+fi
+
+docker build --rm -t phat/follow.market:$(git rev-parse HEAD) -f deployments/Dockerfile .
+docker tag phat/follow.market:$(git rev-parse HEAD) phat/follow.market:${STAGE}

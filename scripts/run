@@ -1,7 +1,12 @@
 #!/bin/bash
 
-docker kill fm
-docker run -d --rm --name fm \
+STAGE=$1
+if [ -z "$1" ]; then
+    STAGE=dev
+fi
+
+docker kill follow.market
+docker run -d --rm --name follow.market \
   -p 6868:6868 \
   -v $(pwd)/configs/dev_configs.json:/configs/configs.json \
-  phat/followmarket:latest
+  phat/follow.market:${STAGE}
