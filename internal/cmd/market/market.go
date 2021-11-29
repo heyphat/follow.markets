@@ -7,6 +7,7 @@ import (
 	"follow.market/internal/pkg/strategy"
 	"follow.market/pkg/config"
 	"follow.market/pkg/log"
+	"github.com/dlclark/regexp2"
 	ta "github.com/itsphat/techan"
 )
 
@@ -77,13 +78,27 @@ func NewMarket(configPathFile *string) (*MarketStruct, error) {
 
 // watch will initialization the watching process from watcher on watchlist specified
 // in the config file.
-func (m *MarketStruct) watch(configs *config.Configs) {
-	stats, err := m.watcher.providor.binSpot.NewListPriceChangeStatsService().Do(context.Background())
-	for _, s := range stats {
-		for _, t := range configs.Watchlist {
-			m.watcher.watch(t)
+func (m *MarketStruct) watch(configs *config.Configs) error {
+	stats, err := m.watcher.provider.binSpot.NewListPriceChangeStatsService().Do(context.Background())
+	if err != nil {
+		return err
+	}
+	for _, p := range configs.Watchlist {
+		re, err := regexp2.Compile(p, 0)
+		if err != nil {
+			return err
+		}
+		for _, s := range stats {
+			isMatch, err := re.MatchString(s.Symbol)
+			if err != nil {
+				return err
+			}
+			if isMatch {
+				m.watcher.watch(s.Symbol)
+			}
 		}
 	}
+	return nil
 }
 
 func (m *MarketStruct) connect() {

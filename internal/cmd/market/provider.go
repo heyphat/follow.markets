@@ -50,8 +50,3 @@ func (p *provider) fetchBinanceKlines(ticker string, d time.Duration) ([]*ta.Can
 	}
 	return candles, nil
 }
-
-func (p *provider) fetchActiveTickers() ([]string, error) {
-	var out []string
-	return out, nil
-}
