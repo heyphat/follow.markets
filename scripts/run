@@ -8,5 +8,5 @@ fi
 docker kill follow.market
 docker run -d --rm --name follow.market \
   -p 6868:6868 \
-  -v $(pwd)/configs/dev_configs.json:/configs/configs.json \
+  -v $(pwd)/configs/deploy.configs.json:/configs/configs.json \
   phat/follow.market:${STAGE}
