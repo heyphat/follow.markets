@@ -99,6 +99,7 @@ func (w *watcher) watch(ticker string) error {
 	}
 	w.runners.Store(ticker, m)
 	go w.await(m)
+	w.logger.Info.Println(w.newLog(ticker, "started to watch"))
 	return nil
 }
 
