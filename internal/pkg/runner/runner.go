@@ -34,6 +34,8 @@ func NewRunnerDefaultConfigs() *RunnerConfigs {
 		time.Minute,
 		5 * time.Minute,
 		15 * time.Minute,
+		60 * time.Minute,
+		4 * time.Hour,
 	}
 	return &RunnerConfigs{
 		LFrames:  lineFrames,
