@@ -14,5 +14,5 @@ FROM alpine
 RUN apk update
 RUN apk add --update ca-certificates tzdata
 COPY --from=builder ./follow.market/app app
-COPY configs/ configs/
+COPY configs/configs.json configs/configs.json
 CMD ["./app"]
