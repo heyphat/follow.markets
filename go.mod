@@ -20,6 +20,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/google/pprof v0.0.0-20210423192551-a2663126120b // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
