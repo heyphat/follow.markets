@@ -1,8 +1,18 @@
 package techanex
 
 import (
+	"fmt"
+
 	ta "github.com/itsphat/techan"
 	"github.com/sdcoffey/big"
+)
+
+const (
+	SimpleDateTimeFormat = "01/02/2006T15:04:05"
+	SimpleDateFormat     = "01/02/2006"
+
+	SimpleTimeFormat   = "15:04:05"
+	SimpleDateFormatV2 = "2006-01-02"
 )
 
 func change(purchased, sold big.Decimal) big.Decimal {
@@ -37,24 +47,28 @@ func HighClose(high, closeP big.Decimal) big.Decimal {
 }
 
 type CandleJSON struct {
-	Time   int64  `json:"t"`
-	Open   string `json:"o"`
-	High   string `json:"h"`
-	Low    string `json:"l"`
-	Close  string `json:"c"`
-	Volume string `json:"v"`
-	Trade  uint   `json:"tc"`
+	StartTime string `json:"st"`
+	EndTime   string `json:"et"`
+	Open      string `json:"o"`
+	High      string `json:"h"`
+	Low       string `json:"l"`
+	Close     string `json:"c"`
+	Volume    string `json:"v"`
+	Trade     uint   `json:"tc"`
 }
 
 type CandlesJSON []CandleJSON
 
 func Candle2JSON(c *ta.Candle) CandleJSON {
+	layout := fmt.Sprint(SimpleDateFormatV2, "T", SimpleTimeFormat)
 	return CandleJSON{
-		Time:  c.Period.Start.Unix(),
-		Open:  c.OpenPrice.FormattedString(2),
-		High:  c.MaxPrice.FormattedString(2),
-		Low:   c.MinPrice.FormattedString(2),
-		Close: c.ClosePrice.FormattedString(2),
-		Trade: c.TradeCount,
+		StartTime: c.Period.Start.Format(layout),
+		EndTime:   c.Period.End.Format(layout),
+		Open:      c.OpenPrice.FormattedString(2),
+		High:      c.MaxPrice.FormattedString(2),
+		Low:       c.MinPrice.FormattedString(2),
+		Close:     c.ClosePrice.FormattedString(2),
+		Volume:    c.Volume.FormattedString(2),
+		Trade:     c.TradeCount,
 	}
 }
