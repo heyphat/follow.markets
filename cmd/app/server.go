@@ -106,6 +106,8 @@ func Mux(middleware Func) *mux.Router {
 	// watcher endpoints
 	router.Handle("/watcher/list",
 		middleware(http.HandlerFunc(watchlist))).Methods("GET")
+	router.Handle("/watcher/last/{ticker}",
+		middleware(http.HandlerFunc(last))).Methods("GET")
 	router.Handle("/watcher/watch/{ticker}",
 		middleware(http.HandlerFunc(watch))).Methods("POST")
 

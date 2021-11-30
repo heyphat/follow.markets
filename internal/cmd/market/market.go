@@ -4,11 +4,12 @@ import (
 	"context"
 	"sync"
 
+	"github.com/dlclark/regexp2"
+
 	"follow.market/internal/pkg/strategy"
+	tax "follow.market/internal/pkg/techanex"
 	"follow.market/pkg/config"
 	"follow.market/pkg/log"
-	"github.com/dlclark/regexp2"
-	ta "github.com/itsphat/techan"
 )
 
 var (
@@ -121,9 +122,18 @@ func (m *MarketStruct) IsWatchingOn(ticker string) bool {
 	return m.watcher.isWatchingOn(ticker)
 }
 
-func (m *MarketStruct) LastCandles(ticker string) []*ta.Candle {
-	return m.watcher.lastCandles(ticker)
+func (m *MarketStruct) LastCandles(ticker string) tax.CandlesJSON {
+	last := m.watcher.lastCandles(ticker)
+	var out tax.CandlesJSON
+	for _, l := range last {
+		out = append(out, tax.Candle2JSON(l))
+	}
+	return out
 }
+
+//func (m *MarketStruct) LastIndicators(ticker string) []*tax.Indicator {
+//	return m.watcher.lastIndicators(ticker)
+//}
 
 // evaluator endpoints
 func (m *MarketStruct) AddSignal(ticker string, s strategy.Signal) {

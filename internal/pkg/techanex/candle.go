@@ -1,6 +1,9 @@
 package techanex
 
-import "github.com/sdcoffey/big"
+import (
+	ta "github.com/itsphat/techan"
+	"github.com/sdcoffey/big"
+)
 
 func change(purchased, sold big.Decimal) big.Decimal {
 	if purchased.EQ(big.ZERO) {
@@ -31,4 +34,27 @@ func LowClose(low, closeP big.Decimal) big.Decimal {
 
 func HighClose(high, closeP big.Decimal) big.Decimal {
 	return change(high, closeP)
+}
+
+type CandleJSON struct {
+	Time   int64  `json:"t"`
+	Open   string `json:"o"`
+	High   string `json:"h"`
+	Low    string `json:"l"`
+	Close  string `json:"c"`
+	Volume string `json:"v"`
+	Trade  uint   `json:"tc"`
+}
+
+type CandlesJSON []CandleJSON
+
+func Candle2JSON(c *ta.Candle) CandleJSON {
+	return CandleJSON{
+		Time:  c.Period.Start.Unix(),
+		Open:  c.OpenPrice.FormattedString(2),
+		High:  c.MaxPrice.FormattedString(2),
+		Low:   c.MinPrice.FormattedString(2),
+		Close: c.ClosePrice.FormattedString(2),
+		Trade: c.TradeCount,
+	}
 }

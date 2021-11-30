@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+
+	tax "follow.market/internal/pkg/techanex"
 )
 
 func watchlist(w http.ResponseWriter, req *http.Request) {
@@ -41,4 +43,36 @@ func watch(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func last(w http.ResponseWriter, req *http.Request) {
+	str, ok := mux.Vars(req)["ticker"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	strs := strings.Split(str, ",")
+	if len(strs) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if !market.IsWatchingOn(strs[0]) {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	last := market.LastCandles(strs[0])
+	type candles struct {
+		Candles tax.CandlesJSON `json:"candles"`
+	}
+	bts, err := json.Marshal(candles{Candles: last})
+	if err != nil {
+		logger.Error.Println(err)
+		InternalError(w)
+		return
+	}
+	header := w.Header()
+	header.Set("Content-Length", strconv.Itoa(len(bts)))
+	w.WriteHeader(http.StatusOK)
+	w.Write(bts)
+
 }
