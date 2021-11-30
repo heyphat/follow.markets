@@ -67,6 +67,7 @@ func NewRunner(name string, configs *RunnerConfigs) *Runner {
 	}
 }
 
+// validateFrame returns true if the given duration for a line is acceptable.
 func (r *Runner) validateFrame(d time.Duration) bool {
 	for _, duration := range acceptedFrames {
 		if duration == d {
@@ -110,45 +111,24 @@ func (r *Runner) LastCandle(d time.Duration) *ta.Candle {
 	return line.Candles.LastCandle()
 }
 
-// AddNewLine adds a new price timeseries and indicator timeseries to the runner.
-// The newly created timeseries will be aggregated from the 1-minute time series
-// if the candles is not given (nil). Otherwise, it uses the given candles.
-func (r *Runner) AddNewLine(d *time.Duration, candles *ta.TimeSeries) bool {
-	r.Lock()
-	defer r.Unlock()
-
-	for _, duration := range r.configs.LFrames {
-		if *d == duration {
-			return true
-		}
+func (r *Runner) LastIndicator(d time.Duration) *tax.Indicator {
+	line, ok := r.GetLines(d)
+	if !ok || line == nil {
+		return nil
 	}
-	if !r.validateFrame(*d) {
-		return false
-	}
-	line, ok := r.GetLines(time.Minute)
-	if !ok {
-		return ok
-	}
-	newCandles := line.Candles
-	if candles != nil {
-		newCandles = candles
-	}
-	series := tax.NewSeries(r.configs.IConfigs)
-	if !series.SyncCandles(newCandles, d) {
-		return false
-	}
-	r.lines[*d] = series
-	r.configs.LFrames = append(r.configs.LFrames, *d)
-	return true
+	return line.Indicators.LastIndicator()
 }
 
 // Initialize initializes a time series of the 1-minute bar candles. It's used for the
-// performance purpose on syncing runner with market data.
-func (r *Runner) Initialize(series *ta.TimeSeries) bool {
-	for d, line := range r.lines {
-		if !line.SyncCandles(series, &d) {
-			return false
-		}
+// performance purpose on syncing runner with market data. The function only aggregates
+// for lines with less than 15-minute timeframe.
+func (r *Runner) Initialize(series *ta.TimeSeries, d *time.Duration) bool {
+	line, ok := r.GetLines(*d)
+	if !ok || line == nil {
+		return false
+	}
+	if !line.SyncCandles(series, d) {
+		return false
 	}
 	return true
 }

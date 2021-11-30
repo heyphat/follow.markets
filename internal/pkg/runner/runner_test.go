@@ -117,9 +117,9 @@ func Test_AddNewLine(t *testing.T) {
 	ok = runner.SyncCandle(candle2)
 	assert.EqualValues(t, true, ok)
 
-	newFrame := time.Minute
-	ok = runner.AddNewLine(&newFrame, nil)
-	assert.EqualValues(t, true, ok)
+	//newFrame := time.Minute
+	//ok = runner.AddNewLine(&newFrame, nil)
+	//assert.EqualValues(t, true, ok)
 
 	for d, line := range runner.lines {
 		assert.EqualValues(t, 0.0, line.Candles.LastCandle().OpenPrice.Float())
@@ -146,7 +146,7 @@ func Test_AddNewLineWithNewTimeSeries(t *testing.T) {
 		LFrames: []time.Duration{
 			time.Minute,
 			5 * time.Minute,
-			//10 * time.Minute,
+			10 * time.Minute,
 		},
 		IConfigs: tax.NewDefaultIndicatorConfigs(),
 	}
@@ -170,8 +170,8 @@ func Test_AddNewLineWithNewTimeSeries(t *testing.T) {
 	series := ta.TimeSeries{
 		Candles: []*ta.Candle{candle1, candle2},
 	}
-	for _, frame := range acceptedFrames {
-		ok := runner.AddNewLine(&frame, &series)
+	for _, frame := range runner.GetConfigs().LFrames {
+		ok := runner.Initialize(&series, &frame)
 		assert.EqualValues(t, true, ok)
 	}
 	for d, line := range runner.lines {
