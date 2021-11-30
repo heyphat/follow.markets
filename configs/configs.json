@@ -13,7 +13,7 @@
   "datadog": {
     "host": "",
     "port": "8126",
-    "env": "staging|production",
+    "env": "development|production",
     "service": "follow.market",
     "version": "0.1.0"
   },
@@ -32,5 +32,17 @@
   },
   "watchlist": [
     "(?<!(BUSD|DAI))USDT"
-  ]
+  ],
+  "runner": {
+    "frames": [
+      "1m", "5m", "15m", "1h", "4h"
+    ],
+    "indicators": {
+      "EMA": [9, 25, 50],
+      "MA": [99, 200],
+      "BBU": [25],
+      "BBL": [25],
+      "ATR": [10]
+    }
+  }
 }
