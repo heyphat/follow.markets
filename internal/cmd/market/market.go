@@ -76,7 +76,7 @@ func NewMarket(configPathFile *string) (*MarketStruct, error) {
 	return Market, nil
 }
 
-// watch will initialization the watching process from watcher on watchlist specified
+// watch will initialize the watching process from watcher on watchlist specified
 // in the config file.
 func (m *MarketStruct) watch(configs *config.Configs) error {
 	stats, err := m.watcher.provider.binSpot.NewListPriceChangeStatsService().Do(context.Background())
@@ -94,7 +94,7 @@ func (m *MarketStruct) watch(configs *config.Configs) error {
 				return err
 			}
 			if isMatch {
-				m.watcher.watch(s.Symbol)
+				m.watcher.watch(s.Symbol, nil)
 			}
 		}
 	}
@@ -110,7 +110,7 @@ func (m *MarketStruct) connect() {
 
 // watcher endpoints
 func (m *MarketStruct) Watch(ticker string) error {
-	return m.watcher.watch(ticker)
+	return m.watcher.watch(ticker, nil)
 }
 
 func (m *MarketStruct) Watchlist() []string {

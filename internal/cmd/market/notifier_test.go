@@ -8,7 +8,7 @@ import (
 )
 
 func Test_Notifier(t *testing.T) {
-	path := "./../../../configs/dev_configs.json"
+	path := "./../../../configs/deploy.configs.json"
 	configs, err := config.NewConfigs(&path)
 	assert.EqualValues(t, nil, err)
 

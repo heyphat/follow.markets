@@ -10,7 +10,7 @@ import (
 )
 
 func Test_Watcher(t *testing.T) {
-	path := "./../../../configs/dev_configs.json"
+	path := "./../../../configs/deploy.configs.json"
 	configs, err := config.NewConfigs(&path)
 	assert.EqualValues(t, nil, err)
 
@@ -28,7 +28,7 @@ func Test_Watcher(t *testing.T) {
 		}
 	}()
 
-	err = watcher.watch("BTCUSDT")
+	err = watcher.watch("BTCUSDT", nil)
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, watcher.isConnected())
 	assert.EqualValues(t, true, watcher.isWatchingOn("BTCUSDT"))

@@ -78,7 +78,7 @@ func (w *watcher) isWatchingOn(ticker string) bool {
 // watch initializes the process to add a ticker to the watchlist. The process keep
 // watching the ticker by comsuming the 1-minute candle and trade information boardcasted
 // from the streamer.
-func (w *watcher) watch(ticker string) error {
+func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
 	if !w.connected {
 		w.connect()
 	}
@@ -86,16 +86,28 @@ func (w *watcher) watch(ticker string) error {
 		return nil
 	}
 	m := wmember{
-		runner: runner.NewRunner(ticker, nil),
+		runner: runner.NewRunner(ticker, rc),
 		bChann: make(chan *ta.Candle, 3),
 		tChann: make(chan *tax.Trade, 10),
 	}
-	candles, err := w.provider.fetchBinanceKlines(ticker, time.Minute)
+	m1Candles, err := w.provider.fetchBinanceKlines(ticker, time.Minute)
 	if err != nil {
 		return err
 	}
-	if !m.runner.Initialize(&ta.TimeSeries{Candles: candles}) {
-		return errors.New("failed to sync candles on initialization")
+	m30Candles, err := w.provider.fetchBinanceKlines(ticker, time.Minute*30)
+	if err != nil {
+		return err
+	}
+	for _, f := range m.runner.GetConfigs().LFrames {
+		if f < time.Minute*15 {
+			if !m.runner.Initialize(&ta.TimeSeries{Candles: m1Candles}, &f) {
+				return errors.New("failed to sync m1 candles on initialization")
+			}
+		} else {
+			if !m.runner.Initialize(&ta.TimeSeries{Candles: m30Candles}, &f) {
+				return errors.New("failed to sync m30 candles on initialization")
+			}
+		}
 	}
 	w.runners.Store(ticker, m)
 	go w.await(m)
