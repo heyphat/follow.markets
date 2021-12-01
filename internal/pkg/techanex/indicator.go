@@ -134,3 +134,24 @@ func (i *Indicator) String() string {
 		strings.Join(vs, "\n"),
 	))
 }
+
+type IndicatorJSON struct {
+	StartTime string            `json:"st"`
+	EndTime   string            `json:"et"`
+	IndiMap   map[string]string `json:"indicators"`
+}
+
+type IndicatorsJSON []IndicatorJSON
+
+func (id *Indicator) Indicator2JSON() IndicatorJSON {
+	m := make(map[string]string, len(id.IndiMap))
+	for k, v := range id.IndiMap {
+		m[k] = v.FormattedString(2)
+	}
+	layout := fmt.Sprint(SimpleDateFormatV2, "T", SimpleTimeFormat)
+	return IndicatorJSON{
+		StartTime: id.Period.Start.Format(layout),
+		EndTime:   id.Period.End.Format(layout),
+		IndiMap:   m,
+	}
+}
