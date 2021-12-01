@@ -137,7 +137,7 @@ func (w *watcher) await(mem wmember) {
 	}()
 }
 
-// lastCandles returns all last candles from all time frame of a member in the watchlist
+// lastCandles returns all last candles from all time frames of a member in the watchlist
 func (w *watcher) lastCandles(ticker string) []*ta.Candle {
 	candles := make([]*ta.Candle, 0)
 	r := w.get(ticker)
@@ -151,6 +151,22 @@ func (w *watcher) lastCandles(ticker string) []*ta.Candle {
 		}
 	}
 	return candles
+}
+
+// lastIndicators return all last indicators from all time frames a member in the watchlist
+func (w *watcher) lastIndicators(ticker string) []*tax.Indicator {
+	inds := make([]*tax.Indicator, 0)
+	r := w.get(ticker)
+	if r == nil {
+		return inds
+	}
+	for _, d := range r.GetConfigs().LFrames {
+		c := r.LastIndicator(d)
+		if r != nil {
+			inds = append(inds, c)
+		}
+	}
+	return inds
 }
 
 // connect connects the watcher to other market participants py listening to

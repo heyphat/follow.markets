@@ -131,9 +131,14 @@ func (m *MarketStruct) LastCandles(ticker string) tax.CandlesJSON {
 	return out
 }
 
-//func (m *MarketStruct) LastIndicators(ticker string) []*tax.Indicator {
-//	return m.watcher.lastIndicators(ticker)
-//}
+func (m *MarketStruct) LastIndicators(ticker string) tax.IndicatorsJSON {
+	last := m.watcher.lastIndicators(ticker)
+	var out tax.IndicatorsJSON
+	for _, l := range last {
+		out = append(out, l.Indicator2JSON())
+	}
+	return out
+}
 
 // evaluator endpoints
 func (m *MarketStruct) AddSignal(ticker string, s strategy.Signal) {
