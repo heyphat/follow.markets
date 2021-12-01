@@ -76,5 +76,4 @@ func last(w http.ResponseWriter, req *http.Request) {
 	header.Set("Content-Length", strconv.Itoa(len(bts)))
 	w.WriteHeader(http.StatusOK)
 	w.Write(bts)
-
 }

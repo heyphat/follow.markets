@@ -111,6 +111,12 @@ func Mux(middleware Func) *mux.Router {
 	router.Handle("/watcher/watch/{ticker}",
 		middleware(http.HandlerFunc(watch))).Methods("POST")
 
+	// evaluator endpoints
+	router.Handle("/evaluator/add_signal/{patterns}",
+		middleware(http.HandlerFunc(addSignal))).Methods("POST")
+	router.Handle("/evaluator/drop_signals/{signals}",
+		middleware(http.HandlerFunc(dropSignals))).Methods("POST")
+
 	return router
 }
 
