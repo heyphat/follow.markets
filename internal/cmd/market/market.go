@@ -141,8 +141,8 @@ func (m *MarketStruct) LastIndicators(ticker string) tax.IndicatorsJSON {
 }
 
 // evaluator endpoints
-func (m *MarketStruct) AddSignal(ticker string, s strategy.Signal) {
-	m.evaluator.add(ticker, &s)
+func (m *MarketStruct) AddSignal(patterns []string, s strategy.Signal) {
+	m.evaluator.add(patterns, &s)
 }
 
 // notifier endpoints

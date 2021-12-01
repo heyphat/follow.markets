@@ -30,7 +30,7 @@ func Test_Market(t *testing.T) {
 	s, err := strategy.NewSignalFromBytes(sraw)
 	assert.EqualValues(t, nil, err)
 
-	market.evaluator.add("ETHUSDT", s)
+	market.evaluator.add([]string{"ETHUSDT"}, s)
 
 	time.Sleep(time.Second * 5)
 
