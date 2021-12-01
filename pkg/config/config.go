@@ -41,8 +41,9 @@ type Configs struct {
 		ChatIDs  []string `json:"chat_ids"`
 	} `json:"telegram"`
 	Watchlist []string `json:"watchlist"`
-
-	MarketConfigPath string `json:"market_config_path"`
+	Signal    struct {
+		Path string `json:"path"`
+	} `json:"signal"`
 }
 
 func (c Configs) IsProduction() bool {
