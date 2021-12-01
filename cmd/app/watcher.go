@@ -60,11 +60,13 @@ func last(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	last := market.LastCandles(strs[0])
+	clast := market.LastCandles(strs[0])
+	ilast := market.LastIndicators(strs[0])
 	type candles struct {
-		Candles tax.CandlesJSON `json:"candles"`
+		Candles    tax.CandlesJSON    `json:"candles"`
+		Indicators tax.IndicatorsJSON `json:"indicators"`
 	}
-	bts, err := json.Marshal(candles{Candles: last})
+	bts, err := json.Marshal(candles{Candles: clast, Indicators: ilast})
 	if err != nil {
 		logger.Error.Println(err)
 		InternalError(w)
