@@ -8,7 +8,6 @@ import (
 
 	tele "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
-	"follow.market/internal/pkg/strategy"
 	"follow.market/pkg/config"
 	"follow.market/pkg/log"
 	"follow.market/pkg/util"
@@ -84,8 +83,8 @@ func (n *notifier) add(cids []int64) {
 }
 
 func (n *notifier) processEvaluatorRequest(msg *message) {
-	s := msg.request.what.(*strategy.Signal)
-	n.notify(s.Description())
+	mess := msg.request.what.(string)
+	n.notify(mess)
 }
 
 // notify sends tele message to all chatIDs for a given content.

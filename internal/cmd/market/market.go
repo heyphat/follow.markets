@@ -77,7 +77,9 @@ func NewMarket(configPathFile *string) (*MarketStruct, error) {
 		if err := Market.initSignals(configs); err != nil {
 			common.logger.Error.Println("failed to init signals with err: ", err)
 		}
-		Market.initWatchlist(configs)
+		if err := Market.initWatchlist(configs); err != nil {
+			common.logger.Error.Println("failed to init watchlist with err: ", err)
+		}
 	})
 	return Market, nil
 }
@@ -95,11 +97,11 @@ func (m *MarketStruct) initWatchlist(configs *config.Configs) error {
 			return err
 		}
 		for _, s := range stats {
-			isMatch, err := re.MatchString(s.Symbol)
+			isMatched, err := re.MatchString(s.Symbol)
 			if err != nil {
 				return err
 			}
-			if isMatch {
+			if isMatched {
 				m.watcher.watch(s.Symbol, nil)
 			}
 		}
@@ -169,8 +171,12 @@ func (m *MarketStruct) LastIndicators(ticker string) tax.IndicatorsJSON {
 }
 
 // evaluator endpoints
-func (m *MarketStruct) AddSignal(patterns []string, s strategy.Signal) {
-	m.evaluator.add(patterns, &s)
+func (m *MarketStruct) AddSignal(patterns []string, s *strategy.Signal) error {
+	return m.evaluator.add(patterns, s)
+}
+
+func (m *MarketStruct) DropSignal(name string) error {
+	return m.evaluator.drop(name)
 }
 
 // notifier endpoints

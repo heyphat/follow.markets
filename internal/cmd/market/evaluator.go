@@ -101,13 +101,15 @@ func (e *evaluator) add(patterns []string, s *strategy.Signal) error {
 
 // remove removes the given signal from the evaluator. After the removal, the singal won't be
 // evaluated any longer.
-func (e *evaluator) remove(name string) {
+func (e *evaluator) drop(name string) error {
 	e.Lock()
 	defer e.Unlock()
+
 	if _, ok := e.signals.Load(name); !ok {
-		return
+		return nil
 	}
 	e.signals.Delete(name)
+	return nil
 }
 
 // get returns a slice of signal that are applicable to the given ticker.
@@ -154,9 +156,9 @@ func (e *evaluator) processingWatcherRequest(msg *message) {
 	r := msg.request.what.(wmember).runner
 	signals := e.get(r.GetName())
 	for _, s := range signals {
-		fmt.Println(s)
 		if s.Evaluate(r, nil) {
-			e.communicator.evaluator2Notifier <- e.communicator.newMessage(s, nil)
+			mess := r.GetName() + ": " + s.Description()
+			e.communicator.evaluator2Notifier <- e.communicator.newMessage(mess, nil)
 		}
 	}
 }

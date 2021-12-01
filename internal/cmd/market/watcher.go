@@ -109,6 +109,8 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
 			}
 		}
 	}
+	w.Lock()
+	defer w.Unlock()
 	w.runners.Store(ticker, m)
 	go w.await(m)
 	w.logger.Info.Println(w.newLog(ticker, "started to watch"))
