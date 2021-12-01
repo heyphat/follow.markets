@@ -2,6 +2,7 @@ package market
 
 import (
 	"context"
+	"io/ioutil"
 	"sync"
 
 	"github.com/dlclark/regexp2"
@@ -10,6 +11,7 @@ import (
 	tax "follow.market/internal/pkg/techanex"
 	"follow.market/pkg/config"
 	"follow.market/pkg/log"
+	"follow.market/pkg/util"
 )
 
 var (
@@ -72,14 +74,17 @@ func NewMarket(configPathFile *string) (*MarketStruct, error) {
 		Market.notifier = notifier
 
 		Market.connect()
-		Market.watch(configs)
+		if err := Market.initSignals(configs); err != nil {
+			common.logger.Error.Println("failed to init signals with err: ", err)
+		}
+		Market.initWatchlist(configs)
 	})
 	return Market, nil
 }
 
-// watch will initialize the watching process from watcher on watchlist specified
+// watch initializes the watching process from watcher on watchlist specified
 // in the config file.
-func (m *MarketStruct) watch(configs *config.Configs) error {
+func (m *MarketStruct) initWatchlist(configs *config.Configs) error {
 	stats, err := m.watcher.provider.binSpot.NewListPriceChangeStatsService().Do(context.Background())
 	if err != nil {
 		return err
@@ -98,6 +103,29 @@ func (m *MarketStruct) watch(configs *config.Configs) error {
 				m.watcher.watch(s.Symbol, nil)
 			}
 		}
+	}
+	return nil
+}
+
+// initSignals adds all the singals defined as json files in the configs/signals dir.
+func (m *MarketStruct) initSignals(configs *config.Configs) error {
+	if len(configs.Signal.Path) == 0 {
+		return nil
+	}
+	files, err := util.IOReadDir(configs.Signal.Path)
+	if err != nil {
+		return err
+	}
+	for _, f := range files {
+		bts, err := ioutil.ReadFile(f)
+		if err != nil {
+			return err
+		}
+		signal, err := strategy.NewSignalFromBytes(bts)
+		if err != nil {
+			return err
+		}
+		m.evaluator.add([]string{signal.Name}, signal)
 	}
 	return nil
 }

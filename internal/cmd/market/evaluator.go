@@ -67,6 +67,9 @@ func (e *evaluator) connect() {
 // add adds a new signal to the evalulator. The evaluator will evaluate the signal
 // every minute on all tickers that satisfied the given patterns.
 func (e *evaluator) add(patterns []string, s *strategy.Signal) error {
+	e.Lock()
+	defer e.Unlock()
+
 	var mem emember
 	val, ok := e.signals.Load(s.Name)
 	if !ok {
@@ -90,10 +93,21 @@ func (e *evaluator) add(patterns []string, s *strategy.Signal) error {
 		mem.signals = append(mem.signals, s)
 		e.signals.Store(s.Name, mem)
 	}
-	if s.IsOnTrade() {
-		go e.await(mem, s)
-	}
+	//if s.IsOnTrade() {
+	//	go e.await(mem, s)
+	//}
 	return nil
+}
+
+// remove removes the given signal from the evaluator. After the removal, the singal won't be
+// evaluated any longer.
+func (e *evaluator) remove(name string) {
+	e.Lock()
+	defer e.Unlock()
+	if _, ok := e.signals.Load(name); !ok {
+		return
+	}
+	e.signals.Delete(name)
 }
 
 // get returns a slice of signal that are applicable to the given ticker.
@@ -111,18 +125,18 @@ func (e *evaluator) get(ticker string) strategy.Signals {
 	return out
 }
 
-func (e *evaluator) await(mem emember, s *strategy.Signal) {
-	for !e.registerStreamingChannel(mem) {
-		e.logger.Error.Println(e.newLog(mem.name, "failed to register streaming data"))
-	}
-	go func() {
-		for msg := range mem.tChann {
-			if s.Evaluate(nil, msg) {
-				e.communicator.evaluator2Notifier <- e.communicator.newMessage(s, nil)
-			}
-		}
-	}()
-}
+//func (e *evaluator) await(mem emember, s *strategy.Signal) {
+//	for !e.registerStreamingChannel(mem) {
+//		e.logger.Error.Println(e.newLog(mem.name, "failed to register streaming data"))
+//	}
+//	go func() {
+//		for msg := range mem.tChann {
+//			if s.Evaluate(nil, msg) {
+//				e.communicator.evaluator2Notifier <- e.communicator.newMessage(s, nil)
+//			}
+//		}
+//	}()
+//}
 
 func (e *evaluator) registerStreamingChannel(mem emember) bool {
 	doneStreamingRegister := false
@@ -140,6 +154,7 @@ func (e *evaluator) processingWatcherRequest(msg *message) {
 	r := msg.request.what.(wmember).runner
 	signals := e.get(r.GetName())
 	for _, s := range signals {
+		fmt.Println(s)
 		if s.Evaluate(r, nil) {
 			e.communicator.evaluator2Notifier <- e.communicator.newMessage(s, nil)
 		}

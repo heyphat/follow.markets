@@ -128,6 +128,7 @@ func (w *watcher) await(mem wmember) {
 				w.logger.Error.Println(w.newLog(mem.runner.GetName(), "failed to sync new candle on watching"))
 				continue
 			}
+			w.communicator.watcher2Evaluator <- w.communicator.newMessage(mem, nil)
 		}
 	}()
 	go func() {
