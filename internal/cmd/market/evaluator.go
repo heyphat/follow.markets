@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/dlclark/regexp2"
+
 	"follow.market/internal/pkg/strategy"
 	tax "follow.market/internal/pkg/techanex"
 	"follow.market/pkg/log"
@@ -13,7 +15,7 @@ import (
 type evaluator struct {
 	sync.Mutex
 	connected bool
-	runners   *sync.Map
+	signals   *sync.Map
 
 	// shared properties with other market participants
 	logger       *log.Logger
@@ -23,6 +25,7 @@ type evaluator struct {
 
 type emember struct {
 	name    string
+	regex   []*regexp2.Regexp
 	tChann  chan *tax.Trade
 	signals strategy.Signals
 }
@@ -33,7 +36,7 @@ func newEvaluator(participants *sharedParticipants) (*evaluator, error) {
 	}
 	e := &evaluator{
 		connected: false,
-		runners:   &sync.Map{},
+		signals:   &sync.Map{},
 
 		logger:       participants.logger,
 		provider:     participants.provider,
@@ -61,24 +64,51 @@ func (e *evaluator) connect() {
 	e.connected = true
 }
 
-func (e *evaluator) add(ticker string, s *strategy.Signal) {
+// add adds a new signal to the evalulator. The evaluator will evaluate the signal
+// every minute on all tickers that satisfied the given patterns.
+func (e *evaluator) add(patterns []string, s *strategy.Signal) error {
 	var mem emember
-	val, ok := e.runners.Load(ticker)
+	val, ok := e.signals.Load(s.Name)
 	if !ok {
+		reges := make([]*regexp2.Regexp, 0)
+		for _, t := range patterns {
+			reg, err := regexp2.Compile(t, 0)
+			if err != nil {
+				return err
+			}
+			reges = append(reges, reg)
+		}
 		mem = emember{
-			name:    ticker,
+			name:    s.Name,
+			regex:   reges,
 			tChann:  make(chan *tax.Trade),
 			signals: strategy.Signals{s},
 		}
-		e.runners.Store(ticker, mem)
+		e.signals.Store(s.Name, mem)
 	} else {
 		mem = val.(emember)
 		mem.signals = append(mem.signals, s)
-		e.runners.Store(ticker, mem)
+		e.signals.Store(s.Name, mem)
 	}
 	if s.IsOnTrade() {
 		go e.await(mem, s)
 	}
+	return nil
+}
+
+// get returns a slice of signal that are applicable to the given ticker.
+func (e *evaluator) get(ticker string) strategy.Signals {
+	out := strategy.Signals{}
+	e.signals.Range(func(k, v interface{}) bool {
+		m := v.(emember)
+		for _, re := range m.regex {
+			if isMatched, err := re.MatchString(ticker); err == nil && isMatched {
+				out = append(out, m.signals...)
+			}
+		}
+		return true
+	})
+	return out
 }
 
 func (e *evaluator) await(mem emember, s *strategy.Signal) {
@@ -108,11 +138,8 @@ func (e *evaluator) registerStreamingChannel(mem emember) bool {
 
 func (e *evaluator) processingWatcherRequest(msg *message) {
 	r := msg.request.what.(wmember).runner
-	val, ok := e.runners.Load(r.GetName())
-	if !ok {
-		return
-	}
-	for _, s := range val.(emember).signals {
+	signals := e.get(r.GetName())
+	for _, s := range signals {
 		if s.Evaluate(r, nil) {
 			e.communicator.evaluator2Notifier <- e.communicator.newMessage(s, nil)
 		}
@@ -120,7 +147,7 @@ func (e *evaluator) processingWatcherRequest(msg *message) {
 }
 
 func (e *evaluator) processStreamerRequest(msg *message) {
-	if mem, ok := e.runners.Load(msg.request.what.(string)); ok && msg.response != nil {
+	if mem, ok := e.signals.Load(msg.request.what.(string)); ok && msg.response != nil {
 		msg.response <- e.communicator.newPayload(mem)
 		close(msg.response)
 	}
