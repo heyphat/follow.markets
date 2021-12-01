@@ -3,6 +3,7 @@ package strategy
 import (
 	"encoding/json"
 	"strings"
+	"time"
 
 	"follow.market/internal/pkg/runner"
 	tax "follow.market/internal/pkg/techanex"
@@ -17,9 +18,22 @@ type Signal struct {
 type Signals []*Signal
 
 func NewSignalFromBytes(bytes []byte) (*Signal, error) {
-	stg := Signal{}
-	err := json.Unmarshal(bytes, &stg)
-	return &stg, err
+	signal := Signal{}
+	err := json.Unmarshal(bytes, &signal)
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range signal.Conditions {
+		if err := c.validate(); err != nil {
+			return nil, err
+		}
+	}
+	for _, g := range signal.ConditionGroups {
+		if err := g.validate(); err != nil {
+			return nil, err
+		}
+	}
+	return &signal, err
 }
 
 func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
@@ -42,18 +56,24 @@ func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 // Description returns a text description of all valid(true) conditions.
 func (s Signal) Description() string {
 	var out []string
+	var thisFrame, thatFrame string
 	for _, c := range s.Conditions {
 		if c.Msg != nil {
 			out = append(out, *c.Msg)
+			thisFrame = (time.Duration(c.This.TimePeriod) * time.Second).String()
+			thatFrame = (time.Duration(c.That.TimePeriod) * time.Second).String()
 		}
 	}
 	for _, g := range s.ConditionGroups {
 		for _, c := range g.Conditions {
 			if c.Msg != nil {
 				out = append(out, *c.Msg)
+				thisFrame = (time.Duration(c.This.TimePeriod) * time.Second).String()
+				thatFrame = (time.Duration(c.That.TimePeriod) * time.Second).String()
 			}
 		}
 	}
+	out = append([]string{s.Name + ": " + thisFrame + ": " + thatFrame}, out...)
 	return strings.Join(out, "\n")
 }
 
