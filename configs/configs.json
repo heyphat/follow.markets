@@ -31,7 +31,7 @@
     ] 
   },
   "watchlist": [
-    "(?<!(BUSD|DAI))USDT"
+   "(?<!(BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR))USDT"
   ],
   "runner": {
     "frames": [
@@ -44,5 +44,8 @@
       "BBL": [25],
       "ATR": [10]
     }
+  },
+  "signal": {
+    "path": "./configs/signals"
   }
 }
