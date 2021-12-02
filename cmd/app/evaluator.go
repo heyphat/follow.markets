@@ -35,13 +35,13 @@ func addSignal(w http.ResponseWriter, req *http.Request) {
 	signal, err := strategy.NewSignalFromBytes(bts)
 	if err != nil {
 		logger.Error.Println(err)
-		InternalError(w)
+		BadRequest(err.Error(), w)
 		return
 	}
 	str, ok := mux.Vars(req)["patterns"]
 	if !ok {
 		logger.Error.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
+		BadRequest("missing patterns", w)
 		return
 	}
 	patterns, err := url.PathUnescape(str)
