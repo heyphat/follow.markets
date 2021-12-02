@@ -98,14 +98,22 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
 	if err != nil {
 		return err
 	}
+	d1Candles, err := w.provider.fetchBinanceKlines(ticker, time.Hour*24)
+	if err != nil {
+		return err
+	}
 	for _, f := range m.runner.GetConfigs().LFrames {
 		if f < time.Minute*15 {
 			if !m.runner.Initialize(&ta.TimeSeries{Candles: m1Candles}, &f) {
 				return errors.New("failed to sync m1 candles on initialization")
 			}
-		} else {
+		} else if f >= time.Minute*15 && f < time.Hour*24 {
 			if !m.runner.Initialize(&ta.TimeSeries{Candles: m30Candles}, &f) {
 				return errors.New("failed to sync m30 candles on initialization")
+			}
+		} else {
+			if !m.runner.Initialize(&ta.TimeSeries{Candles: d1Candles}, &f) {
+				return errors.New("failed to sync d1 candles on initialization")
 			}
 		}
 	}
