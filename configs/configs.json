@@ -31,7 +31,7 @@
     ] 
   },
   "watchlist": [
-   "(?<!(BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR))USDT"
+   "(?<!(BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT"
   ],
   "runner": {
     "frames": [
