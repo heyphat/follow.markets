@@ -40,7 +40,7 @@ const (
 
 var (
 	candleLevels = []string{
-		"FIXED", "CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_NUM",
+		"FIXED", "OPEN", "CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_NUM",
 		"LOW_HIGH", "OPEN_CLOSE", "OPEN_HIGH", "OPEN_LOW", "HIGH_CLOSE", "LOW_CLOSE",
 	}
 	tradeLevels = []string{
