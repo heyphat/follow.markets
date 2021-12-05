@@ -1,0 +1,134 @@
+package runner
+
+import (
+	"fmt"
+	"sync"
+	"time"
+
+	ta "github.com/itsphat/techan"
+
+	tax "follow.market/internal/pkg/techanex"
+)
+
+var (
+	acceptedFrames = [...]time.Duration{
+		time.Minute,
+		3 * time.Minute,
+		5 * time.Minute,
+		10 * time.Minute,
+		15 * time.Minute,
+		30 * time.Minute,
+		60 * time.Minute,
+		4 * time.Hour,
+		24 * time.Hour,
+	}
+)
+
+type RunnerConfigs struct {
+	LFrames  []time.Duration
+	IConfigs tax.IndicatorConfigs
+}
+
+func NewRunnerDefaultConfigs() *RunnerConfigs {
+	lineFrames := []time.Duration{
+		time.Minute,
+		5 * time.Minute,
+		15 * time.Minute,
+		60 * time.Minute,
+		4 * time.Hour,
+	}
+	return &RunnerConfigs{
+		LFrames:  lineFrames,
+		IConfigs: tax.NewDefaultIndicatorConfigs(),
+	}
+}
+
+type Runner struct {
+	sync.Mutex
+
+	name    string
+	lines   map[time.Duration]*tax.Series
+	configs *RunnerConfigs
+}
+
+func NewRunner(name string, configs *RunnerConfigs) *Runner {
+	if configs == nil {
+		configs = NewRunnerDefaultConfigs()
+	}
+	lines := make(map[time.Duration]*tax.Series, len(configs.LFrames))
+	lines[time.Minute] = tax.NewSeries(configs.IConfigs)
+	for _, frame := range configs.LFrames {
+		lines[frame] = tax.NewSeries(configs.IConfigs)
+	}
+	return &Runner{
+		name:    name,
+		lines:   lines,
+		configs: configs,
+	}
+}
+
+// validateFrame returns true if the given duration for a line is acceptable.
+func (r *Runner) validateFrame(d time.Duration) bool {
+	for _, duration := range acceptedFrames {
+		if duration == d {
+			return true
+		}
+	}
+	return false
+}
+
+// GetLines returns a line of type tax.Series based on the given time frame.
+func (r *Runner) GetLines(d time.Duration) (*tax.Series, bool) { k, v := r.lines[d]; return k, v }
+
+// GetConfigs returns the runner's configurations
+func (r *Runner) GetConfigs() *RunnerConfigs { return r.configs }
+
+// GetName return the runner's name
+func (r *Runner) GetName() string { return r.name }
+
+// SyncCandle aggregate the lines with the values of the given candle.
+// The syncing process will be different for different lines based on its frame.
+// The given candle's period should always be the latest candle broadcasted by
+// a market data providor. For example: Binance, AlpacaMarkets, FTX.
+func (r *Runner) SyncCandle(c *ta.Candle) bool {
+	if c == nil {
+		panic(fmt.Errorf("error syncing candle: cannle cannot be nil"))
+	}
+	for frame, series := range r.lines {
+		if !series.SyncCandle(c, &frame) {
+			return false
+		}
+	}
+	return true
+}
+
+// LastCandle returns last candle on the given time frame of the runner.
+func (r *Runner) LastCandle(d time.Duration) *ta.Candle {
+	line, ok := r.GetLines(d)
+	if !ok || line == nil {
+		return nil
+	}
+	return line.Candles.LastCandle()
+}
+
+func (r *Runner) LastIndicator(d time.Duration) *tax.Indicator {
+	line, ok := r.GetLines(d)
+	if !ok || line == nil {
+		return nil
+	}
+	return line.Indicators.LastIndicator()
+}
+
+// Initialize initializes a time series of the 1-minute bar candles. It's used for the
+// performance purpose on syncing runner with market data. The function only aggregates
+// for lines with less than 15-minute timeframe.
+func (r *Runner) Initialize(series *ta.TimeSeries, d *time.Duration) bool {
+	line, ok := r.GetLines(*d)
+	if !ok || line == nil {
+		return false
+	}
+	if !line.SyncCandles(series, d) {
+		return false
+	}
+	return true
+}

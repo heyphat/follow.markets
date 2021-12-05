@@ -1,0 +1,31 @@
+{
+  "name": "BTCUSDT",
+  "signal_type": "CONTINUOUS",
+  "notify_type": "FIRST",
+  "conditions": [
+    {
+    "this":
+      {
+        "time_period": 300,
+        "time_frame": 1,
+        "candle": {
+          "name": "CLOSE",
+          "multiplier": 1 
+        }
+      },
+    "that":
+      {
+        "time_period": 300,
+        "time_frame": 1,
+        "candle": {
+          "name": "FIXED",
+          "multiplier": 1,
+          "config": {
+            "level": 300 
+          }
+        }
+      },
+    "opt": "more"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# test the main endpoint
+cd cmd/app
+go test
+cd ../.. 
+
+# test public packages
+
+cd pkg/config
+go test
+cd ../.. 
+
+# test private packages
+cd internal/pkg/techanex
+go test
+cd ../../.. 
+
+cd internal/pkg/runner
+go test
+cd ../../.. 
+
+cd internal/pkg/strategy
+go test
+cd ../../.. 
+
+cd internal/cmd/market
+go test
+cd ../../.. 

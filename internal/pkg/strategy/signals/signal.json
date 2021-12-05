@@ -1,0 +1,61 @@
+{
+  "name": "sample",
+  "conditions":
+  [
+    {
+    "this":
+      {
+        "time_period": 60,
+        "time_frame": 1,
+        "candle": {
+          "name": "CLOSE",
+          "multiplier": 1 
+        }
+      },
+    "that":
+      {
+        "time_period": 60,
+        "time_frame": 0,
+        "candle": {
+          "name": "CLOSE",
+          "multiplier": 1 
+        }
+      },
+    "opt": "equal"
+    }
+  ],
+  "condition_groups": [
+    {
+      "conditions": [
+        {
+          "this":
+            {
+              "time_period": 60,
+              "time_frame": 1,
+              "candle": {
+                "name": "CLOSE",
+                "config": {
+                  "level": 10.3
+                }
+              }
+            },
+          "that":
+            {
+              "time_period": 60,
+              "time_frame": 0,
+              "indicator": {
+                "name": "MovingAverge",
+                "config": {
+                  "window": 9,
+                  "level": 10.2
+                },
+                "multiplier": 1 
+              }
+            },
+          "opt": "equal"
+        }
+      ],
+      "opt": "or"
+    }
+  ]
+}

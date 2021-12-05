@@ -1,0 +1,21 @@
+{
+  "name": "trade",
+  "conditions": [
+    {
+      "this": {
+        "trade": {
+          "name": "USD_VOLUME"
+        }
+      },
+      "that": {
+         "trade": {
+           "name": "FIXED",
+           "config": {
+            "level": 100000 
+           }
+         }
+      },
+      "opt": "more_equal"
+    }
+  ]
+}
