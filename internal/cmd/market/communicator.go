@@ -2,8 +2,6 @@ package market
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type communicator struct {
@@ -34,7 +32,7 @@ type message struct {
 }
 
 type payload struct {
-	uuid uuid.UUID
+	id   string
 	when time.Time
 	what interface{}
 }
@@ -46,10 +44,25 @@ func (c *communicator) newMessage(data interface{}, responseChannel chan *payloa
 	}
 }
 
+func (c *communicator) newMessageWithPayloadID(id string, data interface{}, responseChannel chan *payload) *message {
+	return &message{
+		request:  c.newPayloadWithID(id, data),
+		response: responseChannel,
+	}
+}
+
 func (c *communicator) newPayload(data interface{}) *payload {
 	return &payload{
-		uuid: uuid.New(),
 		when: time.Now(),
 		what: data,
 	}
+}
+
+func (c *communicator) newPayloadWithID(id string, data interface{}) *payload {
+	return &payload{
+		id:   id,
+		when: time.Now(),
+		what: data,
+	}
+
 }

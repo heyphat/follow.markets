@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	tele "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
+	"follow.market/internal/pkg/strategy"
 	"follow.market/pkg/config"
 	"follow.market/pkg/log"
 	"follow.market/pkg/util"
@@ -17,12 +19,18 @@ type notifier struct {
 	sync.Mutex
 	connected bool
 	bot       *tele.BotAPI
+	notis     *sync.Map
 	chatIDs   []int64
 
 	// shared properties with other market participants
 	logger       *log.Logger
 	provider     *provider
 	communicator *communicator
+}
+
+type nmember struct {
+	id       string
+	lastSent time.Time
 }
 
 func newNotifier(participants *sharedParticipants, configs *config.Configs) (*notifier, error) {
@@ -44,6 +52,7 @@ func newNotifier(participants *sharedParticipants, configs *config.Configs) (*no
 	return &notifier{
 		connected: false,
 		bot:       bot,
+		notis:     &sync.Map{},
 		chatIDs:   chatIDs,
 
 		logger:       participants.logger,
@@ -71,8 +80,8 @@ func (n *notifier) connect() {
 // isConnected returns true if the notifier is connected to the system, false otherwise.
 func (n *notifier) isConnected() bool { return n.connected }
 
-// add adds new chat ids to the system if not initialized
-func (n *notifier) add(cids []int64) {
+// addChatIDs adds new chat ids to the system if not initialized
+func (n *notifier) addChatIDs(cids []int64) {
 	n.Lock()
 	defer n.Unlock()
 	for _, cid := range cids {
@@ -83,8 +92,23 @@ func (n *notifier) add(cids []int64) {
 }
 
 func (n *notifier) processEvaluatorRequest(msg *message) {
-	mess := msg.request.what.(string)
-	n.notify(mess)
+	s := msg.request.what.(*strategy.Signal)
+	mess := msg.request.id + "\n" + s.Description()
+	if s.IsOnetime() {
+		n.notify(mess)
+		return
+	}
+	if val, ok := n.notis.Load(msg.request.id); !ok {
+		n.notify(mess)
+		n.notis.Store(msg.request.id,
+			nmember{id: msg.request.id, lastSent: time.Now().Add(-time.Minute)})
+	} else {
+		if s.ShouldSend(val.(nmember).lastSent) {
+			n.notify(mess)
+			n.notis.Store(msg.request.id,
+				nmember{id: msg.request.id, lastSent: time.Now().Add(-time.Minute)})
+		}
+	}
 }
 
 // notify sends tele message to all chatIDs for a given content.

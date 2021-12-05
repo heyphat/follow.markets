@@ -180,6 +180,6 @@ func (m *MarketStruct) DropSignal(name string) error {
 }
 
 // notifier endpoints
-func (m *MarketStruct) AddChatID(cids []int64) {
-	m.notifier.add(cids)
+func (m *MarketStruct) AddChatIDs(cids []int64) {
+	m.notifier.addChatIDs(cids)
 }

@@ -84,8 +84,9 @@ func (e *evaluator) add(patterns []string, s *strategy.Signal) error {
 		mem = emember{
 			name:    s.Name,
 			regex:   reges,
-			tChann:  make(chan *tax.Trade),
+			tChann:  nil,
 			signals: strategy.Signals{s},
+			//tChann:  make(chan *tax.Trade),
 		}
 		e.signals.Store(s.Name, mem)
 	} else {
@@ -112,14 +113,14 @@ func (e *evaluator) drop(name string) error {
 	return nil
 }
 
-// get returns a slice of signal that are applicable to the given ticker.
+// get returns a slice of signals that are applicable to the given ticker.
 func (e *evaluator) get(ticker string) strategy.Signals {
 	out := strategy.Signals{}
 	e.signals.Range(func(k, v interface{}) bool {
 		m := v.(emember)
 		for _, re := range m.regex {
 			if isMatched, err := re.MatchString(ticker); err == nil && isMatched {
-				out = append(out, m.signals...)
+				out = append(out, m.signals.Copy()...)
 			}
 		}
 		return true
@@ -157,8 +158,10 @@ func (e *evaluator) processingWatcherRequest(msg *message) {
 	signals := e.get(r.GetName())
 	for _, s := range signals {
 		if s.Evaluate(r, nil) {
-			mess := r.GetName() + ": " + s.Description()
-			e.communicator.evaluator2Notifier <- e.communicator.newMessage(mess, nil)
+			e.communicator.evaluator2Notifier <- e.communicator.newMessageWithPayloadID(r.GetName()+"-"+s.Name, s, nil)
+			if s.IsOnetime() {
+				_ = e.drop(s.Name)
+			}
 		}
 	}
 }
