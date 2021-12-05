@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"follow.market/internal/pkg/strategy"
@@ -11,7 +13,7 @@ import (
 )
 
 func dropSignals(w http.ResponseWriter, req *http.Request) {
-	str, ok := mux.Vars(req)["signals"]
+	str, ok := mux.Vars(req)["names"]
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -56,4 +58,24 @@ func addSignal(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func listSignals(w http.ResponseWriter, req *http.Request) {
+	opts := req.URL.Query()
+	var signals strategy.Signals
+	if str, ok := opts["names"]; ok && len(str) > 0 {
+		signals = market.GetSingals(strings.Split(str[0], ","))
+	} else {
+		signals = market.GetSingals([]string{})
+	}
+	bts, err := json.Marshal(signals)
+	if err != nil {
+		logger.Error.Println(err)
+		InternalError(w)
+		return
+	}
+	header := w.Header()
+	header.Set("Content-Length", strconv.Itoa(len(bts)))
+	w.WriteHeader(http.StatusOK)
+	w.Write(bts)
 }
