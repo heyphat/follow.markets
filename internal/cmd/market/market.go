@@ -179,6 +179,10 @@ func (m *MarketStruct) DropSignal(name string) error {
 	return m.evaluator.drop(name)
 }
 
+func (m *MarketStruct) GetSingals(names []string) strategy.Signals {
+	return m.evaluator.getByNames(names)
+}
+
 // notifier endpoints
 func (m *MarketStruct) AddChatIDs(cids []int64) {
 	m.notifier.addChatIDs(cids)

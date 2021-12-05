@@ -10,6 +10,7 @@ import (
 	"follow.market/internal/pkg/strategy"
 	tax "follow.market/internal/pkg/techanex"
 	"follow.market/pkg/log"
+	"follow.market/pkg/util"
 )
 
 type evaluator struct {
@@ -65,7 +66,7 @@ func (e *evaluator) connect() {
 }
 
 // add adds a new signal to the evalulator. The evaluator will evaluate the signal
-// every minute on all tickers that satisfied the given patterns.
+// every minute on all tickers that match the given patterns.
 func (e *evaluator) add(patterns []string, s *strategy.Signal) error {
 	e.Lock()
 	defer e.Unlock()
@@ -113,8 +114,8 @@ func (e *evaluator) drop(name string) error {
 	return nil
 }
 
-// get returns a slice of signals that are applicable to the given ticker.
-func (e *evaluator) get(ticker string) strategy.Signals {
+// getByTicker returns a slice of signals that are applicable to the given ticker.
+func (e *evaluator) getByTicker(ticker string) strategy.Signals {
 	out := strategy.Signals{}
 	e.signals.Range(func(k, v interface{}) bool {
 		m := v.(emember)
@@ -122,6 +123,18 @@ func (e *evaluator) get(ticker string) strategy.Signals {
 			if isMatched, err := re.MatchString(ticker); err == nil && isMatched {
 				out = append(out, m.signals.Copy()...)
 			}
+		}
+		return true
+	})
+	return out
+}
+
+// getByName return a slice of signals with the given name.
+func (e *evaluator) getByNames(names []string) strategy.Signals {
+	out := strategy.Signals{}
+	e.signals.Range(func(k, v interface{}) bool {
+		if len(names) == 0 || util.StringSliceContains(names, k.(string)) {
+			out = append(out, v.(emember).signals.Copy()...)
 		}
 		return true
 	})
@@ -155,7 +168,7 @@ func (e *evaluator) registerStreamingChannel(mem emember) bool {
 
 func (e *evaluator) processingWatcherRequest(msg *message) {
 	r := msg.request.what.(wmember).runner
-	signals := e.get(r.GetName())
+	signals := e.getByTicker(r.GetName())
 	for _, s := range signals {
 		if s.Evaluate(r, nil) {
 			e.communicator.evaluator2Notifier <- e.communicator.newMessageWithPayloadID(r.GetName()+"-"+s.Name, s, nil)
