@@ -15,7 +15,6 @@ import (
 )
 
 type Comparable struct {
-	Ticker     string            `json:"ticker"`
 	TimePeriod int               `json:"time_period"` // mustt be in second
 	TimeFrame  int               `json:"time_frame"`
 	Trade      *ComparableObject `json:"trade",omitempty`
@@ -27,6 +26,30 @@ type ComparableObject struct {
 	Name       string             `json:"name"`
 	Config     map[string]float64 `json:"config"`
 	Multiplier float64            `json:"multiplier"`
+}
+
+func (c *ComparableObject) copy() *ComparableObject {
+	if c == nil {
+		return nil
+	}
+	var nc ComparableObject
+	nc.Name = c.Name
+	nc.Multiplier = c.Multiplier
+	nc.Config = c.Config
+	return &nc
+}
+
+func (c *Comparable) copy() *Comparable {
+	if c == nil {
+		return nil
+	}
+	var nc Comparable
+	nc.TimePeriod = c.TimePeriod
+	nc.TimeFrame = c.TimeFrame
+	nc.Trade = c.Trade.copy()
+	nc.Candle = c.Candle.copy()
+	nc.Indicator = c.Indicator.copy()
+	return &nc
 }
 
 func (c *Comparable) validate() error {

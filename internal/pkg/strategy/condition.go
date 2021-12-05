@@ -29,6 +29,23 @@ func (c *Condition) validate() error {
 	return nil
 }
 
+func (c *Condition) copy() *Condition {
+	var nc Condition
+	nc.This = c.This.copy()
+	nc.That = c.That.copy()
+	nc.Opt = c.Opt.copy()
+	nc.Msg = nil
+	return &nc
+}
+
+func (cs Conditions) copy() Conditions {
+	var ncs Conditions
+	for _, c := range cs {
+		ncs = append(ncs, c.copy())
+	}
+	return ncs
+}
+
 func (c *Condition) evaluate(r *runner.Runner, t *tax.Trade) bool {
 	if r == nil && t == nil {
 		return false
@@ -67,6 +84,21 @@ type ConditionGroup struct {
 }
 
 type ConditionGroups []*ConditionGroup
+
+func (g *ConditionGroup) copy() *ConditionGroup {
+	var ng ConditionGroup
+	ng.Conditions = g.Conditions.copy()
+	ng.Opt = g.Opt.copy()
+	return &ng
+}
+
+func (gs ConditionGroups) copy() ConditionGroups {
+	var ngs ConditionGroups
+	for _, g := range gs {
+		ngs = append(ngs, g.copy())
+	}
+	return ngs
+}
 
 func (g *ConditionGroup) validate() error {
 	if g.Opt == nil {

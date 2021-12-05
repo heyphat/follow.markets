@@ -29,3 +29,9 @@ func (o *Operator) toString() string {
 		return "unknow"
 	}
 }
+
+func (o *Operator) copy() *Operator {
+	var no Operator
+	no = *o
+	return &no
+}

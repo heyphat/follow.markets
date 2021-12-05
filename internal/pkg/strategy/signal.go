@@ -63,13 +63,21 @@ func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 	return true
 }
 
+func (s *Signal) copy() *Signal {
+	var ns Signal
+	ns.Name = s.Name
+	ns.Conditions = s.Conditions.copy()
+	ns.ConditionGroups = s.ConditionGroups.copy()
+	ns.SignalType = s.SignalType
+	ns.NotifyType = s.NotifyType
+	ns.TimePeriod = s.TimePeriod
+	return &ns
+}
+
 func (ss Signals) Copy() Signals {
 	var out Signals
 	for _, s := range ss {
-		ns := Signal{}
-		nsp := &ns
-		*nsp = *s
-		out = append(out, nsp)
+		out = append(out, s.copy())
 	}
 	return out
 }
