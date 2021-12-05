@@ -28,6 +28,17 @@ const (
 )
 
 const (
+	OnetimeSignal    = "ONETIME"
+	ContinuousSignal = "CONTINUOUS"
+)
+
+const (
+	AllNotify = "ALL"
+	MidNotify = "MID"
+	FstNotify = "FIRST"
+)
+
+const (
 	ComparableMap string = `
 	"ticker": "BTCUSDT",
 	"time_period": ["1m", "3m", "5m", "10m", "15m", "30m"],
