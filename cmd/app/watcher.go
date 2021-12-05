@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -23,7 +22,6 @@ func watchlist(w http.ResponseWriter, req *http.Request) {
 		InternalError(w)
 		return
 	}
-	fmt.Println(string(bts))
 	header := w.Header()
 	header.Set("Content-Length", strconv.Itoa(len(bts)))
 	w.WriteHeader(http.StatusOK)
