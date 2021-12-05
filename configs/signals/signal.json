@@ -1,11 +1,12 @@
 {
   "name": "BTCUSDT",
-  "conditions":
-  [
+  "signal_type": "CONTINUOUS",
+  "notify_type": "FIRST",
+  "conditions": [
     {
     "this":
       {
-        "time_period": 60,
+        "time_period": 300,
         "time_frame": 1,
         "candle": {
           "name": "CLOSE",
@@ -14,7 +15,7 @@
       },
     "that":
       {
-        "time_period": 60,
+        "time_period": 300,
         "time_frame": 1,
         "candle": {
           "name": "FIXED",
