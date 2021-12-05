@@ -118,6 +118,11 @@ func Mux(middleware Func) *mux.Router {
 		middleware(http.HandlerFunc(addSignal))).Methods("POST")
 	router.Handle("/evaluator/drop_signals/{names}",
 		middleware(http.HandlerFunc(dropSignals))).Methods("POST")
+
+	// notifier enpoints
+	router.Handle("/notifier/add_chat_ids/{chat_ids}",
+		middleware(http.HandlerFunc(addChatIDs))).Methods("POST")
+
 	return router
 }
 
