@@ -1,5 +1,7 @@
 {
   "name": "green1h",
+  "signal_type": "CONTINUOUS",
+  "notify_type": "FIRST",
   "conditions":
   [
     {
@@ -69,6 +71,28 @@
     "this":
       {
         "time_period": 3600,
+        "time_frame": 1,
+        "candle": {
+          "name": "LOW",
+          "multiplier": 1 
+        }
+      },
+    "that":
+      {
+        "time_period": 3600,
+        "time_frame": 2,
+        "candle": {
+          "name": "LOW",
+          "multiplier": 1
+        }
+      },
+    "opt": "more"
+    },
+
+    {
+    "this":
+      {
+        "time_period": 3600,
         "time_frame": 3,
         "candle": {
           "name": "CLOSE",
@@ -102,6 +126,27 @@
         "time_frame": 3,
         "candle": {
           "name": "HIGH",
+          "multiplier": 1
+        }
+      },
+    "opt": "more"
+    },
+    {
+    "this":
+      {
+        "time_period": 3600,
+        "time_frame": 2,
+        "candle": {
+          "name": "LOW",
+          "multiplier": 1 
+        }
+      },
+    "that":
+      {
+        "time_period": 3600,
+        "time_frame": 3,
+        "candle": {
+          "name": "LOW",
           "multiplier": 1
         }
       },
