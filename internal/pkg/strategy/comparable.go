@@ -25,7 +25,7 @@ type Comparable struct {
 type ComparableObject struct {
 	Name       string             `json:"name"`
 	Config     map[string]float64 `json:"config"`
-	Multiplier float64            `json:"multiplier"`
+	Multiplier *float64           `json:"multiplier"`
 }
 
 func (c *ComparableObject) copy() *ComparableObject {
@@ -37,6 +37,13 @@ func (c *ComparableObject) copy() *ComparableObject {
 	nc.Multiplier = c.Multiplier
 	nc.Config = c.Config
 	return &nc
+}
+
+func (c *ComparableObject) parseMultiplier() big.Decimal {
+	if c.Multiplier != nil {
+		return big.NewDecimal(*c.Multiplier)
+	}
+	return big.ONE
 }
 
 func (c *Comparable) copy() *Comparable {
@@ -76,7 +83,7 @@ func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Dec
 	if c.Trade != nil {
 		val, ok := c.mapTrade(t)
 		mess := "Trade: " + c.Trade.Name + "@" + val.FormattedString(2)
-		return mess, val, ok
+		return mess, val.Mul(c.Trade.parseMultiplier()), ok
 	}
 	if r == nil {
 		return "", big.ZERO, false
@@ -88,12 +95,12 @@ func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Dec
 	if c.Candle != nil {
 		val, ok := c.mapCandle(line.CandleByIndex(len(line.Candles.Candles) - c.TimeFrame))
 		mess := "Candle: " + c.Candle.Name + "@" + val.FormattedString(2)
-		return mess, val, ok
+		return mess, val.Mul(c.Candle.parseMultiplier()), ok
 	}
 	if c.Indicator != nil {
 		val, ok := c.mapIndicator(line.IndicatorByIndex(len(line.Indicators.Indicators) - c.TimeFrame))
 		mess := "Indicator: " + c.Indicator.Name + "@" + val.FormattedString(2)
-		return mess, val, ok
+		return mess, val.Mul(c.Indicator.parseMultiplier()), ok
 	}
 
 	return "", big.ZERO, false
