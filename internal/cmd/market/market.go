@@ -40,10 +40,10 @@ type MarketStruct struct {
 	notifier  *notifier
 }
 
-func NewMarket(configPathFile *string) (*MarketStruct, error) {
+func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	path := "./../../../configs/configs.json"
-	if configPathFile != nil {
-		path = *configPathFile
+	if configFilePath != nil {
+		path = *configFilePath
 	}
 	configs, err := config.NewConfigs(&path)
 	if err != nil {
