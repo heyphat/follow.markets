@@ -7,15 +7,18 @@ import (
 
 	"follow.market/internal/pkg/runner"
 	tax "follow.market/internal/pkg/techanex"
+	ta "github.com/itsphat/techan"
 )
 
 type Signal struct {
 	Name            string          `json:"name"`
 	Conditions      Conditions      `json:"conditions"`
 	ConditionGroups ConditionGroups `json:"condition_groups"`
-	SignalType      string          `json:"signal_type"`
-	NotifyType      string          `json:"notify_type"`
 	TimePeriod      time.Duration   `json:"primary_period"`
+
+	NotifyType string `json:"notify_type"`
+	TrackType  string `json:"track_type"`
+	SignalType string `json:"signal_type"`
 }
 
 type Signals []*Signal
@@ -69,6 +72,7 @@ func (s *Signal) copy() *Signal {
 	ns.Conditions = s.Conditions.copy()
 	ns.ConditionGroups = s.ConditionGroups.copy()
 	ns.SignalType = s.SignalType
+	ns.TrackType = s.TrackType
 	ns.NotifyType = s.NotifyType
 	ns.TimePeriod = s.TimePeriod
 	return &ns
@@ -134,7 +138,32 @@ func (s Signal) IsOnTrade() bool {
 
 // IsOnetime returns true if the signal is valid for only one time check.
 func (s Signal) IsOnetime() bool {
-	return strings.ToLower(s.SignalType) == strings.ToLower(OnetimeSignal)
+	return strings.ToLower(s.TrackType) == strings.ToLower(OnetimeTrack)
+}
+
+// IsBullish return true if the signal is bullish, false otherwise.
+func (s Signal) IsBullish() bool {
+	return strings.ToLower(s.SignalType) == strings.ToLower(BullishSignal)
+}
+
+// IsBearish return true if the signal is bearish, false otherwise.
+func (s Signal) IsBearish() bool {
+	return strings.ToLower(s.SignalType) == strings.ToLower(BearishSignal)
+}
+
+// Side returns BUY or SELL side of the signal depending on the given postion.
+func (s Signal) Side(side ta.OrderSide) ta.OrderSide {
+	if s.IsBullish() && side == ta.BUY {
+		return ta.BUY
+	} else if s.IsBullish() && side == ta.SELL {
+		return ta.SELL
+	} else if s.IsBearish() && side == ta.BUY {
+		return ta.SELL
+	} else if s.IsBearish() && side == ta.SELL {
+		return ta.BUY
+	} else {
+		panic("unknown signal type")
+	}
 }
 
 // encodeNotify returns float64 ranging from -1 to 1 depends on signal notification options.
