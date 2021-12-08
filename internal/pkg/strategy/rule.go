@@ -11,7 +11,6 @@ type GenericRule struct {
 	Signal Signal
 
 	runner *runner.Runner
-	//trade  *tax.Trade
 }
 
 func NewRule(signal Signal) *GenericRule {
@@ -26,20 +25,13 @@ func (gr *GenericRule) SetRunner(r *runner.Runner) *GenericRule {
 	return gr
 }
 
-//func (gr *GenericRule) SetTrade(t *tax.Trade) *GenericRule {
-//	gr.trade = t
-//	return gr
-//}
-
 func (gr GenericRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
-	// the index is supposed to range from 0 to len(r.line.Candles)
-	if gr.runner == nil { //&& gr.trade == nil {
+	if gr.runner == nil {
 		return false
 	}
 	if gr.Signal.IsOnTrade() {
 		return false
 	}
-	//return gr.Signal.Evaluate(gr.runner, gr.trade)
 	return gr.Signal.Evaluate(gr.runner, nil)
 }
 
@@ -58,7 +50,10 @@ func (sr *StopLossRule) SetRunner(r *runner.Runner) *StopLossRule {
 }
 
 func NewStopLossRule(tol float64) *StopLossRule {
-	return &StopLossRule{LossTolerance: big.NewDecimal(tol)}
+	if tol < 0 {
+		return &StopLossRule{LossTolerance: big.NewDecimal(tol)}
+	}
+	return &StopLossRule{LossTolerance: big.NewDecimal(-tol)}
 }
 
 func (sr StopLossRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
@@ -140,6 +135,5 @@ func (rr *RiskRewardRule) SetRunner(r *runner.Runner) *RiskRewardRule {
 }
 
 func (rr RiskRewardRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
-	//return rr.StopLoss.IsSatisfied(index, record) || rr.TakeProfit.IsSatisfied(index, record)
 	return ta.Or(rr.StopLoss, rr.TakeProfit).IsSatisfied(index, record)
 }
