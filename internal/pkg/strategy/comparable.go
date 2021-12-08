@@ -93,16 +93,15 @@ func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Dec
 		return "", big.ZERO, ok
 	}
 	if c.Candle != nil {
-		val, ok := c.mapCandle(line.CandleByIndex(len(line.Candles.Candles) - c.TimeFrame))
+		val, ok := c.mapCandle(line.CandleByIndex(len(line.Candles.Candles) - 1 - c.TimeFrame))
 		mess := "Candle: " + c.Candle.Name + "@" + val.FormattedString(2)
 		return mess, val.Mul(c.Candle.parseMultiplier()), ok
 	}
 	if c.Indicator != nil {
-		val, ok := c.mapIndicator(line.IndicatorByIndex(len(line.Indicators.Indicators) - c.TimeFrame))
+		val, ok := c.mapIndicator(line.IndicatorByIndex(len(line.Indicators.Indicators) - 1 - c.TimeFrame))
 		mess := "Indicator: " + c.Indicator.Name + "@" + val.FormattedString(2)
 		return mess, val.Mul(c.Indicator.parseMultiplier()), ok
 	}
-
 	return "", big.ZERO, false
 }
 

@@ -28,15 +28,18 @@ const (
 )
 
 const (
-	OnetimeSignal    = "ONETIME"
-	ContinuousSignal = "CONTINUOUS"
-)
+	OnetimeTrack    = "ONETIME"
+	ContinuousTrack = "CONTINUOUS"
 
-const (
 	AllNotify = "ALL"
 	MidNotify = "MID"
 	FstNotify = "FIRST"
+
+	BullishSignal = "BULLISH"
+	BearishSignal = "BEARISH"
 )
+
+const ()
 
 const (
 	ComparableMap string = `

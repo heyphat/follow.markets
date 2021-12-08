@@ -6,7 +6,7 @@
     "this":
       {
         "time_period": 60,
-        "time_frame": 1,
+        "time_frame": 0,
         "candle": {
           "name": "CLOSE",
           "multiplier": 1 
@@ -15,7 +15,7 @@
     "that":
       {
         "time_period": 60,
-        "time_frame": 0,
+        "time_frame": 1,
         "candle": {
           "name": "CLOSE",
           "multiplier": 1 
@@ -31,7 +31,7 @@
           "this":
             {
               "time_period": 60,
-              "time_frame": 1,
+              "time_frame": 0,
               "candle": {
                 "name": "CLOSE",
                 "config": {
@@ -42,7 +42,7 @@
           "that":
             {
               "time_period": 60,
-              "time_frame": 0,
+              "time_frame": 1,
               "indicator": {
                 "name": "MovingAverge",
                 "config": {
