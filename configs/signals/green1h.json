@@ -1,6 +1,7 @@
 {
   "name": "green1h",
-  "signal_type": "CONTINUOUS",
+  "signal_type": "BULLISH",
+  "track_type": "CONTINUOUS",
   "notify_type": "FIRST",
   "conditions":
   [
@@ -8,6 +9,27 @@
     "this":
       {
         "time_period": 3600,
+        "time_frame": 0,
+        "candle": {
+          "name": "CLOSE",
+          "multiplier": 1 
+        }
+      },
+    "that":
+      {
+        "time_period": 3600,
+        "time_frame": 0,
+        "candle": {
+          "name": "OPEN",
+          "multiplier": 1
+        }
+      },
+    "opt": "more"
+    },
+    {
+    "this":
+      {
+        "time_period": 3600,
         "time_frame": 1,
         "candle": {
           "name": "CLOSE",
@@ -29,28 +51,7 @@
     "this":
       {
         "time_period": 3600,
-        "time_frame": 2,
-        "candle": {
-          "name": "CLOSE",
-          "multiplier": 1 
-        }
-      },
-    "that":
-      {
-        "time_period": 3600,
-        "time_frame": 2,
-        "candle": {
-          "name": "OPEN",
-          "multiplier": 1
-        }
-      },
-    "opt": "more"
-    },
-    {
-    "this":
-      {
-        "time_period": 3600,
-        "time_frame": 1,
+        "time_frame": 0,
         "candle": {
           "name": "HIGH",
           "multiplier": 1 
@@ -59,7 +60,7 @@
     "that":
       {
         "time_period": 3600,
-        "time_frame": 2,
+        "time_frame": 1,
         "candle": {
           "name": "HIGH",
           "multiplier": 1
@@ -71,7 +72,7 @@
     "this":
       {
         "time_period": 3600,
-        "time_frame": 1,
+        "time_frame": 0,
         "candle": {
           "name": "LOW",
           "multiplier": 1 
@@ -80,7 +81,7 @@
     "that":
       {
         "time_period": 3600,
-        "time_frame": 2,
+        "time_frame": 1,
         "candle": {
           "name": "LOW",
           "multiplier": 1
@@ -93,7 +94,7 @@
     "this":
       {
         "time_period": 3600,
-        "time_frame": 3,
+        "time_frame": 2,
         "candle": {
           "name": "CLOSE",
           "multiplier": 1 
@@ -102,7 +103,7 @@
     "that":
       {
         "time_period": 3600,
-        "time_frame": 3,
+        "time_frame": 2,
         "candle": {
           "name": "OPEN",
           "multiplier": 1
@@ -114,7 +115,7 @@
     "this":
       {
         "time_period": 3600,
-        "time_frame": 2,
+        "time_frame": 1,
         "candle": {
           "name": "HIGH",
           "multiplier": 1 
@@ -123,7 +124,7 @@
     "that":
       {
         "time_period": 3600,
-        "time_frame": 3,
+        "time_frame": 2,
         "candle": {
           "name": "HIGH",
           "multiplier": 1
@@ -135,7 +136,7 @@
     "this":
       {
         "time_period": 3600,
-        "time_frame": 2,
+        "time_frame": 1,
         "candle": {
           "name": "LOW",
           "multiplier": 1 
@@ -144,7 +145,7 @@
     "that":
       {
         "time_period": 3600,
-        "time_frame": 3,
+        "time_frame": 2,
         "candle": {
           "name": "LOW",
           "multiplier": 1
