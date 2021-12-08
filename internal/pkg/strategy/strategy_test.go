@@ -44,7 +44,7 @@ func Test_Strategy(t *testing.T) {
 	assert.EqualValues(t, true, ok)
 
 	entry := NewRule(*signal).SetRunner(r)
-	risk := NewRiskRewardRule(0.5, 0.6, r)
+	risk := NewRiskRewardRule(0.5, 0.6).SetRunner(r)
 
 	s := ta.RuleStrategy{
 		EntryRule:      entry,
