@@ -1,0 +1,23 @@
+#!/bin/bash
+
+FILENAME=$1
+FILEPATH=./configs/signals/
+NEW_FILEPATH=~/signals/
+for i in {1..10000}
+do
+  NEW_FILENAME=$FILENAME-$i
+  cp $FILEPATH$FILENAME.json $NEW_FILEPATH$NEW_FILENAME.json
+  sed -i "s/green1h/green1h-$i/" $NEW_FILEPATH$NEW_FILENAME.json
+done
+
+STAGE=$1
+if [ -z "$1" ]; then
+    STAGE=dev
+fi
+
+docker kill follow.market
+docker run -d --rm --name follow.market \
+  -p 6868:6868 \
+  -v $(pwd)/configs/deploy.configs.json:/configs/configs.json \
+  -v ~/signals:/configs/signals\
+  phat/follow.market:${STAGE}
