@@ -1,17 +1,17 @@
 #!/bin/bash
 
-FILENAME=$1
-FILEPATH=./configs/signals/
-NEW_FILEPATH=~/signals/
-for i in {1..10000}
-do
-  NEW_FILENAME=$FILENAME-$i
-  cp $FILEPATH$FILENAME.json $NEW_FILEPATH$NEW_FILENAME.json
-  sed -i "s/green1h/green1h-$i/" $NEW_FILEPATH$NEW_FILENAME.json
-done
+#FILENAME=$1
+#FILEPATH=./configs/signals/
+#NEW_FILEPATH=~/signals/
+#for i in {1..3000}
+#do
+#  NEW_FILENAME=$FILENAME-$i
+#  cp $FILEPATH$FILENAME.json $NEW_FILEPATH$NEW_FILENAME.json
+#  sed -i "s/green1h/green1h-$i/" $NEW_FILEPATH$NEW_FILENAME.json
+#done
 
-STAGE=$1
-if [ -z "$1" ]; then
+STAGE=$2
+if [ -z "$2" ]; then
     STAGE=dev
 fi
 

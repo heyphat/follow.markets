@@ -90,15 +90,11 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
 		bChann: make(chan *ta.Candle, 3),
 		tChann: make(chan *tax.Trade, 10),
 	}
-	m1Candles, err := w.provider.fetchBinanceKlines(ticker, time.Minute)
+	m1Candles, err := w.provider.fetchBinanceKlinesV2(ticker, time.Minute, time.Now().Add(-time.Hour*24*2), time.Now())
 	if err != nil {
 		return err
 	}
-	m30Candles, err := w.provider.fetchBinanceKlines(ticker, time.Minute*30)
-	if err != nil {
-		return err
-	}
-	d1Candles, err := w.provider.fetchBinanceKlines(ticker, time.Hour*24)
+	m15Candles, err := w.provider.fetchBinanceKlinesV2(ticker, time.Minute*15, time.Now().Add(-time.Hour*24*10), time.Now())
 	if err != nil {
 		return err
 	}
@@ -108,10 +104,14 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
 				return errors.New("failed to sync m1 candles on initialization")
 			}
 		} else if f >= time.Minute*15 && f < time.Hour*24 {
-			if !m.runner.Initialize(&ta.TimeSeries{Candles: m30Candles}, &f) {
+			if !m.runner.Initialize(&ta.TimeSeries{Candles: m15Candles}, &f) {
 				return errors.New("failed to sync m30 candles on initialization")
 			}
 		} else {
+			d1Candles, err := w.provider.fetchBinanceKlinesV2(ticker, time.Hour*24, time.Now().Add(-time.Hour*24*500), time.Now())
+			if err != nil {
+				return err
+			}
 			if !m.runner.Initialize(&ta.TimeSeries{Candles: d1Candles}, &f) {
 				return errors.New("failed to sync d1 candles on initialization")
 			}

@@ -33,8 +33,11 @@ type RunnerConfigs struct {
 func NewRunnerDefaultConfigs() *RunnerConfigs {
 	lineFrames := []time.Duration{
 		time.Minute,
+		3 * time.Minute,
 		5 * time.Minute,
+		10 * time.Minute,
 		15 * time.Minute,
+		30 * time.Minute,
 		60 * time.Minute,
 		4 * time.Hour,
 		24 * time.Hour,

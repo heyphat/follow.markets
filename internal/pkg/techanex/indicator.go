@@ -143,13 +143,16 @@ type IndicatorJSON struct {
 
 type IndicatorsJSON []IndicatorJSON
 
-func (id *Indicator) Indicator2JSON() IndicatorJSON {
+func (id *Indicator) Indicator2JSON() *IndicatorJSON {
+	if id == nil {
+		return nil
+	}
 	m := make(map[string]string, len(id.IndiMap))
 	for k, v := range id.IndiMap {
 		m[k] = v.FormattedString(2)
 	}
 	layout := fmt.Sprint(SimpleDateFormatV2, "T", SimpleTimeFormat)
-	return IndicatorJSON{
+	return &IndicatorJSON{
 		StartTime: id.Period.Start.Format(layout),
 		EndTime:   id.Period.End.Format(layout),
 		IndiMap:   m,

@@ -37,7 +37,7 @@ type tmember struct {
 	strategy *strategy.Strategy
 }
 
-func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Strategy) (tmember, error) {
+func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Strategy, start, end time.Time) (tmember, error) {
 	if initBalance.LTE(big.ZERO) {
 		return tmember{}, errors.New("init balance has to be > 0")
 	}
@@ -60,7 +60,8 @@ func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Stra
 		balance:  initBalance,
 		strategy: stg.SetRunner(r),
 	}
-	candles, err := t.provider.fetchBinanceKlines(ticker, time.Minute*15)
+	//candles, err := t.provider.fetchBinanceKlinesV2(ticker, time.Minute*15, time.Now().Add(-time.Hour*24*7), time.Now())
+	candles, err := t.provider.fetchBinanceKlinesV2(ticker, time.Minute*15, start, end)
 	if err != nil {
 		return mem, err
 	}

@@ -102,7 +102,9 @@ func (m *MarketStruct) initWatchlist(configs *config.Configs) error {
 				return err
 			}
 			if isMatched {
-				m.watcher.watch(s.Symbol, nil)
+				if err := m.watcher.watch(s.Symbol, nil); err != nil {
+					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol, err.Error()))
+				}
 			}
 		}
 	}
@@ -127,7 +129,8 @@ func (m *MarketStruct) initSignals(configs *config.Configs) error {
 		if err != nil {
 			return err
 		}
-		m.evaluator.add([]string{signal.Name}, signal)
+		tickers := `(?=(?<!(BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)`
+		m.evaluator.add([]string{tickers}, signal)
 	}
 	return nil
 }
@@ -156,7 +159,11 @@ func (m *MarketStruct) LastCandles(ticker string) tax.CandlesJSON {
 	last := m.watcher.lastCandles(ticker)
 	var out tax.CandlesJSON
 	for _, l := range last {
-		out = append(out, tax.Candle2JSON(l))
+		if l == nil {
+			continue
+		}
+		js := tax.Candle2JSON(l)
+		out = append(out, *js)
 	}
 	return out
 }
@@ -165,7 +172,11 @@ func (m *MarketStruct) LastIndicators(ticker string) tax.IndicatorsJSON {
 	last := m.watcher.lastIndicators(ticker)
 	var out tax.IndicatorsJSON
 	for _, l := range last {
-		out = append(out, l.Indicator2JSON())
+		if l == nil {
+			continue
+		}
+		js := l.Indicator2JSON()
+		out = append(out, *js)
 	}
 	return out
 }
