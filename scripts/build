@@ -6,5 +6,5 @@ if [ -z "$1" ]; then
     STAGE=dev
 fi
 
-docker build --rm -t phat/follow.market:$(git rev-parse HEAD) -f deployments/Dockerfile .
-docker tag phat/follow.market:$(git rev-parse HEAD) phat/follow.market:${STAGE}
+docker build --rm -t phat/follow.markets:$(git rev-parse HEAD) -f deployments/Dockerfile .
+docker tag phat/follow.markets:$(git rev-parse HEAD) phat/follow.markets:${STAGE}
