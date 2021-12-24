@@ -24,7 +24,12 @@ var (
 		4 * time.Hour,
 		24 * time.Hour,
 	}
+	maxSize = 1000
 )
+
+func ChangeMaxSize(size int) {
+	maxSize = size
+}
 
 type RunnerConfigs struct {
 	LFrames  []time.Duration
@@ -105,6 +110,7 @@ func (r *Runner) SyncCandle(c *ta.Candle) bool {
 		if !series.SyncCandle(c, &frame) {
 			return false
 		}
+		series.Shrink(maxSize)
 	}
 	return true
 }
@@ -135,15 +141,12 @@ func (r *Runner) LastIndicator(d time.Duration) *tax.Indicator {
 	return line.Indicators.LastIndicator()
 }
 
-// Initialize initializes a time series with the given candles. It's used for the
-// performance purpose on syncing runner with market data.
+// Initialize initializes a time series with the given candle series. It's used for the
+// the first time of initializing the series.
 func (r *Runner) Initialize(series *ta.TimeSeries, d *time.Duration) bool {
 	line, ok := r.GetLines(*d)
 	if !ok || line == nil {
 		return false
 	}
-	if !line.SyncCandles(series, d) {
-		return false
-	}
-	return true
+	return line.SyncCandles(series, d)
 }

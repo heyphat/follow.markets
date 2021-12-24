@@ -77,9 +77,11 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 		if err := Market.initSignals(configs); err != nil {
 			common.logger.Error.Println("failed to init signals with err: ", err)
 		}
-		if err := Market.initWatchlist(configs); err != nil {
-			common.logger.Error.Println("failed to init watchlist with err: ", err)
-		}
+		go func() {
+			if err := Market.initWatchlist(configs); err != nil {
+				common.logger.Error.Println("failed to init watchlist with err: ", err)
+			}
+		}()
 	})
 	return Market, nil
 }

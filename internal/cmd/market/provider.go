@@ -71,7 +71,6 @@ func (p *provider) fetchBinanceKlinesV2(ticker string, d time.Duration, start, e
 	}
 	var service *bn.KlinesService
 	var klines []*bn.Kline
-	//for len(klines) == 0 || (len(klines) > 0 && klines[len(klines)-1].OpenTime < endUnix) {
 	for len(klines) == 0 || (startUnix < endUnix) {
 		service = p.binSpot.NewKlinesService().Symbol(ticker).Interval(interval).StartTime(startUnix).EndTime(endUnix).Limit(1000)
 		kls, err := service.Do(context.Background())

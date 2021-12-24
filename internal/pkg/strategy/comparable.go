@@ -171,13 +171,6 @@ func (c *Comparable) mapIndicator(id *tax.Indicator) (big.Decimal, bool) {
 	if id == nil {
 		return big.ZERO, false
 	}
-	if tax.IndicatorName(c.Indicator.Name) == tax.LEVL {
-		value, ok := c.Indicator.Config["level"]
-		if !ok {
-			return big.ZERO, false
-		}
-		return big.NewDecimal(value), true
-	}
 	window, ok := c.Indicator.Config["window"]
 	if !ok {
 		return big.ZERO, false

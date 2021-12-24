@@ -3,14 +3,14 @@ package strategy
 type Operator string
 
 const (
-	Less      Operator = "less"
-	More      Operator = "more"
-	Equal     Operator = "equal"
-	LessEqual Operator = "less_equal"
-	MoreEqual Operator = "more_equal"
+	Less      Operator = "LESS"
+	More      Operator = "MORE"
+	Equal     Operator = "EQUAL"
+	LessEqual Operator = "LESS_EQUAL"
+	MoreEqual Operator = "MORE_EQUAL"
 
-	Or  Operator = "or"
-	And Operator = "and"
+	Or  Operator = "OR"
+	And Operator = "AND"
 )
 
 func (o *Operator) toString() string {
@@ -26,7 +26,7 @@ func (o *Operator) toString() string {
 	case MoreEqual:
 		return ">="
 	default:
-		return "unknow"
+		return "UNKNOWN"
 	}
 }
 

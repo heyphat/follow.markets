@@ -18,10 +18,10 @@
         "time_frame": 0,
         "candle": {
           "name": "CLOSE",
-          "multiplier": 1.5 
+          "multiplier": 1.6
         }
       },
-    "opt": "less_equal"
+    "opt": "LESS_EQUAL"
     }
   ]
 }

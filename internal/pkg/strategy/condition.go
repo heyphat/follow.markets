@@ -2,6 +2,7 @@ package strategy
 
 import (
 	"errors"
+	"strings"
 
 	"follow.market/internal/pkg/runner"
 	tax "follow.market/internal/pkg/techanex"
@@ -104,7 +105,7 @@ func (g *ConditionGroup) validate() error {
 	if g.Opt == nil {
 		return errors.New("missing group operator")
 	}
-	if *g.Opt != Or && *g.Opt != And {
+	if strings.ToLower(string(*g.Opt)) != strings.ToLower(string(Or)) && strings.ToLower(string(*g.Opt)) != strings.ToLower(string(And)) {
 		return errors.New("invalid group condition")
 	}
 	for _, c := range g.Conditions {

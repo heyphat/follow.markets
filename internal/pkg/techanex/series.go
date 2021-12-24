@@ -20,7 +20,7 @@ func NewSeries(configs IndicatorConfigs) *Series {
 }
 
 // SyncCandel is a combination of AddCandle and UpdateCandle where it aggregates a given
-// candle to the series, the line period need to be given in order to perform the operation
+// candle to the series, the time period need to be given in order to perform the operation
 func (s *Series) SyncCandle(candle *ta.Candle, d *time.Duration) bool {
 	if candle == nil {
 		panic(fmt.Errorf("error syncing candle: cannle cannot be nil"))
@@ -61,8 +61,7 @@ func (s *Series) SyncCandles(candles *ta.TimeSeries, d *time.Duration) bool {
 		}
 		s.Candles.LastCandle().UpdateCandle(c)
 	}
-	s.Indicators.newIndicatorsFromCandleSeries(s.Candles)
-	return true
+	return s.Indicators.newIndicatorsFromCandleSeries(s.Candles)
 }
 
 // AddCandle append the given candle to the series.Candles. It also create a new corresponding indicator
@@ -118,4 +117,16 @@ func (ts *Series) IndicatorByIndex(index int) *Indicator {
 		return ts.Indicators.Indicators[index]
 	}
 	return nil
+}
+
+func (ts *Series) Shrink(size int) {
+	if len(ts.Candles.Candles) != len(ts.Indicators.Indicators) {
+		return
+	}
+	currentSize := len(ts.Candles.Candles)
+	if currentSize <= size+100 {
+		return
+	}
+	_, ts.Candles.Candles = ts.Candles.Candles[:currentSize-size-1], ts.Candles.Candles[currentSize-size-1:currentSize-1]
+	_, ts.Indicators.Indicators = ts.Indicators.Indicators[:currentSize-size-1], ts.Indicators.Indicators[currentSize-size-1:currentSize-1]
 }
