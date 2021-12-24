@@ -37,8 +37,8 @@ func (s *Series) SyncCandle(candle *ta.Candle, d *time.Duration) bool {
 		return true
 	}
 	s.Candles.LastCandle().UpdateCandle(candle)
-	indicator.Calculate(s.Indicators.Configs, s.Candles, len(s.Candles.Candles)-1)
-	s.Indicators.Indicators[len(s.Indicators.Indicators)-1] = indicator
+	s.Indicators.LastIndicator().Calculate(s.Indicators.Configs, s.Candles, len(s.Candles.Candles)-1)
+	//s.Indicators.Indicators[len(s.Indicators.Indicators)-1] = indicator
 	return true
 }
 
@@ -124,7 +124,7 @@ func (ts *Series) Shrink(size int) {
 		return
 	}
 	currentSize := len(ts.Candles.Candles)
-	if currentSize <= size+100 {
+	if currentSize+100 <= size {
 		return
 	}
 	_, ts.Candles.Candles = ts.Candles.Candles[:currentSize-size-1], ts.Candles.Candles[currentSize-size-1:currentSize-1]
