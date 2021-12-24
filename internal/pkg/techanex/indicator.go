@@ -12,12 +12,11 @@ type IndicatorConfigs map[IndicatorName][]int
 
 func NewDefaultIndicatorConfigs() IndicatorConfigs {
 	configs := make(map[IndicatorName][]int, 4)
-	configs[EMA] = []int{9, 25, 50}
+	configs[EMA] = []int{9, 26, 50}
 	configs[MA] = []int{99, 200}
 	configs[BBU] = []int{25}
 	configs[BBL] = []int{25}
 	configs[ATR] = []int{10}
-	//configs[LEVL] = []float64{}
 	return configs
 }
 

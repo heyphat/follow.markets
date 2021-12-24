@@ -20,6 +20,7 @@ var (
 		15 * time.Minute,
 		30 * time.Minute,
 		60 * time.Minute,
+		2 * time.Hour,
 		4 * time.Hour,
 		24 * time.Hour,
 	}
@@ -39,6 +40,7 @@ func NewRunnerDefaultConfigs() *RunnerConfigs {
 		15 * time.Minute,
 		30 * time.Minute,
 		60 * time.Minute,
+		2 * time.Hour,
 		4 * time.Hour,
 		24 * time.Hour,
 	}
