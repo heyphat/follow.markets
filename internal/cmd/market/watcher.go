@@ -94,6 +94,9 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
 		if err != nil {
 			return err
 		}
+		if len(candles) == 0 {
+			return errors.New(fmt.Sprintf("failed to fetch data for frame %v", f))
+		}
 		if !m.runner.Initialize(&ta.TimeSeries{Candles: candles}, &f) {
 			return errors.New(fmt.Sprintf("failed to sync %v candles on initialization", f))
 		}
