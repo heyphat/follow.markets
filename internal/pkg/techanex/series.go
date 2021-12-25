@@ -25,7 +25,7 @@ func (s *Series) SyncCandle(candle *ta.Candle, d *time.Duration) bool {
 	if candle == nil {
 		panic(fmt.Errorf("error syncing candle: cannle cannot be nil"))
 	}
-	indicator := NewIndicator(candle.Period, s.Indicators.Configs)
+	indicator := NewIndicator(syncPeriod(candle.Period, d), s.Indicators.Configs)
 	if s.Candles.LastCandle() == nil || candle.Period.Since(s.Candles.LastCandle().Period) >= 0 {
 		if !s.Candles.AddCandle(NewCandleFromCandle(candle, d)) {
 			return false
@@ -38,7 +38,6 @@ func (s *Series) SyncCandle(candle *ta.Candle, d *time.Duration) bool {
 	}
 	s.Candles.LastCandle().UpdateCandle(candle)
 	s.Indicators.LastIndicator().Calculate(s.Indicators.Configs, s.Candles, len(s.Candles.Candles)-1)
-	//s.Indicators.Indicators[len(s.Indicators.Indicators)-1] = indicator
 	return true
 }
 
