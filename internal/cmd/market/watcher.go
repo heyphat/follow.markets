@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"follow.market/internal/pkg/runner"
 	"follow.market/pkg/log"
@@ -90,31 +89,13 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
 		bChann: make(chan *ta.Candle, 3),
 		tChann: make(chan *tax.Trade, 10),
 	}
-	m1Candles, err := w.provider.fetchBinanceKlinesV2(ticker, time.Minute, time.Now().Add(-time.Hour*24*2), time.Now())
-	if err != nil {
-		return err
-	}
-	m15Candles, err := w.provider.fetchBinanceKlinesV2(ticker, time.Minute*15, time.Now().Add(-time.Hour*24*10), time.Now())
-	if err != nil {
-		return err
-	}
 	for _, f := range m.runner.GetConfigs().LFrames {
-		if f < time.Minute*15 {
-			if !m.runner.Initialize(&ta.TimeSeries{Candles: m1Candles}, &f) {
-				return errors.New("failed to sync m1 candles on initialization")
-			}
-		} else if f >= time.Minute*15 && f < time.Hour*24 {
-			if !m.runner.Initialize(&ta.TimeSeries{Candles: m15Candles}, &f) {
-				return errors.New("failed to sync m30 candles on initialization")
-			}
-		} else {
-			d1Candles, err := w.provider.fetchBinanceKlinesV2(ticker, time.Hour*24, time.Now().Add(-time.Hour*24*500), time.Now())
-			if err != nil {
-				return err
-			}
-			if !m.runner.Initialize(&ta.TimeSeries{Candles: d1Candles}, &f) {
-				return errors.New("failed to sync d1 candles on initialization")
-			}
+		candles, err := w.provider.fetchBinanceKlinesV3(ticker, f)
+		if err != nil {
+			return err
+		}
+		if !m.runner.Initialize(&ta.TimeSeries{Candles: candles}, &f) {
+			return errors.New(fmt.Sprintf("failed to sync %v candles on initialization", f))
 		}
 	}
 	w.Lock()
@@ -220,7 +201,7 @@ func (w *watcher) processStreamerRequest(msg *message) {
 	}
 }
 
-// returns a log for the watcher
+// generates a new log with the format for the watcher
 func (w *watcher) newLog(ticker, message string) string {
 	return fmt.Sprintf("[watcher] %s: %s", ticker, message)
 }

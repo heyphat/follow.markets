@@ -89,3 +89,25 @@ func (p *provider) fetchBinanceKlinesV2(ticker string, d time.Duration, start, e
 	}
 	return candles, nil
 }
+
+func (p *provider) fetchBinanceKlinesV3(ticker string, d time.Duration) ([]*ta.Candle, error) {
+	re, _ := regexp.Compile(timeFramePattern)
+	interval := re.FindString(d.String())
+	if d >= time.Hour*24 {
+		interval = "1d"
+	}
+	if d == time.Minute*10 {
+		interval = "5m"
+	}
+	end := time.Now()
+	service := p.binSpot.NewKlinesService().Symbol(ticker).Interval(interval).EndTime(end.Unix() * 1000).Limit(1000)
+	klines, err := service.Do(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	var candles []*ta.Candle
+	for _, kline := range klines {
+		candles = append(candles, tax.ConvertBinanceKline(kline, &d))
+	}
+	return candles, nil
+}
