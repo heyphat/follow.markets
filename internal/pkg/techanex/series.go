@@ -74,14 +74,11 @@ func (s *Series) AddCandle(candle *ta.Candle) bool {
 	}
 	indicator := NewIndicator(candle.Period, s.Indicators.Configs)
 	indicator.Calculate(s.Indicators.Configs, s.Candles, len(s.Candles.Candles)-1)
-	if ok := s.Indicators.addIndicator(indicator); !ok {
-		return ok
-	}
-	return true
+	return s.Indicators.addIndicator(indicator)
 }
 
-// UpdateCandle aggregaates the given candle to the last candle on the Series.Candle. It also updates
-// the indicator on the last candle. UpdateCandle is called when the period of the given candle is
+// UpdateCandle aggregaates the given candle to the last candle on the series.Candles. It also updates
+// the indicator of the last candle. UpdateCandle is called when the period of the given candle is
 // the sub-period of the last candle. UpdateCandle doesn't check if the sub-period condition is satisfied,
 // it only perform the task.
 func (s *Series) UpdateCandle(candle *ta.Candle) bool {
@@ -92,12 +89,14 @@ func (s *Series) UpdateCandle(candle *ta.Candle) bool {
 		return false
 	}
 	s.Candles.LastCandle().UpdateCandle(candle)
-	indicator := NewIndicator(s.Candles.LastCandle().Period, s.Indicators.Configs)
-	indicator.Calculate(s.Indicators.Configs, s.Candles, len(s.Candles.Candles)-1)
-	s.Indicators.Indicators[len(s.Indicators.Indicators)-1] = indicator
+	//indicator := NewIndicator(s.Candles.LastCandle().Period, s.Indicators.Configs)
+	//indicator.Calculate(s.Indicators.Configs, s.Candles, len(s.Candles.Candles)-1)
+	//s.Indicators.Indicators[len(s.Indicators.Indicators)-1] = indicator
+	s.Indicators.LastIndicator().Calculate(s.Indicators.Configs, s.Candles, len(s.Candles.Candles)-1)
 	return true
 }
 
+// Get the candle by the given index.
 func (ts *Series) CandleByIndex(index int) *ta.Candle {
 	if len(ts.Candles.Candles) == 0 || index < 0 {
 		return nil
@@ -108,6 +107,7 @@ func (ts *Series) CandleByIndex(index int) *ta.Candle {
 	return nil
 }
 
+// Get the indicator by the given index.
 func (ts *Series) IndicatorByIndex(index int) *Indicator {
 	if len(ts.Indicators.Indicators) == 0 || index < 0 {
 		return nil
@@ -118,6 +118,7 @@ func (ts *Series) IndicatorByIndex(index int) *Indicator {
 	return nil
 }
 
+// Shink the lenght of candles and indicator to the given size.
 func (ts *Series) Shrink(size int) {
 	if len(ts.Candles.Candles) != len(ts.Indicators.Indicators) {
 		return
