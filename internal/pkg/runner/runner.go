@@ -2,6 +2,7 @@ package runner
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -19,10 +20,16 @@ var (
 		15 * time.Minute,
 		30 * time.Minute,
 		60 * time.Minute,
+		2 * time.Hour,
 		4 * time.Hour,
 		24 * time.Hour,
 	}
+	maxSize = 1000
 )
+
+func ChangeMaxSize(size int) {
+	maxSize = size
+}
 
 type RunnerConfigs struct {
 	LFrames  []time.Duration
@@ -32,10 +39,15 @@ type RunnerConfigs struct {
 func NewRunnerDefaultConfigs() *RunnerConfigs {
 	lineFrames := []time.Duration{
 		time.Minute,
+		//3 * time.Minute,
 		5 * time.Minute,
+		//10 * time.Minute,
 		15 * time.Minute,
+		30 * time.Minute,
 		60 * time.Minute,
+		//2 * time.Hour,
 		4 * time.Hour,
+		24 * time.Hour,
 	}
 	return &RunnerConfigs{
 		LFrames:  lineFrames,
@@ -52,7 +64,7 @@ type Runner struct {
 }
 
 func NewRunner(name string, configs *RunnerConfigs) *Runner {
-	if configs == nil {
+	if configs == nil || len(configs.LFrames) == 0 {
 		configs = NewRunnerDefaultConfigs()
 	}
 	lines := make(map[time.Duration]*tax.Series, len(configs.LFrames))
@@ -98,8 +110,18 @@ func (r *Runner) SyncCandle(c *ta.Candle) bool {
 		if !series.SyncCandle(c, &frame) {
 			return false
 		}
+		series.Shrink(maxSize)
 	}
 	return true
+}
+
+// SmallestFrame return the smallest time duration of the line that the runner is holding.
+func (r *Runner) SmallestFrame() time.Duration {
+	frames := r.configs.LFrames
+	sort.Slice(frames, func(i, j int) bool {
+		return frames[i] < frames[j]
+	})
+	return frames[0]
 }
 
 // LastCandle returns last candle on the given time frame of the runner.
@@ -119,16 +141,12 @@ func (r *Runner) LastIndicator(d time.Duration) *tax.Indicator {
 	return line.Indicators.LastIndicator()
 }
 
-// Initialize initializes a time series of the 1-minute bar candles. It's used for the
-// performance purpose on syncing runner with market data. The function only aggregates
-// for lines with less than 15-minute timeframe.
+// Initialize initializes a time series with the given candle series. It's used for the
+// the first time of initializing the series.
 func (r *Runner) Initialize(series *ta.TimeSeries, d *time.Duration) bool {
 	line, ok := r.GetLines(*d)
 	if !ok || line == nil {
 		return false
 	}
-	if !line.SyncCandles(series, d) {
-		return false
-	}
-	return true
+	return line.SyncCandles(series, d)
 }

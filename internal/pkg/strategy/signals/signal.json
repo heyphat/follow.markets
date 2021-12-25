@@ -6,7 +6,7 @@
     "this":
       {
         "time_period": 60,
-        "time_frame": 1,
+        "time_frame": 0,
         "candle": {
           "name": "CLOSE",
           "multiplier": 1 
@@ -21,7 +21,7 @@
           "multiplier": 1 
         }
       },
-    "opt": "equal"
+    "opt": "EQUAL"
     }
   ],
   "condition_groups": [
@@ -31,31 +31,25 @@
           "this":
             {
               "time_period": 60,
-              "time_frame": 1,
+              "time_frame": 0,
               "candle": {
-                "name": "CLOSE",
-                "config": {
-                  "level": 10.3
-                }
+                "multiplier": 1,
+                "name": "CLOSE"
               }
             },
           "that":
             {
               "time_period": 60,
               "time_frame": 0,
-              "indicator": {
-                "name": "MovingAverge",
-                "config": {
-                  "window": 9,
-                  "level": 10.2
-                },
-                "multiplier": 1 
+              "candle": {
+                "name": "CLOSE",
+                "multiplier": 1
               }
             },
-          "opt": "equal"
+          "opt": "EQUAL"
         }
       ],
-      "opt": "or"
+      "opt": "AND"
     }
   ]
 }

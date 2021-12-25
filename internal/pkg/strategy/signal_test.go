@@ -4,9 +4,10 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"follow.market/internal/pkg/runner"
+	tax "follow.market/internal/pkg/techanex"
+	bn "github.com/adshao/go-binance/v2"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_Signal(t *testing.T) {
@@ -20,6 +21,21 @@ func Test_Signal(t *testing.T) {
 	ok := signal.Evaluate(nil, nil)
 	assert.EqualValues(t, false, ok)
 
+	r := runner.NewRunner("BTCUSDT", nil)
+	kline := &bn.Kline{
+		OpenTime: 1499040000000,
+		Open:     "0.0",
+		High:     "0.8",
+		Low:      "0.01",
+		Close:    "0.2",
+		Volume:   "148976.1",
+		TradeNum: 308,
+	}
+
+	candle1 := tax.ConvertBinanceKline(kline, nil)
+	ok = r.SyncCandle(candle1)
+	assert.EqualValues(t, true, ok)
+
 	for _, c := range signal.Conditions {
 		err := c.This.validate()
 		assert.EqualValues(t, nil, err)
@@ -30,9 +46,8 @@ func Test_Signal(t *testing.T) {
 		ok := c.evaluate(nil, nil)
 		assert.EqualValues(t, false, ok)
 
-		ok = c.evaluate(runner.NewRunner("BTCUSDT", nil), nil)
-		assert.EqualValues(t, false, ok)
-		//TODO: init the runner and test
+		ok = c.evaluate(r, nil)
+		assert.EqualValues(t, true, ok)
 	}
 
 	for _, g := range signal.ConditionGroups {
@@ -42,7 +57,7 @@ func Test_Signal(t *testing.T) {
 		ok = g.evaluate(nil, nil)
 		assert.EqualValues(t, false, ok)
 
-		ok = g.evaluate(runner.NewRunner("BTCUSDT", nil), nil)
+		ok = g.evaluate(r, nil)
 		assert.EqualValues(t, true, ok)
 	}
 }

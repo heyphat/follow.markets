@@ -21,6 +21,10 @@
     "binance": {
       "api_key": "test",
       "secret_key": "test"
+    },
+    "alpaca": {
+      "api_key": "test",
+      "secret_key": "test"
     }
   },
   "telegram": {

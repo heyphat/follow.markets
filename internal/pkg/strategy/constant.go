@@ -9,7 +9,7 @@ const (
 	CandleHigh      CandleLevel = "HIGH"
 	CandleLow       CandleLevel = "LOW"
 	CandleVolume    CandleLevel = "VOLUME"
-	CandleTrade     CandleLevel = "TRADE_NUM"
+	CandleTrade     CandleLevel = "TRADE_COUNT"
 	CandleLowHigh   CandleLevel = "LOW_HIGH"
 	CandleOpenClose CandleLevel = "OPEN_CLOSE"
 	CandleOpenHigh  CandleLevel = "OPEN_HIGH"
@@ -28,30 +28,21 @@ const (
 )
 
 const (
-	OnetimeSignal    = "ONETIME"
-	ContinuousSignal = "CONTINUOUS"
-)
+	OnetimeTrack    = "ONETIME"
+	ContinuousTrack = "CONTINUOUS"
 
-const (
 	AllNotify = "ALL"
 	MidNotify = "MID"
 	FstNotify = "FIRST"
-)
 
-const (
-	ComparableMap string = `
-	"ticker": "BTCUSDT",
-	"time_period": ["1m", "3m", "5m", "10m", "15m", "30m"],
-	"time_frame": 0,
-	"candle": ["CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_NUM",
-						 "TRADE_NUM", "HIGH_LOW", "CLOSE_OPEN", "HIGH_OPEN"],
-	"indicator": ["EMA", "MA"]
-`
+	BullishSignal = "BULLISH"
+	BearishSignal = "BEARISH"
 )
 
 var (
+	// indicator levels are defined in the techanex package in /internal/pkg/strategy/constant.go
 	candleLevels = []string{
-		"FIXED", "OPEN", "CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_NUM",
+		"FIXED", "OPEN", "CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_COUNT",
 		"LOW_HIGH", "OPEN_CLOSE", "OPEN_HIGH", "OPEN_LOW", "HIGH_CLOSE", "LOW_CLOSE",
 	}
 	tradeLevels = []string{

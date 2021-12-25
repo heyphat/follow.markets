@@ -40,10 +40,10 @@ type MarketStruct struct {
 	notifier  *notifier
 }
 
-func NewMarket(configPathFile *string) (*MarketStruct, error) {
+func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	path := "./../../../configs/configs.json"
-	if configPathFile != nil {
-		path = *configPathFile
+	if configFilePath != nil {
+		path = *configFilePath
 	}
 	configs, err := config.NewConfigs(&path)
 	if err != nil {
@@ -77,9 +77,11 @@ func NewMarket(configPathFile *string) (*MarketStruct, error) {
 		if err := Market.initSignals(configs); err != nil {
 			common.logger.Error.Println("failed to init signals with err: ", err)
 		}
-		if err := Market.initWatchlist(configs); err != nil {
-			common.logger.Error.Println("failed to init watchlist with err: ", err)
-		}
+		go func() {
+			if err := Market.initWatchlist(configs); err != nil {
+				common.logger.Error.Println("failed to init watchlist with err: ", err)
+			}
+		}()
 	})
 	return Market, nil
 }
@@ -102,7 +104,9 @@ func (m *MarketStruct) initWatchlist(configs *config.Configs) error {
 				return err
 			}
 			if isMatched {
-				m.watcher.watch(s.Symbol, nil)
+				if err := m.watcher.watch(s.Symbol, nil); err != nil {
+					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol, err.Error()))
+				}
 			}
 		}
 	}
@@ -127,7 +131,8 @@ func (m *MarketStruct) initSignals(configs *config.Configs) error {
 		if err != nil {
 			return err
 		}
-		m.evaluator.add([]string{signal.Name}, signal)
+		tickers := `(?=(?<!(BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)`
+		m.evaluator.add([]string{tickers}, signal)
 	}
 	return nil
 }
@@ -156,7 +161,11 @@ func (m *MarketStruct) LastCandles(ticker string) tax.CandlesJSON {
 	last := m.watcher.lastCandles(ticker)
 	var out tax.CandlesJSON
 	for _, l := range last {
-		out = append(out, tax.Candle2JSON(l))
+		if l == nil {
+			continue
+		}
+		js := tax.Candle2JSON(l)
+		out = append(out, *js)
 	}
 	return out
 }
@@ -165,7 +174,11 @@ func (m *MarketStruct) LastIndicators(ticker string) tax.IndicatorsJSON {
 	last := m.watcher.lastIndicators(ticker)
 	var out tax.IndicatorsJSON
 	for _, l := range last {
-		out = append(out, l.Indicator2JSON())
+		if l == nil {
+			continue
+		}
+		js := l.Indicator2JSON()
+		out = append(out, *js)
 	}
 	return out
 }

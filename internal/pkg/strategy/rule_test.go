@@ -23,7 +23,7 @@ func Test_Rule(t *testing.T) {
 	td.Price = big.NewFromInt(2000)
 	td.Quantity = big.NewFromInt(1)
 
-	rule := NewRule(*signal).SetTrade(td)
+	rule := NewRule(*signal) //.SetTrade(td)
 
 	assert.EqualValues(t, true, rule.IsSatisfied(0, nil))
 

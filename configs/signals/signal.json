@@ -1,13 +1,14 @@
 {
   "name": "BTCUSDT",
-  "signal_type": "CONTINUOUS",
+  "signal_type": "BULLISH",
+  "track_type": "CONTINUOUS",
   "notify_type": "FIRST",
   "conditions": [
     {
     "this":
       {
         "time_period": 300,
-        "time_frame": 1,
+        "time_frame": 0,
         "candle": {
           "name": "CLOSE",
           "multiplier": 1 
@@ -16,7 +17,7 @@
     "that":
       {
         "time_period": 300,
-        "time_frame": 1,
+        "time_frame": 0,
         "candle": {
           "name": "FIXED",
           "multiplier": 1,

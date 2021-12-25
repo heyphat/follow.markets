@@ -8,6 +8,17 @@ import (
 	"github.com/sdcoffey/big"
 )
 
+func syncPeriod(p ta.TimePeriod, duration *time.Duration) ta.TimePeriod {
+	d := time.Minute
+	if duration != nil {
+		d = *duration
+	}
+	newp := p
+	newp.Start = newp.Start.Truncate(d)
+	newp.End = newp.Start.Add(d)
+	return newp
+}
+
 func ConvertBinanceKline(kline *bn.Kline, duration *time.Duration) *ta.Candle {
 	d := time.Minute
 	if duration != nil {
@@ -59,13 +70,7 @@ func ConvertBinanceStreamingAggTrade(t *bn.WsAggTradeEvent) *Trade {
 }
 
 func NewCandleFromCandle(candle *ta.Candle, duration *time.Duration) *ta.Candle {
-	d := time.Minute
-	if duration != nil {
-		d = *duration
-	}
-	period := candle.Period
-	period.Start = period.Start.Truncate(d)
-	period.End = period.Start.Add(d)
+	period := syncPeriod(candle.Period, duration)
 	newCandle := ta.NewCandle(period)
 	newCandle.OpenPrice = candle.OpenPrice
 	newCandle.ClosePrice = candle.ClosePrice

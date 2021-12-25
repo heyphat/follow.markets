@@ -5,4 +5,4 @@ if [ -z "$1" ]; then
     STAGE=dev
 fi
 
-docker pull phat/follow.market:${STAGE}
+docker pull phat/follow.markets:${STAGE}

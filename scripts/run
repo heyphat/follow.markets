@@ -5,8 +5,8 @@ if [ -z "$1" ]; then
     STAGE=dev
 fi
 
-docker kill follow.market
-docker run -d --rm --name follow.market \
+docker kill follow.markets
+docker run -d --rm --name follow.markets \
   -p 6868:6868 \
   -v $(pwd)/configs/deploy.configs.json:/configs/configs.json \
-  phat/follow.market:${STAGE}
+  phat/follow.markets:${STAGE}

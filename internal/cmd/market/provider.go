@@ -2,6 +2,7 @@ package market
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"time"
 
@@ -52,6 +53,57 @@ func (p *provider) fetchBinanceKlines(ticker string, d time.Duration) ([]*ta.Can
 		klines = append(kls, klines...)
 		end = start
 		start = end - int64(limit*60000)
+	}
+	var candles []*ta.Candle
+	for _, kline := range klines {
+		candles = append(candles, tax.ConvertBinanceKline(kline, &d))
+	}
+	return candles, nil
+}
+
+func (p *provider) fetchBinanceKlinesV2(ticker string, d time.Duration, start, end time.Time) ([]*ta.Candle, error) {
+	startUnix := start.Truncate(d).Unix() * 1000
+	endUnix := end.Truncate(d).Unix() * 1000
+	re, _ := regexp.Compile(timeFramePattern)
+	interval := re.FindString(d.String())
+	if d >= time.Hour*24 {
+		interval = "1d"
+	}
+	var service *bn.KlinesService
+	var klines []*bn.Kline
+	for len(klines) == 0 || (startUnix < endUnix) {
+		service = p.binSpot.NewKlinesService().Symbol(ticker).Interval(interval).StartTime(startUnix).EndTime(endUnix).Limit(1000)
+		kls, err := service.Do(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		if len(kls) == 0 && endUnix != startUnix {
+			return nil, errors.New("no candles on frame " + interval)
+		}
+		klines = append(klines, kls...)
+		startUnix = klines[len(klines)-1].CloseTime
+	}
+	var candles []*ta.Candle
+	for _, kline := range klines {
+		candles = append(candles, tax.ConvertBinanceKline(kline, &d))
+	}
+	return candles, nil
+}
+
+func (p *provider) fetchBinanceKlinesV3(ticker string, d time.Duration) ([]*ta.Candle, error) {
+	re, _ := regexp.Compile(timeFramePattern)
+	interval := re.FindString(d.String())
+	if d >= time.Hour*24 {
+		interval = "1d"
+	}
+	if d == time.Minute*10 {
+		interval = "5m"
+	}
+	end := time.Now()
+	service := p.binSpot.NewKlinesService().Symbol(ticker).Interval(interval).EndTime(end.Unix() * 1000).Limit(1000)
+	klines, err := service.Do(context.Background())
+	if err != nil {
+		return nil, err
 	}
 	var candles []*ta.Candle
 	for _, kline := range klines {

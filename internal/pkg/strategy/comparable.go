@@ -25,7 +25,7 @@ type Comparable struct {
 type ComparableObject struct {
 	Name       string             `json:"name"`
 	Config     map[string]float64 `json:"config"`
-	Multiplier float64            `json:"multiplier"`
+	Multiplier *float64           `json:"multiplier"`
 }
 
 func (c *ComparableObject) copy() *ComparableObject {
@@ -37,6 +37,13 @@ func (c *ComparableObject) copy() *ComparableObject {
 	nc.Multiplier = c.Multiplier
 	nc.Config = c.Config
 	return &nc
+}
+
+func (c *ComparableObject) parseMultiplier() big.Decimal {
+	if c.Multiplier != nil {
+		return big.NewDecimal(*c.Multiplier)
+	}
+	return big.ONE
 }
 
 func (c *Comparable) copy() *Comparable {
@@ -75,6 +82,7 @@ func (c *Comparable) convertTimePeriod() time.Duration {
 func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Decimal, bool) {
 	if c.Trade != nil {
 		val, ok := c.mapTrade(t)
+		val = val.Mul(c.Trade.parseMultiplier())
 		mess := "Trade: " + c.Trade.Name + "@" + val.FormattedString(2)
 		return mess, val, ok
 	}
@@ -86,16 +94,17 @@ func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Dec
 		return "", big.ZERO, ok
 	}
 	if c.Candle != nil {
-		val, ok := c.mapCandle(line.CandleByIndex(len(line.Candles.Candles) - c.TimeFrame))
+		val, ok := c.mapCandle(line.CandleByIndex(len(line.Candles.Candles) - 1 - c.TimeFrame))
+		val = val.Mul(c.Candle.parseMultiplier())
 		mess := "Candle: " + c.Candle.Name + "@" + val.FormattedString(2)
-		return mess, val, ok
+		return mess, val.Mul(c.Candle.parseMultiplier()), ok
 	}
 	if c.Indicator != nil {
-		val, ok := c.mapIndicator(line.IndicatorByIndex(len(line.Indicators.Indicators) - c.TimeFrame))
+		val, ok := c.mapIndicator(line.IndicatorByIndex(len(line.Indicators.Indicators) - 1 - c.TimeFrame))
+		val = val.Mul(c.Candle.parseMultiplier())
 		mess := "Indicator: " + c.Indicator.Name + "@" + val.FormattedString(2)
-		return mess, val, ok
+		return mess, val.Mul(c.Indicator.parseMultiplier()), ok
 	}
-
 	return "", big.ZERO, false
 }
 
@@ -164,13 +173,6 @@ func (c *Comparable) mapTrade(td *tax.Trade) (big.Decimal, bool) {
 func (c *Comparable) mapIndicator(id *tax.Indicator) (big.Decimal, bool) {
 	if id == nil {
 		return big.ZERO, false
-	}
-	if tax.IndicatorName(c.Indicator.Name) == tax.LEVL {
-		value, ok := c.Indicator.Config["level"]
-		if !ok {
-			return big.ZERO, false
-		}
-		return big.NewDecimal(value), true
 	}
 	window, ok := c.Indicator.Config["window"]
 	if !ok {

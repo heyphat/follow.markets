@@ -59,9 +59,12 @@ type CandleJSON struct {
 
 type CandlesJSON []CandleJSON
 
-func Candle2JSON(c *ta.Candle) CandleJSON {
+func Candle2JSON(c *ta.Candle) *CandleJSON {
+	if c == nil {
+		return nil
+	}
 	layout := fmt.Sprint(SimpleDateFormatV2, "T", SimpleTimeFormat)
-	return CandleJSON{
+	return &CandleJSON{
 		StartTime: c.Period.Start.Format(layout),
 		EndTime:   c.Period.End.Format(layout),
 		Open:      c.OpenPrice.FormattedString(2),

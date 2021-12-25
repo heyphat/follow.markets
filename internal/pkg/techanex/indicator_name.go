@@ -9,12 +9,11 @@ import (
 type IndicatorName string
 
 const (
-	MA   IndicatorName = "MovingAverge"
-	EMA  IndicatorName = "ExponentialMovingAverage"
-	BBU  IndicatorName = "BollingerUpperBand"
-	BBL  IndicatorName = "BollingerLowerBand"
-	ATR  IndicatorName = "AverageTrueRage"
-	LEVL IndicatorName = "Level"
+	MA  IndicatorName = "MovingAverge"
+	EMA IndicatorName = "ExponentialMovingAverage"
+	BBU IndicatorName = "BollingerUpperBand"
+	BBL IndicatorName = "BollingerLowerBand"
+	ATR IndicatorName = "AverageTrueRage"
 )
 
 func (n IndicatorName) getIndicator(indicator ta.Indicator, param interface{}) ta.Indicator {
@@ -27,8 +26,6 @@ func (n IndicatorName) getIndicator(indicator ta.Indicator, param interface{}) t
 		return ta.NewBollingerUpperBandIndicator(indicator, param.(int), 2)
 	case BBL:
 		return ta.NewBollingerLowerBandIndicator(indicator, param.(int), 2)
-	case LEVL:
-		return ta.NewFixedIndicator(param.(float64))
 	default:
 		return indicator
 	}
@@ -49,6 +46,5 @@ func AvailableIndicators() []string {
 		BBU.ToString(),
 		BBL.ToString(),
 		ATR.ToString(),
-		LEVL.ToString(),
 	}
 }
