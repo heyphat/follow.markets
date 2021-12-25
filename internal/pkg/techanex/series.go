@@ -123,7 +123,7 @@ func (ts *Series) Shrink(size int) {
 		return
 	}
 	currentSize := len(ts.Candles.Candles)
-	if currentSize+100 <= size {
+	if currentSize < size+100 {
 		return
 	}
 	_, ts.Candles.Candles = ts.Candles.Candles[:currentSize-size-1], ts.Candles.Candles[currentSize-size-1:currentSize-1]
