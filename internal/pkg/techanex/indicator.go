@@ -15,7 +15,7 @@ func NewDefaultIndicatorConfigs() IndicatorConfigs {
 	configs[EMA] = []int{9, 26, 50}
 	configs[MA] = []int{99, 200}
 	configs[BBU] = []int{26, 50}
-	configs[BBL] = []int{26, 60}
+	configs[BBL] = []int{26, 50}
 	configs[ATR] = []int{10}
 	return configs
 }
