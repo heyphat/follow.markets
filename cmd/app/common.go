@@ -10,9 +10,9 @@ func parseVars(vars map[string]string, param string) ([]string, bool) {
 	if !ok {
 		return out, ok
 	}
-	strs := strings.Split(str, ",")
-	if len(strs) == 0 {
+	out := strings.Split(str, ",")
+	if len(out) == 0 {
 		return out, false
 	}
-	return strs, true
+	return out, true
 }
