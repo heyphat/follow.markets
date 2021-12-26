@@ -40,7 +40,7 @@ func (c *ComparableObject) copy() *ComparableObject {
 }
 
 func (c *ComparableObject) parseMultiplier() big.Decimal {
-	if c.Multiplier != nil {
+	if c == nil || c.Multiplier != nil {
 		return big.NewDecimal(*c.Multiplier)
 	}
 	return big.ONE
@@ -101,7 +101,7 @@ func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Dec
 	}
 	if c.Indicator != nil {
 		val, ok := c.mapIndicator(line.IndicatorByIndex(len(line.Indicators.Indicators) - 1 - c.TimeFrame))
-		val = val.Mul(c.Candle.parseMultiplier())
+		val = val.Mul(c.Indicator.parseMultiplier())
 		mess := "Indicator: " + c.Indicator.Name + "@" + val.FormattedString(2)
 		return mess, val.Mul(c.Indicator.parseMultiplier()), ok
 	}

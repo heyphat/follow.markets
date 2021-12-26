@@ -14,8 +14,8 @@ func NewDefaultIndicatorConfigs() IndicatorConfigs {
 	configs := make(map[IndicatorName][]int, 4)
 	configs[EMA] = []int{9, 26, 50}
 	configs[MA] = []int{99, 200}
-	configs[BBU] = []int{25}
-	configs[BBL] = []int{25}
+	configs[BBU] = []int{26, 50}
+	configs[BBL] = []int{26, 50}
 	configs[ATR] = []int{10}
 	return configs
 }
