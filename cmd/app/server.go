@@ -110,6 +110,8 @@ func Mux(middleware Func) *mux.Router {
 		middleware(http.HandlerFunc(last))).Methods("GET")
 	router.Handle("/watcher/watch/{ticker}",
 		middleware(http.HandlerFunc(watch))).Methods("POST")
+	router.Handle("/watcher/is_synced/{ticker}/{frame}",
+		middleware(http.HandlerFunc(synced))).Methods("GET")
 
 	// evaluator endpoints
 	router.Handle("/evaluator/list",

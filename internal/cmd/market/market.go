@@ -2,8 +2,10 @@ package market
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"sync"
+	"time"
 
 	"github.com/dlclark/regexp2"
 
@@ -80,6 +82,17 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 		go func() {
 			if err := Market.initWatchlist(configs); err != nil {
 				common.logger.Error.Println("failed to init watchlist with err: ", err)
+			}
+		}()
+		go func() {
+			for {
+				// the duration must be the time period that the watcher is watching on.
+				duration := time.Minute * 5
+				ticker := "BTCUSDT"
+				if synced := Market.IsSynced(ticker, duration); !synced {
+					Market.notifier.notify(fmt.Sprintf("%s is out of sync for %s", ticker, duration.String()))
+				}
+				time.Sleep(time.Minute + time.Second*30)
 			}
 		}()
 	})
@@ -181,6 +194,10 @@ func (m *MarketStruct) LastIndicators(ticker string) tax.IndicatorsJSON {
 		out = append(out, *js)
 	}
 	return out
+}
+
+func (m *MarketStruct) IsSynced(ticker string, duration time.Duration) bool {
+	return m.watcher.isSynced(ticker, duration)
 }
 
 // evaluator endpoints

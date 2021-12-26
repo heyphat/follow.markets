@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"follow.market/internal/pkg/runner"
 	"follow.market/pkg/log"
@@ -72,6 +73,24 @@ func (w *watcher) isWatchingOn(ticker string) bool {
 		return !valid
 	})
 	return valid
+}
+
+// isSynced returns whether the ticker is correctly synced with the market data on time frame.
+// It only checks if the last candle held timestamp is the latest one compared to the current time.
+func (w *watcher) isSynced(ticker string, duration time.Duration) bool {
+	last := w.lastCandles(ticker)
+	if len(last) == 0 {
+		return false
+	}
+	for _, c := range last {
+		if c.Period.End.Sub(c.Period.Start) != duration {
+			continue
+		}
+		if time.Now().Truncate(duration).Unix() == c.Period.Start.Unix() {
+			return true
+		}
+	}
+	return false
 }
 
 // watch initializes the process to add a ticker to the watchlist. The process keep
