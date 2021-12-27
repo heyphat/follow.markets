@@ -8,7 +8,6 @@ if [ $(curl $ENDPOINT) != "pong" ]
 then
   curl -X POST \
        -H 'Content-Type: application/json' \
-       -d '{"chat_id": "CHAT_ID", "text": "Server is down"}' \
+       -d '{"chat_id": "REPLACE_CHAT_ID", "text": "Server is down"}' \
        https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage
 fi
-
