@@ -63,6 +63,12 @@ func (c *Comparable) validate() error {
 	if c.Candle == nil && c.Indicator == nil && c.Trade == nil {
 		return errors.New("missing comparable values")
 	}
+	if !util.Int64SliceContains(AcceptablePeriods, int64(c.TimePeriod)) {
+		return errors.New("unknown time period")
+	}
+	if c.TimeFrame < 0 {
+		return errors.New("invalid time frame")
+	}
 	if c.Candle != nil && !util.StringSliceContains(candleLevels, string(c.Candle.Name)) {
 		return errors.New("invalid candle level")
 	}

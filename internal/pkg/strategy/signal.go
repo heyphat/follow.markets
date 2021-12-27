@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"follow.market/pkg/util"
+
 	"follow.market/internal/pkg/runner"
 	tax "follow.market/internal/pkg/techanex"
 	ta "github.com/itsphat/techan"
@@ -164,6 +166,32 @@ func (s Signal) Side(side ta.OrderSide) ta.OrderSide {
 	} else {
 		panic("unknown signal type")
 	}
+}
+
+func (s Signal) GetPeriods() []time.Duration {
+	var periods []time.Duration
+	for _, c := range s.Conditions {
+		if !util.DurationSliceContains(periods, time.Duration(c.This.TimePeriod)*time.Second) {
+			periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+		}
+		if !util.DurationSliceContains(periods, time.Duration(c.That.TimePeriod)*time.Second) {
+			periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+		}
+	}
+	for _, g := range s.ConditionGroups {
+		if g == nil {
+			continue
+		}
+		for _, c := range g.Conditions {
+			if !util.DurationSliceContains(periods, time.Duration(c.This.TimePeriod)*time.Second) {
+				periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+			}
+			if !util.DurationSliceContains(periods, time.Duration(c.That.TimePeriod)*time.Second) {
+				periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+			}
+		}
+	}
+	return periods
 }
 
 // encodeNotify returns float64 ranging from -1 to 1 depends on signal notification options.

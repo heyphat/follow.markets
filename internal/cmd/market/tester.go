@@ -41,17 +41,11 @@ func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Stra
 	if initBalance.LTE(big.ZERO) {
 		return tmember{}, errors.New("init balance has to be > 0")
 	}
-	if stg == nil {
-		return tmember{}, errors.New("missing trading strategy")
+	if stg == nil || stg.EntryRule == nil {
+		return tmember{}, errors.New("missing trading strategy or signal")
 	}
 	r := runner.NewRunner(ticker, &runner.RunnerConfigs{
-		LFrames: []time.Duration{
-			time.Minute * 15,
-			time.Minute * 30,
-			time.Minute * 60,
-			time.Hour * 4,
-			time.Hour * 24,
-		},
+		LFrames:  stg.EntryRule.Signal.GetPeriods(),
 		IConfigs: tax.NewDefaultIndicatorConfigs(),
 	})
 	mem := tmember{
@@ -60,8 +54,7 @@ func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Stra
 		balance:  initBalance,
 		strategy: stg.SetRunner(r),
 	}
-	//candles, err := t.provider.fetchBinanceKlinesV2(ticker, time.Minute*15, time.Now().Add(-time.Hour*24*7), time.Now())
-	candles, err := t.provider.fetchBinanceKlinesV2(ticker, time.Minute*15, start, end)
+	candles, err := t.provider.fetchBinanceKlinesV3(ticker, r.SmallestFrame(), 1000)
 	if err != nil {
 		return mem, err
 	}

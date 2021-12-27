@@ -42,11 +42,11 @@ func Test_Watcher(t *testing.T) {
 		assert.EqualValues(t, true, ok)
 		switch d {
 		case time.Minute:
-			assert.EqualValues(t, 1000, len(line.Candles.Candles))
+			assert.EqualValues(t, 500, len(line.Candles.Candles))
 		case time.Minute * 5:
-			assert.EqualValues(t, 1000, len(line.Candles.Candles))
+			assert.EqualValues(t, 500, len(line.Candles.Candles))
 		case time.Minute * 15:
-			assert.EqualValues(t, 1000, len(line.Candles.Candles))
+			assert.EqualValues(t, 500, len(line.Candles.Candles))
 		}
 	}
 }

@@ -112,7 +112,7 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
 		tChann: make(chan *tax.Trade, 10),
 	}
 	for _, f := range m.runner.GetConfigs().LFrames {
-		candles, err := w.provider.fetchBinanceKlinesV3(ticker, f)
+		candles, err := w.provider.fetchBinanceKlinesV3(ticker, f, 500)
 		if err != nil {
 			return err
 		}
