@@ -19,12 +19,12 @@
   },
   "markets": {
     "binance": {
-      "api_key": "test",
-      "secret_key": "test"
+      "api_key": "your_key",
+      "secret_key": "your_key"
     },
     "alpaca": {
-      "api_key": "test",
-      "secret_key": "test"
+      "api_key": "your_key",
+      "secret_key": "your_key"
     }
   },
   "telegram": {
@@ -42,14 +42,20 @@
       "1m", "5m", "15m", "1h", "4h"
     ],
     "indicators": {
-      "EMA": [9, 25, 50],
+      "EMA": [9, 26, 50],
       "MA": [99, 200],
-      "BBU": [25],
-      "BBL": [25],
+      "BBU": [26, 50],
+      "BBL": [26, 50],
       "ATR": [10]
     }
   },
   "signal": {
     "path": "./configs/signals"
+  },
+  "tester": {
+    "save_path": "./configs/test_results",
+    "init_balance": 10000,
+    "profit_margin": 0.1,
+    "loss_tolerance": 0.05
   }
 }
