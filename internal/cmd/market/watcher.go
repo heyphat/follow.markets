@@ -78,6 +78,9 @@ func (w *watcher) isWatchingOn(ticker string) bool {
 // isSynced returns whether the ticker is correctly synced with the market data on time frame.
 // It only checks if the last candle held timestamp is the latest one compared to the current time.
 func (w *watcher) isSynced(ticker string, duration time.Duration) bool {
+	if time.Now().Sub(time.Now().Truncate(duration)) <= time.Minute {
+		return true
+	}
 	last := w.lastCandles(ticker)
 	if len(last) == 0 {
 		return false
