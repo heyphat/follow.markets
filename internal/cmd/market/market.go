@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/dlclark/regexp2"
+	ta "github.com/itsphat/techan"
+	"github.com/sdcoffey/big"
 
 	"follow.market/internal/pkg/strategy"
 	tax "follow.market/internal/pkg/techanex"
@@ -40,6 +42,7 @@ type MarketStruct struct {
 	streamer  *streamer
 	evaluator *evaluator
 	notifier  *notifier
+	tester    *tester
 }
 
 func NewMarket(configFilePath *string) (*MarketStruct, error) {
@@ -64,6 +67,10 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	if err != nil {
 		return nil, err
 	}
+	tester, err := newTester(common)
+	if err != nil {
+		return nil, err
+	}
 	notifier, err := newNotifier(common, configs)
 	if err != nil {
 		return nil, err
@@ -74,6 +81,7 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 		Market.streamer = streamer
 		Market.evaluator = evaluator
 		Market.notifier = notifier
+		Market.tester = tester
 
 		Market.connect()
 		if err := Market.initSignals(configs); err != nil {
@@ -216,4 +224,13 @@ func (m *MarketStruct) GetSingals(names []string) strategy.Signals {
 // notifier endpoints
 func (m *MarketStruct) AddChatIDs(cids []int64) {
 	m.notifier.addChatIDs(cids)
+}
+
+// tester endpoints
+func (m *MarketStruct) Test(ticker string, balance float64, stg *strategy.Strategy, start, end time.Time) (*ta.TradingRecord, error) {
+	result, err := m.tester.test(ticker, big.NewDecimal(balance), stg, start, end)
+	if err != nil {
+		return nil, err
+	}
+	return result.record, nil
 }

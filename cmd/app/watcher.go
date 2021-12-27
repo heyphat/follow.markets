@@ -79,7 +79,6 @@ func synced(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	fmt.Println(strs)
 	ticker := strs[0]
 	strs, ok = parseVars(mux.Vars(req), "frame")
 	if !ok {
