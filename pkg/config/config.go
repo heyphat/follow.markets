@@ -44,6 +44,12 @@ type Configs struct {
 	Signal    struct {
 		Path string `json:"path"`
 	} `json:"signal"`
+	Tester struct {
+		SavePath      string  `json:"save_path"`
+		InitBalance   float64 `json:"init_balance"`
+		ProfitMargin  float64 `json:"profit_margin"`
+		LossTolerance float64 `json:"loss_tolerance"`
+	} `json:"tester"`
 }
 
 func (c Configs) IsProduction() bool {

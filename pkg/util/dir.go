@@ -25,3 +25,15 @@ func IOReadDir(root string) ([]string, error) {
 	}
 	return files, nil
 }
+
+func ConcatPath(root string, fileName string) (string, error) {
+	pattern := `/$`
+	ispatternMatched, err := regexp.MatchString(pattern, root)
+	if err != nil {
+		return "", err
+	}
+	if ispatternMatched {
+		return root + fileName, nil
+	}
+	return root + "/" + fileName, nil
+}
