@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/sdcoffey/big"
@@ -38,7 +39,11 @@ type tmember struct {
 	strategy *strategy.Strategy
 }
 
-func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Strategy, start, end time.Time) (tmember, error) {
+func (t *tester) test(ticker string,
+	initBalance big.Decimal,
+	stg *strategy.Strategy,
+	start, end *time.Time,
+	file string) (tmember, error) {
 	if initBalance.LTE(big.ZERO) {
 		return tmember{}, errors.New("init balance has to be > 0")
 	}
@@ -55,7 +60,7 @@ func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Stra
 		balance:  initBalance,
 		strategy: stg.SetRunner(r),
 	}
-	candles, err := t.provider.fetchBinanceKlinesV3(ticker, r.SmallestFrame(), &fetchOptions{start: &start, end: &end})
+	candles, err := t.provider.fetchBinanceKlinesV3(ticker, r.SmallestFrame(), &fetchOptions{start: start, end: end})
 	if err != nil {
 		return mem, err
 	}
@@ -84,9 +89,13 @@ func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Stra
 			})
 		}
 	}
-	logTrades := ta.LogTradesAnalysis{Writer: bytes.NewBufferString("")}
+	buffer := bytes.NewBufferString("")
+	logTrades := ta.LogTradesAnalysis{Writer: buffer}
 	_ = logTrades.Analyze(mem.record)
-	fmt.Println(logTrades.Writer)
+	fmt.Println(logTrades)
+	if err := os.WriteFile(file, buffer.Bytes(), 0444); err != nil {
+		return mem, err
+	}
 	return mem, nil
 }
 

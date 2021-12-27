@@ -3,7 +3,6 @@ package market
 import (
 	"io/ioutil"
 	"testing"
-	"time"
 
 	"follow.market/internal/pkg/strategy"
 	"follow.market/pkg/config"
@@ -33,8 +32,7 @@ func Test_Tester(t *testing.T) {
 		ExitRule:       nil,
 		RiskRewardRule: strategy.NewRiskRewardRule(-0.02, 0.04),
 	}
-
-	rs, err := tester.test(ticker, big.NewDecimal(10000), &stg, time.Now().AddDate(0, -1, 0), time.Now())
+	rs, err := tester.test(ticker, big.NewDecimal(10000), &stg, nil, nil, "./test_result")
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, len(rs.record.Trades), len(rs.record.Trades))
 }
