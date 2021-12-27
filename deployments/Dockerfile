@@ -16,4 +16,5 @@ RUN apk add --update ca-certificates tzdata
 COPY --from=builder ./follow.markets/app app
 COPY configs/configs.json configs/configs.json
 COPY configs/signals/signal.json configs/signals/signal.json
+COPY configs/test_results configs/test_results
 CMD ["./app"]
