@@ -92,7 +92,7 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 				if synced := Market.IsSynced(ticker, duration); !synced {
 					Market.notifier.notify(fmt.Sprintf("%s is out of sync for %s", ticker, duration.String()))
 				}
-				time.Sleep(time.Minute + time.Second*30)
+				time.Sleep(time.Minute + time.Second*27)
 			}
 		}()
 	})

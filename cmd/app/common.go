@@ -5,14 +5,12 @@ import (
 )
 
 func parseVars(vars map[string]string, param string) ([]string, bool) {
-	var out []string
 	str, ok := vars[param]
 	if !ok {
-		return out, ok
+		return nil, ok
 	}
-	out := strings.Split(str, ",")
-	if len(out) == 0 {
-		return out, false
+	if out := strings.Split(str, ","); len(out) != 0 {
+		return out, true
 	}
-	return out, true
+	return nil, false
 }
