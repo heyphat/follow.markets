@@ -27,40 +27,6 @@ func newProvider(configs *config.Configs) *provider {
 	}
 }
 
-func (p *provider) fetchBinanceKlines(ticker string, d time.Duration) ([]*ta.Candle, error) {
-	re, _ := regexp.Compile(timeFramePattern)
-	limit := 1000  // binance limit per request
-	iteration := 6 // minute candle need to be fetched multiple times
-	interval := re.FindString(d.String())
-	end := int64(time.Now().Unix() * 1000) // 1000 is second to millisecond
-	start := end - int64(limit*60000)
-	if d > time.Minute*15 && d < time.Hour*24 {
-		iteration = 1
-		start = end - (d * time.Duration(limit)).Milliseconds()
-	} else if d >= time.Hour*24 {
-		interval = "1d"
-		iteration = 1
-		start = end - (d * time.Duration(limit)).Milliseconds()
-	}
-	var service *bn.KlinesService
-	var klines []*bn.Kline
-	for i := 0; i < iteration; i++ {
-		service = p.binSpot.NewKlinesService().Symbol(ticker).Interval(interval).StartTime(start).EndTime(end).Limit(limit)
-		kls, err := service.Do(context.Background())
-		if err != nil {
-			return nil, err
-		}
-		klines = append(kls, klines...)
-		end = start
-		start = end - int64(limit*60000)
-	}
-	var candles []*ta.Candle
-	for _, kline := range klines {
-		candles = append(candles, tax.ConvertBinanceKline(kline, &d))
-	}
-	return candles, nil
-}
-
 func (p *provider) fetchBinanceKlinesV2(ticker string, d time.Duration, start, end time.Time) ([]*ta.Candle, error) {
 	startUnix := start.Truncate(d).Unix() * 1000
 	endUnix := end.Truncate(d).Unix() * 1000
@@ -90,10 +56,16 @@ func (p *provider) fetchBinanceKlinesV2(ticker string, d time.Duration, start, e
 	return candles, nil
 }
 
-func (p *provider) fetchBinanceKlinesV3(ticker string, d time.Duration, limit int) ([]*ta.Candle, error) {
-	lmt := 500
-	if limit > 0 {
-		lmt = limit
+type fetchOptions struct {
+	limit int
+	start *time.Time
+	end   *time.Time
+}
+
+func (p *provider) fetchBinanceKlinesV3(ticker string, d time.Duration, opt *fetchOptions) ([]*ta.Candle, error) {
+	lmt := 1000
+	if opt != nil && opt.limit > 0 && opt.limit <= 1000 {
+		lmt = opt.limit
 	}
 	re, _ := regexp.Compile(timeFramePattern)
 	interval := re.FindString(d.String())
@@ -104,8 +76,11 @@ func (p *provider) fetchBinanceKlinesV3(ticker string, d time.Duration, limit in
 		interval = "5m"
 	}
 	end := time.Now().Unix() * 1000
+	if opt != nil && opt.end != nil {
+		end = opt.end.Unix() * 1000
+	}
 	var klines []*bn.Kline
-	for len(klines) < lmt {
+	for len(klines) < lmt || (opt.start != nil && len(klines) > 0 && klines[0].OpenTime > opt.start.Unix()*1000) {
 		service := p.binSpot.NewKlinesService().Symbol(ticker).Interval(interval).EndTime(end).Limit(lmt)
 		kls, err := service.Do(context.Background())
 		if err != nil {

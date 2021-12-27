@@ -1,7 +1,6 @@
 package market
 
 import (
-	"fmt"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -25,7 +24,6 @@ func Test_Tester(t *testing.T) {
 
 	signal, err := strategy.NewSignalFromBytes(raw)
 	assert.EqualValues(t, nil, err)
-	fmt.Println(ticker, signal)
 
 	tester, err := newTester(initSharedParticipants(configs))
 	assert.EqualValues(t, nil, err)
@@ -38,7 +36,5 @@ func Test_Tester(t *testing.T) {
 
 	rs, err := tester.test(ticker, big.NewDecimal(10000), &stg, time.Now().AddDate(0, -1, 0), time.Now())
 	assert.EqualValues(t, nil, err)
-	for _, t := range rs.record.Trades {
-		fmt.Println(t.EntranceOrder(), t.ExitOrder())
-	}
+	assert.EqualValues(t, len(rs.record.Trades), len(rs.record.Trades))
 }

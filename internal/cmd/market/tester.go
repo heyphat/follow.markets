@@ -1,6 +1,7 @@
 package market
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"time"
@@ -54,7 +55,7 @@ func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Stra
 		balance:  initBalance,
 		strategy: stg.SetRunner(r),
 	}
-	candles, err := t.provider.fetchBinanceKlinesV3(ticker, r.SmallestFrame(), 1000)
+	candles, err := t.provider.fetchBinanceKlinesV3(ticker, r.SmallestFrame(), &fetchOptions{start: &start, end: &end})
 	if err != nil {
 		return mem, err
 	}
@@ -83,6 +84,9 @@ func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Stra
 			})
 		}
 	}
+	logTrades := ta.LogTradesAnalysis{Writer: bytes.NewBufferString("")}
+	_ = logTrades.Analyze(mem.record)
+	fmt.Println(logTrades.Writer)
 	return mem, nil
 }
 
