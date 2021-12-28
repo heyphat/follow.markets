@@ -30,12 +30,12 @@ type Configs struct {
 		Service string `json:"service"`
 		Version string `json:"version"`
 	} `json:"datadog"`
-	Markets struct {
+	Market struct {
 		Binance struct {
 			APIKey    string `json:"api_key"`
 			SecretKey string `json:"secret_key"`
 		} `json:"binance"`
-	} `json:"markets"`
+	} `json:"market"`
 	Telegram struct {
 		BotToken string   `json:"bot_token"`
 		ChatIDs  []string `json:"chat_ids"`

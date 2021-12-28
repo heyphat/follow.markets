@@ -3,7 +3,7 @@ package market
 import (
 	"testing"
 
-	"follow.market/pkg/config"
+	"follow.markets/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 

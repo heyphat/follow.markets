@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"follow.market/internal/pkg/strategy"
+	"follow.markets/internal/pkg/strategy"
 	"github.com/gorilla/mux"
 )
 

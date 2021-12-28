@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	tax "follow.market/internal/pkg/techanex"
+	tax "follow.markets/internal/pkg/techanex"
 )
 
 func watchlist(w http.ResponseWriter, req *http.Request) {

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"sync"
 
-	"follow.market/internal/pkg/runner"
-	"follow.market/pkg/log"
+	"follow.markets/internal/pkg/runner"
+	"follow.markets/pkg/log"
 	ta "github.com/itsphat/techan"
 
-	tax "follow.market/internal/pkg/techanex"
+	tax "follow.markets/internal/pkg/techanex"
 )
 
 type watcher struct {

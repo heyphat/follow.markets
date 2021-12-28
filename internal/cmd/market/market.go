@@ -7,11 +7,11 @@ import (
 
 	"github.com/dlclark/regexp2"
 
-	"follow.market/internal/pkg/strategy"
-	tax "follow.market/internal/pkg/techanex"
-	"follow.market/pkg/config"
-	"follow.market/pkg/log"
-	"follow.market/pkg/util"
+	"follow.markets/internal/pkg/strategy"
+	tax "follow.markets/internal/pkg/techanex"
+	"follow.markets/pkg/config"
+	"follow.markets/pkg/log"
+	"follow.markets/pkg/util"
 )
 
 var (
