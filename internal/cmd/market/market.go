@@ -163,10 +163,10 @@ func (m *MarketStruct) initWatchlist() error {
 
 // initSignals adds all the singals defined as json files in the configs/signals dir.
 func (m *MarketStruct) initSignals() error {
-	if len(m.configs.Market.Evaluator.Signal.Path) == 0 {
+	if len(m.configs.Market.Evaluator.Signal.SourcePath) == 0 {
 		return nil
 	}
-	files, err := util.IOReadDir(m.configs.Market.Evaluator.Signal.Path)
+	files, err := util.IOReadDir(m.configs.Market.Evaluator.Signal.SourcePath)
 	if err != nil {
 		return err
 	}

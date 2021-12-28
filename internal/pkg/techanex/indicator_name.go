@@ -6,10 +6,22 @@ import (
 	ta "github.com/itsphat/techan"
 )
 
+func AvailableIndicators() []string {
+	return []string{
+		MA.ToString(),
+		VMA.ToString(),
+		EMA.ToString(),
+		BBU.ToString(),
+		BBL.ToString(),
+		ATR.ToString(),
+	}
+}
+
 type IndicatorName string
 
 const (
 	MA  IndicatorName = "MovingAverge"
+	VMA IndicatorName = "VolumeMovingAverage"
 	EMA IndicatorName = "ExponentialMovingAverage"
 	BBU IndicatorName = "BollingerUpperBand"
 	BBL IndicatorName = "BollingerLowerBand"
@@ -21,6 +33,8 @@ func (n IndicatorName) getIndicator(indicator ta.Indicator, param interface{}) t
 	case EMA:
 		return ta.NewEMAIndicator(indicator, param.(int))
 	case MA:
+		return ta.NewSimpleMovingAverage(indicator, param.(int))
+	case VMA:
 		return ta.NewSimpleMovingAverage(indicator, param.(int))
 	case BBU:
 		return ta.NewBollingerUpperBandIndicator(indicator, param.(int), 2)
@@ -37,14 +51,4 @@ func (n IndicatorName) ToKey(i int) string {
 
 func (n IndicatorName) ToString() string {
 	return string(n)
-}
-
-func AvailableIndicators() []string {
-	return []string{
-		MA.ToString(),
-		EMA.ToString(),
-		BBU.ToString(),
-		BBL.ToString(),
-		ATR.ToString(),
-	}
 }

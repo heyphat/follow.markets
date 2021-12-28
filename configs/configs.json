@@ -47,16 +47,16 @@
         ],
         "indicators": {
           "MovingAverge": [9, 26, 50],
+          "VolumeMovingAverage": [200],
           "ExponentialMovingAverage": [99, 200],
           "BollingerUpperBand": [26, 50],
-          "BollingerLowerBand": [26, 50],
-          "AverageTrueRage": [10]
+          "BollingerLowerBand": [26, 50]
         }
       }
     },
     "evaluator": {
       "signal": {
-        "path": "./configs/signals"
+        "source_path": "./configs/signals"
       }
     },
     "tester": {

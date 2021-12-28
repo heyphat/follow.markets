@@ -52,7 +52,7 @@ type Configs struct {
 		} `json:"watcher"`
 		Evaluator struct {
 			Signal struct {
-				Path string `json:"path"`
+				SourcePath string `json:"source_path"`
 			} `json:"signal"`
 		} `json:evaluator`
 		Tester struct {
