@@ -6,11 +6,11 @@ import (
 	"regexp"
 	"time"
 
-	"follow.market/pkg/config"
+	"follow.markets/pkg/config"
 	bn "github.com/adshao/go-binance/v2"
 	ta "github.com/itsphat/techan"
 
-	tax "follow.market/internal/pkg/techanex"
+	tax "follow.markets/internal/pkg/techanex"
 )
 
 const (

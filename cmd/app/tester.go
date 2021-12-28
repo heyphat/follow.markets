@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"follow.market/internal/pkg/strategy"
-	"follow.market/pkg/util"
+	"follow.markets/internal/pkg/strategy"
+	"follow.markets/pkg/util"
 	"github.com/gorilla/mux"
 )
 

@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"follow.market/internal/pkg/runner"
-	tax "follow.market/internal/pkg/techanex"
+	"follow.markets/internal/pkg/runner"
+	tax "follow.markets/internal/pkg/techanex"
 	bn "github.com/adshao/go-binance/v2"
 	"github.com/stretchr/testify/assert"
 )

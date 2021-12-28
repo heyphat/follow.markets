@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"follow.market/pkg/config"
+	"follow.markets/pkg/config"
 )
 
 func Test_Watcher(t *testing.T) {

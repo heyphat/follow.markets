@@ -4,7 +4,7 @@ import (
 	ta "github.com/itsphat/techan"
 	"github.com/sdcoffey/big"
 
-	"follow.market/internal/pkg/runner"
+	"follow.markets/internal/pkg/runner"
 )
 
 type GenericRule struct {

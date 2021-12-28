@@ -1,7 +1,7 @@
 package strategy
 
 import (
-	"follow.market/internal/pkg/runner"
+	"follow.markets/internal/pkg/runner"
 	ta "github.com/itsphat/techan"
 )
 

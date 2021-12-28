@@ -9,10 +9,10 @@ import (
 
 	tele "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
-	"follow.market/internal/pkg/strategy"
-	"follow.market/pkg/config"
-	"follow.market/pkg/log"
-	"follow.market/pkg/util"
+	"follow.markets/internal/pkg/strategy"
+	"follow.markets/pkg/config"
+	"follow.markets/pkg/log"
+	"follow.markets/pkg/util"
 )
 
 type notifier struct {

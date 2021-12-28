@@ -5,10 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"follow.market/pkg/util"
-
-	"follow.market/internal/pkg/runner"
-	tax "follow.market/internal/pkg/techanex"
+	"follow.markets/internal/pkg/runner"
+	tax "follow.markets/internal/pkg/techanex"
+	"follow.markets/pkg/util"
 	ta "github.com/itsphat/techan"
 )
 
