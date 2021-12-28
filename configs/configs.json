@@ -43,14 +43,14 @@
       ],
       "runner": {
         "frames": [
-          "1m", "5m", "15m", "1h", "4h"
+          60, 300
         ],
         "indicators": {
-          "EMA": [9, 26, 50],
-          "MA": [99, 200],
-          "BBU": [26, 50],
-          "BBL": [26, 50],
-          "ATR": [10]
+          "MovingAverge": [9, 26, 50],
+          "ExponentialMovingAverage": [99, 200],
+          "BollingerUpperBand": [26, 50],
+          "BollingerLowerBand": [26, 50],
+          "AverageTrueRage": [10]
         }
       }
     },

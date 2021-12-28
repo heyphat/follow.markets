@@ -11,6 +11,7 @@ import (
 	ta "github.com/itsphat/techan"
 	"github.com/sdcoffey/big"
 
+	"follow.markets/internal/pkg/runner"
 	"follow.markets/internal/pkg/strategy"
 	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/config"
@@ -38,6 +39,8 @@ func initSharedParticipants(configs *config.Configs) *sharedParticipants {
 }
 
 type MarketStruct struct {
+	configs *config.Configs
+
 	watcher   *watcher
 	streamer  *streamer
 	evaluator *evaluator
@@ -77,6 +80,7 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	}
 	once.Do(func() {
 		Market = &MarketStruct{}
+		Market.configs = configs
 		Market.watcher = watcher
 		Market.streamer = streamer
 		Market.evaluator = evaluator
@@ -107,6 +111,29 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	return Market, nil
 }
 
+func (m *MarketStruct) parseRunnerConfigs(configs *config.Configs) *runner.RunnerConfigs {
+	out := runner.NewRunnerDefaultConfigs()
+	frames := []time.Duration{}
+	if len(configs.Market.Watcher.Runner.Frames) > 0 {
+		for _, f := range configs.Market.Watcher.Runner.Frames {
+			if runner.ValidateFrame(time.Duration(f) * time.Second) {
+				frames = append(frames, time.Duration(f)*time.Second)
+			}
+		}
+		out.LFrames = frames
+	}
+	if len(configs.Market.Watcher.Runner.Indicators) > 0 {
+		ic := make(map[tax.IndicatorName][]int, len(configs.Market.Watcher.Runner.Indicators))
+		for k, v := range configs.Market.Watcher.Runner.Indicators {
+			if util.StringSliceContains(tax.AvailableIndicators(), k) {
+				ic[tax.IndicatorName(k)] = v
+			}
+		}
+		out.IConfigs = ic
+	}
+	return out
+}
+
 // watch initializes the watching process from watcher on watchlist specified
 // in the config file.
 func (m *MarketStruct) initWatchlist(configs *config.Configs) error {
@@ -125,7 +152,7 @@ func (m *MarketStruct) initWatchlist(configs *config.Configs) error {
 				return err
 			}
 			if isMatched {
-				if err := m.watcher.watch(s.Symbol, nil); err != nil {
+				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs(configs)); err != nil {
 					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol, err.Error()))
 				}
 			}
@@ -167,7 +194,7 @@ func (m *MarketStruct) connect() {
 
 // watcher endpoints
 func (m *MarketStruct) Watch(ticker string) error {
-	return m.watcher.watch(ticker, nil)
+	return m.watcher.watch(ticker, m.parseRunnerConfigs(m.configs))
 }
 
 func (m *MarketStruct) Watchlist() []string {

@@ -45,6 +45,10 @@ type Configs struct {
 		} `json:"notifier"`
 		Watcher struct {
 			Watchlist []string `json:"watchlist"`
+			Runner    struct {
+				Frames     []int            `json:"frames"`
+				Indicators map[string][]int `json:"indicators"`
+			} `json:"runner"`
 		} `json:"watcher"`
 		Evaluator struct {
 			Signal struct {

@@ -75,7 +75,7 @@ func (w *watcher) isWatchingOn(ticker string) bool {
 	return valid
 }
 
-// isSynced returns whether the ticker is correctly synced with the market data on time frame.
+// isSynced returns whether the ticker is correctly synced with the market data on the given time frame.
 // It only checks if the last candle held timestamp is the latest one compared to the current time.
 func (w *watcher) isSynced(ticker string, duration time.Duration) bool {
 	if time.Now().Sub(time.Now().Truncate(duration)) <= time.Minute {
@@ -96,7 +96,7 @@ func (w *watcher) isSynced(ticker string, duration time.Duration) bool {
 	return false
 }
 
-// watch initializes the process to add a ticker to the watchlist. The process keep
+// watch initializes the process to add a ticker to the watchlist. It keeps
 // watching the ticker by comsuming the 1-minute candle and trade information boardcasted
 // from the streamer.
 func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
@@ -187,7 +187,7 @@ func (w *watcher) lastIndicators(ticker string) []*tax.Indicator {
 }
 
 // connect connects the watcher to other market participants py listening to
-// decicated channels for the communication.
+// decicated channels for communication.
 func (w *watcher) connect() {
 	w.Lock()
 	defer w.Unlock()
