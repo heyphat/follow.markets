@@ -9,9 +9,9 @@ import (
 
 	"github.com/sdcoffey/big"
 
-	"follow.market/internal/pkg/runner"
-	tax "follow.market/internal/pkg/techanex"
-	"follow.market/pkg/util"
+	"follow.markets/internal/pkg/runner"
+	tax "follow.markets/internal/pkg/techanex"
+	"follow.markets/pkg/util"
 )
 
 type Comparable struct {

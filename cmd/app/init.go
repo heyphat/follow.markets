@@ -1,9 +1,9 @@
 package main
 
 import (
-	mk "follow.market/internal/cmd/market"
-	"follow.market/pkg/config"
-	"follow.market/pkg/log"
+	mk "follow.markets/internal/cmd/market"
+	"follow.markets/pkg/config"
+	"follow.markets/pkg/log"
 )
 
 var (

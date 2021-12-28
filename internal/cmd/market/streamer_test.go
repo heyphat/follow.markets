@@ -7,10 +7,10 @@ import (
 
 	ta "github.com/itsphat/techan"
 
-	"follow.market/internal/pkg/runner"
-	"follow.market/internal/pkg/strategy"
-	tax "follow.market/internal/pkg/techanex"
-	"follow.market/pkg/config"
+	"follow.markets/internal/pkg/runner"
+	"follow.markets/internal/pkg/strategy"
+	tax "follow.markets/internal/pkg/techanex"
+	"follow.markets/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 

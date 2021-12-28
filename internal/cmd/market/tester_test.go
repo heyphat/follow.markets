@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"follow.market/internal/pkg/strategy"
-	"follow.market/pkg/config"
+	"follow.markets/internal/pkg/strategy"
+	"follow.markets/pkg/config"
 	"github.com/sdcoffey/big"
 	"github.com/stretchr/testify/assert"
 )

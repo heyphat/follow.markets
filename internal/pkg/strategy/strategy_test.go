@@ -9,8 +9,8 @@ import (
 	bn "github.com/adshao/go-binance/v2"
 	ta "github.com/itsphat/techan"
 
-	"follow.market/internal/pkg/runner"
-	tax "follow.market/internal/pkg/techanex"
+	"follow.markets/internal/pkg/runner"
+	tax "follow.markets/internal/pkg/techanex"
 	"github.com/sdcoffey/big"
 )
 
