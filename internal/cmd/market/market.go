@@ -88,11 +88,11 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 		Market.tester = tester
 
 		Market.connect()
-		if err := Market.initSignals(configs); err != nil {
+		if err := Market.initSignals(); err != nil {
 			common.logger.Error.Println("failed to init signals with err: ", err)
 		}
 		go func() {
-			if err := Market.initWatchlist(configs); err != nil {
+			if err := Market.initWatchlist(); err != nil {
 				common.logger.Error.Println("failed to init watchlist with err: ", err)
 			}
 		}()
@@ -111,20 +111,20 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	return Market, nil
 }
 
-func (m *MarketStruct) parseRunnerConfigs(configs *config.Configs) *runner.RunnerConfigs {
+func (m *MarketStruct) parseRunnerConfigs() *runner.RunnerConfigs {
 	out := runner.NewRunnerDefaultConfigs()
 	frames := []time.Duration{}
-	if len(configs.Market.Watcher.Runner.Frames) > 0 {
-		for _, f := range configs.Market.Watcher.Runner.Frames {
+	if len(m.configs.Market.Watcher.Runner.Frames) > 0 {
+		for _, f := range m.configs.Market.Watcher.Runner.Frames {
 			if runner.ValidateFrame(time.Duration(f) * time.Second) {
 				frames = append(frames, time.Duration(f)*time.Second)
 			}
 		}
 		out.LFrames = frames
 	}
-	if len(configs.Market.Watcher.Runner.Indicators) > 0 {
-		ic := make(map[tax.IndicatorName][]int, len(configs.Market.Watcher.Runner.Indicators))
-		for k, v := range configs.Market.Watcher.Runner.Indicators {
+	if len(m.configs.Market.Watcher.Runner.Indicators) > 0 {
+		ic := make(map[tax.IndicatorName][]int, len(m.configs.Market.Watcher.Runner.Indicators))
+		for k, v := range m.configs.Market.Watcher.Runner.Indicators {
 			if util.StringSliceContains(tax.AvailableIndicators(), k) {
 				ic[tax.IndicatorName(k)] = v
 			}
@@ -136,12 +136,12 @@ func (m *MarketStruct) parseRunnerConfigs(configs *config.Configs) *runner.Runne
 
 // watch initializes the watching process from watcher on watchlist specified
 // in the config file.
-func (m *MarketStruct) initWatchlist(configs *config.Configs) error {
+func (m *MarketStruct) initWatchlist() error {
 	stats, err := m.watcher.provider.binSpot.NewListPriceChangeStatsService().Do(context.Background())
 	if err != nil {
 		return err
 	}
-	for _, p := range configs.Market.Watcher.Watchlist {
+	for _, p := range m.configs.Market.Watcher.Watchlist {
 		re, err := regexp2.Compile(p, 0)
 		if err != nil {
 			return err
@@ -152,7 +152,7 @@ func (m *MarketStruct) initWatchlist(configs *config.Configs) error {
 				return err
 			}
 			if isMatched {
-				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs(configs)); err != nil {
+				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs()); err != nil {
 					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol, err.Error()))
 				}
 			}
@@ -162,11 +162,11 @@ func (m *MarketStruct) initWatchlist(configs *config.Configs) error {
 }
 
 // initSignals adds all the singals defined as json files in the configs/signals dir.
-func (m *MarketStruct) initSignals(configs *config.Configs) error {
-	if len(configs.Market.Evaluator.Signal.Path) == 0 {
+func (m *MarketStruct) initSignals() error {
+	if len(m.configs.Market.Evaluator.Signal.Path) == 0 {
 		return nil
 	}
-	files, err := util.IOReadDir(configs.Market.Evaluator.Signal.Path)
+	files, err := util.IOReadDir(m.configs.Market.Evaluator.Signal.Path)
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func (m *MarketStruct) connect() {
 
 // watcher endpoints
 func (m *MarketStruct) Watch(ticker string) error {
-	return m.watcher.watch(ticker, m.parseRunnerConfigs(m.configs))
+	return m.watcher.watch(ticker, m.parseRunnerConfigs())
 }
 
 func (m *MarketStruct) Watchlist() []string {
