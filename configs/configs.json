@@ -50,7 +50,8 @@
           "VolumeMovingAverage": [200],
           "ExponentialMovingAverage": [99, 200],
           "BollingerUpperBand": [26, 50],
-          "BollingerLowerBand": [26, 50]
+          "BollingerLowerBand": [26, 50],
+          "AverageTrueRage": [10]
         }
       }
     },

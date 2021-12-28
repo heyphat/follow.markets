@@ -28,20 +28,22 @@ const (
 	ATR IndicatorName = "AverageTrueRage"
 )
 
-func (n IndicatorName) getIndicator(indicator ta.Indicator, param interface{}) ta.Indicator {
+func (n IndicatorName) getIndicator(ts *ta.TimeSeries, param interface{}) ta.Indicator {
 	switch n {
 	case EMA:
-		return ta.NewEMAIndicator(indicator, param.(int))
+		return ta.NewEMAIndicator(ta.NewClosePriceIndicator(ts), param.(int))
 	case MA:
-		return ta.NewSimpleMovingAverage(indicator, param.(int))
+		return ta.NewSimpleMovingAverage(ta.NewClosePriceIndicator(ts), param.(int))
 	case VMA:
-		return ta.NewSimpleMovingAverage(indicator, param.(int))
+		return ta.NewSimpleMovingAverage(ta.NewVolumeIndicator(ts), param.(int))
 	case BBU:
-		return ta.NewBollingerUpperBandIndicator(indicator, param.(int), 2)
+		return ta.NewBollingerUpperBandIndicator(ta.NewClosePriceIndicator(ts), param.(int), 2)
 	case BBL:
-		return ta.NewBollingerLowerBandIndicator(indicator, param.(int), 2)
+		return ta.NewBollingerLowerBandIndicator(ta.NewClosePriceIndicator(ts), param.(int), 2)
+	case ATR:
+		return ta.NewAverageTrueRangeIndicator(ts, param.(int))
 	default:
-		return indicator
+		return ta.NewClosePriceIndicator(ts)
 	}
 }
 

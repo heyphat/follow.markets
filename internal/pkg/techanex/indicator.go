@@ -17,6 +17,7 @@ func NewDefaultIndicatorConfigs() IndicatorConfigs {
 	configs[MA] = []int{99, 200}
 	configs[BBU] = []int{26, 50}
 	configs[BBL] = []int{26, 50}
+	configs[ATR] = []int{10}
 	return configs
 }
 
@@ -43,18 +44,13 @@ func NewIndicator(period ta.TimePeriod, configs IndicatorConfigs) *Indicator {
 }
 
 func (i *Indicator) Calculate(configs IndicatorConfigs, candles *ta.TimeSeries, index int) {
-	closePrices := ta.NewClosePriceIndicator(candles)
 	for k, v := range configs {
 		var ind ta.Indicator
 		if len(v) == 0 {
-			ind = k.getIndicator(closePrices, 0)
+			ind = k.getIndicator(candles, 0)
 		}
 		for _, window := range v {
-			if k == VMA {
-				ind = k.getIndicator(ta.NewVolumeIndicator(candles), window)
-			} else {
-				ind = k.getIndicator(closePrices, window)
-			}
+			ind = k.getIndicator(candles, window)
 			i.IndiMap[k.ToKey(window)] = ind.Calculate(index)
 		}
 	}
@@ -97,21 +93,13 @@ func (is *IndicatorSeries) newIndicatorsFromCandleSeries(s *ta.TimeSeries) bool 
 	if s == nil || len(s.Candles) == 0 {
 		return true
 	}
-	//closePrices := ta.NewClosePriceIndicator(s)
 	inds := map[string]ta.Indicator{}
 	for k, v := range is.Configs {
 		if len(v) == 0 {
-			inds[k.ToString()] = k.getIndicator(ta.NewClosePriceIndicator(s), 0)
-			if k == VMA {
-				inds[k.ToString()] = k.getIndicator(ta.NewVolumeIndicator(s), 0)
-			}
+			inds[k.ToString()] = k.getIndicator(s, 0)
 		}
 		for _, window := range v {
-			//inds[k.ToKey(window)] = k.getIndicator(closePrices, window)
-			inds[k.ToKey(window)] = k.getIndicator(ta.NewClosePriceIndicator(s), window)
-			if k == VMA {
-				inds[k.ToKey(window)] = k.getIndicator(ta.NewVolumeIndicator(s), window)
-			}
+			inds[k.ToKey(window)] = k.getIndicator(s, window)
 		}
 	}
 	for index := 0; index < len(s.Candles); index++ {
