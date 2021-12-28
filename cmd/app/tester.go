@@ -31,7 +31,7 @@ func test(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	opts := req.URL.Query()
-	balance := configs.Tester.InitBalance
+	balance := configs.Market.Tester.InitBalance
 	if rs, ok := parseOptions(opts, "balance"); ok && len(rs) > 0 {
 		if bl, err := strconv.Atoi(rs[0]); err != nil {
 			balance = float64(bl)
@@ -54,8 +54,8 @@ func test(w http.ResponseWriter, req *http.Request) {
 			end = &[]time.Time{time.Unix(int64(ed), 0)}[0]
 		}
 	}
-	profitMargin := configs.Tester.ProfitMargin
-	lossTolerance := configs.Tester.LossTolerance
+	profitMargin := configs.Market.Tester.ProfitMargin
+	lossTolerance := configs.Market.Tester.LossTolerance
 	if rs, ok := parseOptions(opts, "profit_margin"); ok && len(rs) > 0 {
 		if pm, err := strconv.ParseFloat(rs[0], 32); err == nil {
 			logger.Error.Println(err)
@@ -76,7 +76,7 @@ func test(w http.ResponseWriter, req *http.Request) {
 		ExitRule:       nil,
 		RiskRewardRule: strategy.NewRiskRewardRule(-lossTolerance, profitMargin),
 	}
-	savePath, err := util.ConcatPath(configs.Tester.SavePath, ticker+"-"+signal.Name+"-"+time.Now().Format("2006-01-02T15:04:05"))
+	savePath, err := util.ConcatPath(configs.Market.Tester.SavePath, ticker+"-"+signal.Name+"-"+time.Now().Format("2006-01-02T15:04:05"))
 	if err != nil {
 		logger.Error.Println(err)
 		InternalError(w)

@@ -23,7 +23,7 @@ type provider struct {
 
 func newProvider(configs *config.Configs) *provider {
 	return &provider{
-		binSpot: bn.NewClient(configs.Markets.Binance.APIKey, configs.Markets.Binance.SecretKey),
+		binSpot: bn.NewClient(configs.Market.Provider.Binance.APIKey, configs.Market.Provider.Binance.SecretKey),
 	}
 }
 

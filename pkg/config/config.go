@@ -30,26 +30,34 @@ type Configs struct {
 		Service string `json:"service"`
 		Version string `json:"version"`
 	} `json:"datadog"`
-	Markets struct {
-		Binance struct {
-			APIKey    string `json:"api_key"`
-			SecretKey string `json:"secret_key"`
-		} `json:"binance"`
-	} `json:"markets"`
-	Telegram struct {
-		BotToken string   `json:"bot_token"`
-		ChatIDs  []string `json:"chat_ids"`
-	} `json:"telegram"`
-	Watchlist []string `json:"watchlist"`
-	Signal    struct {
-		Path string `json:"path"`
-	} `json:"signal"`
-	Tester struct {
-		SavePath      string  `json:"save_path"`
-		InitBalance   float64 `json:"init_balance"`
-		ProfitMargin  float64 `json:"profit_margin"`
-		LossTolerance float64 `json:"loss_tolerance"`
-	} `json:"tester"`
+	Market struct {
+		Provider struct {
+			Binance struct {
+				APIKey    string `json:"api_key"`
+				SecretKey string `json:"secret_key"`
+			} `json:"binance"`
+		} `json:"provider"`
+		Notifier struct {
+			Telegram struct {
+				BotToken string   `json:"bot_token"`
+				ChatIDs  []string `json:"chat_ids"`
+			} `json:"telegram"`
+		} `json:"notifier"`
+		Watcher struct {
+			Watchlist []string `json:"watchlist"`
+		} `json:"watcher"`
+		Evaluator struct {
+			Signal struct {
+				Path string `json:"path"`
+			} `json:"signal"`
+		} `json:evaluator`
+		Tester struct {
+			SavePath      string  `json:"save_path"`
+			InitBalance   float64 `json:"init_balance"`
+			ProfitMargin  float64 `json:"profit_margin"`
+			LossTolerance float64 `json:"loss_tolerance"`
+		} `json:"tester"`
+	} `json:"market"`
 }
 
 func (c Configs) IsProduction() bool {
@@ -85,7 +93,7 @@ func NewConfigs(filePath *string) (*Configs, error) {
 	if len(configs.Datadog.Host) > 0 {
 		os.Setenv("DD_AGENT_HOST", configs.Datadog.Host)
 	}
-	if len(configs.Markets.Binance.APIKey) == 0 {
+	if len(configs.Market.Provider.Binance.APIKey) == 0 {
 		return &configs, errors.New("missing binance api key and secret")
 	}
 	return &configs, err

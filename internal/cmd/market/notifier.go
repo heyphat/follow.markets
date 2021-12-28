@@ -38,14 +38,14 @@ func newNotifier(participants *sharedParticipants, configs *config.Configs) (*no
 		return nil, errors.New("missing shared participants")
 	}
 	var chatIDs []int64
-	for _, id := range configs.Telegram.ChatIDs {
+	for _, id := range configs.Market.Notifier.Telegram.ChatIDs {
 		if iid, err := strconv.Atoi(id); err != nil {
 			return nil, err
 		} else {
 			chatIDs = append(chatIDs, int64(iid))
 		}
 	}
-	bot, err := tele.NewBotAPI(configs.Telegram.BotToken)
+	bot, err := tele.NewBotAPI(configs.Market.Notifier.Telegram.BotToken)
 	if err != nil {
 		return nil, err
 	}

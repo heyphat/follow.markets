@@ -114,7 +114,7 @@ func (m *MarketStruct) initWatchlist(configs *config.Configs) error {
 	if err != nil {
 		return err
 	}
-	for _, p := range configs.Watchlist {
+	for _, p := range configs.Market.Watcher.Watchlist {
 		re, err := regexp2.Compile(p, 0)
 		if err != nil {
 			return err
@@ -136,10 +136,10 @@ func (m *MarketStruct) initWatchlist(configs *config.Configs) error {
 
 // initSignals adds all the singals defined as json files in the configs/signals dir.
 func (m *MarketStruct) initSignals(configs *config.Configs) error {
-	if len(configs.Signal.Path) == 0 {
+	if len(configs.Market.Evaluator.Signal.Path) == 0 {
 		return nil
 	}
-	files, err := util.IOReadDir(configs.Signal.Path)
+	files, err := util.IOReadDir(configs.Market.Evaluator.Signal.Path)
 	if err != nil {
 		return err
 	}
