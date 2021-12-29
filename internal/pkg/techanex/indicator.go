@@ -52,6 +52,7 @@ func (i *Indicator) Calculate(configs IndicatorConfigs, candles *ta.TimeSeries, 
 		var ind ta.Indicator
 		if len(v) == 0 || k == MACD || k == HMACD {
 			ind = k.getIndicator(candles, v)
+			i.IndiMap[k.ToKey(v...)] = ind.Calculate(index)
 			continue
 		}
 		for _, window := range v {

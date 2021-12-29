@@ -59,24 +59,21 @@ func (n IndicatorName) getIndicator(ts *ta.TimeSeries, param interface{}) ta.Ind
 		windows := param.([]int)
 		if len(windows) < 2 {
 			return ta.NewConstantIndicator(float64(0))
-		} else {
-			sort.Slice(windows, func(i, j int) bool {
-				return windows[i] < windows[j]
-			})
-			return ta.NewDifferenceIndicator(ta.NewEMAIndicator(ta.NewClosePriceIndicator(ts), windows[0]), ta.NewEMAIndicator(ta.NewClosePriceIndicator(ts), windows[1]))
 		}
+		sort.Slice(windows, func(i, j int) bool {
+			return windows[i] < windows[j]
+		})
+		return ta.NewDifferenceIndicator(ta.NewEMAIndicator(ta.NewClosePriceIndicator(ts), windows[0]), ta.NewEMAIndicator(ta.NewClosePriceIndicator(ts), windows[1]))
 	case HMACD:
 		windows := param.([]int)
 		if len(windows) < 3 {
 			return ta.NewConstantIndicator(float64(0))
-		} else {
-			sort.Slice(windows, func(i, j int) bool {
-				return windows[i] < windows[j]
-			})
-			macd := ta.NewDifferenceIndicator(ta.NewEMAIndicator(ta.NewClosePriceIndicator(ts), windows[0]), ta.NewEMAIndicator(ta.NewClosePriceIndicator(ts), windows[2]))
-			return ta.NewDifferenceIndicator(macd, ta.NewEMAIndicator(macd, windows[1]))
 		}
-
+		sort.Slice(windows, func(i, j int) bool {
+			return windows[i] < windows[j]
+		})
+		macd := ta.NewDifferenceIndicator(ta.NewEMAIndicator(ta.NewClosePriceIndicator(ts), windows[0]), ta.NewEMAIndicator(ta.NewClosePriceIndicator(ts), windows[2]))
+		return ta.NewDifferenceIndicator(macd, ta.NewEMAIndicator(macd, windows[1]))
 	default:
 		return ta.NewConstantIndicator(float64(0))
 	}
