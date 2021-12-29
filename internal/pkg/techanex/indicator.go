@@ -18,6 +18,10 @@ func NewDefaultIndicatorConfigs() IndicatorConfigs {
 	configs[BBU] = []int{26, 50}
 	configs[BBL] = []int{26, 50}
 	configs[ATR] = []int{10}
+	configs[RSI] = []int{14}
+	configs[STO] = []int{14}
+	configs[MACD] = []int{9, 26}
+	configs[HMACD] = []int{9, 12, 26}
 	return configs
 }
 
@@ -29,10 +33,10 @@ type Indicator struct {
 func NewIndicator(period ta.TimePeriod, configs IndicatorConfigs) *Indicator {
 	inds := make(map[string]big.Decimal)
 	for k, v := range configs {
-		if len(v) == 0 {
-			inds[k.ToString()] = big.ZERO
+		if len(v) == 0 || k == MACD || k == HMACD {
+			inds[k.ToKey(v...)] = big.ZERO
+			continue
 		}
-		// if v != 0, it won't iterate this, why?
 		for _, window := range v {
 			inds[k.ToKey(window)] = big.ZERO
 		}
@@ -46,8 +50,9 @@ func NewIndicator(period ta.TimePeriod, configs IndicatorConfigs) *Indicator {
 func (i *Indicator) Calculate(configs IndicatorConfigs, candles *ta.TimeSeries, index int) {
 	for k, v := range configs {
 		var ind ta.Indicator
-		if len(v) == 0 {
-			ind = k.getIndicator(candles, 0)
+		if len(v) == 0 || k == MACD || k == HMACD {
+			ind = k.getIndicator(candles, v)
+			continue
 		}
 		for _, window := range v {
 			ind = k.getIndicator(candles, window)
@@ -95,8 +100,9 @@ func (is *IndicatorSeries) newIndicatorsFromCandleSeries(s *ta.TimeSeries) bool 
 	}
 	inds := map[string]ta.Indicator{}
 	for k, v := range is.Configs {
-		if len(v) == 0 {
-			inds[k.ToString()] = k.getIndicator(s, 0)
+		if len(v) == 0 || k == MACD || k == HMACD {
+			inds[k.ToKey(v...)] = k.getIndicator(s, v)
+			continue
 		}
 		for _, window := range v {
 			inds[k.ToKey(window)] = k.getIndicator(s, window)
@@ -105,8 +111,9 @@ func (is *IndicatorSeries) newIndicatorsFromCandleSeries(s *ta.TimeSeries) bool 
 	for index := 0; index < len(s.Candles); index++ {
 		i := NewIndicator(s.Candles[index].Period, is.Configs)
 		for k, v := range is.Configs {
-			if len(v) == 0 {
-				i.IndiMap[k.ToString()] = inds[k.ToString()].Calculate(index)
+			if len(v) == 0 || k == MACD || k == HMACD {
+				i.IndiMap[k.ToKey(v...)] = inds[k.ToKey(v...)].Calculate(index)
+				continue
 			}
 			for _, window := range v {
 				i.IndiMap[k.ToKey(window)] = inds[k.ToKey(window)].Calculate(index)

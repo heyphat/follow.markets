@@ -51,7 +51,11 @@
           "ExponentialMovingAverage": [99, 200],
           "BollingerUpperBand": [26, 50],
           "BollingerLowerBand": [26, 50],
-          "AverageTrueRage": [10]
+          "AverageTrueRage": [10],
+          "RelativeStrengthIndex": [14],
+          "Stochastic": [14],
+          "MACD": [9, 26],
+          "MACDHistogram": [9, 12, 26]
         }
       }
     },

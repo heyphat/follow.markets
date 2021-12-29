@@ -111,10 +111,10 @@ func (s Signal) Description() string {
 	return strings.Join(out, "\n")
 }
 
-// IsOnTrade returns if a strategy is valid in term of trade evaluation support.
-// A valid trade strategy is the one which has conditions only on `s.Trade` or condition
-// groups only on `s.Trade`. Currently the system doesn't support a strategy which
-// is a combination of `Candle` and `Trade` or `Indicator` and `Trade`.
+// IsOnTrade returns true if a strategy is valid. A valid trade strategy is the one
+// which has conditions only on `s.Trade` or condition groups only on `s.Trade`.
+// Currently it doesn't support a is a combined strategy of `Candle` and `Trade`
+// or `Indicator` and `Trade`.
 func (s Signal) IsOnTrade() bool {
 	for _, c := range s.Conditions {
 		if err := c.validate(); err != nil {
@@ -193,8 +193,9 @@ func (s Signal) GetPeriods() []time.Duration {
 	return periods
 }
 
-// encodeNotify returns float64 ranging from -1 to 1 depends on signal notification options.
-// the meaning values only from 0 to 1, -1 means given data is wrong and won't be accepted.
+// encodeNotify returns float64 ranging from -1 to 1 depends on signal notification option.
+// the valid values ranges from 0 to 1,
+// -1 means given data is wrong and won't be accepted.
 // 0 means only send once.
 // 1 means send all the time the signal is valid.
 // 0 -> 1 means some where between the given time period.
