@@ -41,7 +41,7 @@ func test(w http.ResponseWriter, req *http.Request) {
 	nw := time.Now()
 	end = &nw
 	if rs, ok := parseOptions(opts, "start"); ok && len(rs) > 0 {
-		if st, err := strconv.Atoi(rs[0]); err == nil {
+		if st, err := strconv.Atoi(rs[0]); err != nil {
 			logger.Error.Println(err)
 		} else {
 			start = &[]time.Time{time.Unix(int64(st), 0)}[0]
