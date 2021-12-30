@@ -6,7 +6,6 @@ import (
 	"time"
 
 	ta "github.com/itsphat/techan"
-
 	"github.com/sdcoffey/big"
 
 	"follow.markets/internal/pkg/runner"
@@ -180,11 +179,13 @@ func (c *Comparable) mapIndicator(id *tax.Indicator) (big.Decimal, bool) {
 	if id == nil {
 		return big.ZERO, false
 	}
-	window, ok := c.Indicator.Config["window"]
-	if !ok {
-		return big.ZERO, false
+	var indiName string
+	if window, ok := c.Indicator.Config["window"]; !ok {
+		indiName = c.Indicator.Name
+	} else {
+		indiName = c.Indicator.Name + "-" + strconv.Itoa(int(window))
 	}
-	if v, ok := id.IndiMap[c.Indicator.Name+"-"+strconv.Itoa(int(window))]; ok {
+	if v, ok := id.IndiMap[indiName]; ok {
 		return v, ok
 	}
 	return big.ZERO, false
