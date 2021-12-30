@@ -68,7 +68,7 @@ func NewRunner(name string, configs *RunnerConfigs) *Runner {
 		configs = NewRunnerDefaultConfigs()
 	}
 	lines := make(map[time.Duration]*tax.Series, len(configs.LFrames))
-	lines[time.Minute] = tax.NewSeries(configs.IConfigs)
+	//lines[time.Minute] = tax.NewSeries(configs.IConfigs)
 	for _, frame := range configs.LFrames {
 		lines[frame] = tax.NewSeries(configs.IConfigs)
 	}
