@@ -111,6 +111,9 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	}
 }
 
+//func (n *notifier) processTesterRequest(msg *message) {
+//}
+
 // notify sends tele message to all chatIDs for a given content.
 func (n *notifier) notify(content string) {
 	for _, cid := range n.chatIDs {
