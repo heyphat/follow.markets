@@ -2,7 +2,6 @@ package strategy
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
@@ -56,7 +55,6 @@ func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 		return false
 	}
 	for _, c := range s.Conditions {
-		fmt.Println(c)
 		if !c.evaluate(r, t) {
 			return false
 		}
