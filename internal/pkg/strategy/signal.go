@@ -2,6 +2,7 @@ package strategy
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -55,6 +56,7 @@ func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 		return false
 	}
 	for _, c := range s.Conditions {
+		fmt.Println(c)
 		if !c.evaluate(r, t) {
 			return false
 		}
@@ -120,8 +122,8 @@ func (s Signal) IsOnTrade() bool {
 		if err := c.validate(); err != nil {
 			return false
 		}
-		if c.This.Trade == nil || c.That.Trade == nil {
-			return false
+		if c.This.Trade != nil || c.That.Trade != nil {
+			return true
 		}
 	}
 	for _, g := range s.ConditionGroups {
@@ -130,11 +132,11 @@ func (s Signal) IsOnTrade() bool {
 				return false
 			}
 			if c.This.Trade != nil || c.That.Trade != nil {
-				return false
+				return true
 			}
 		}
 	}
-	return true
+	return false
 }
 
 // IsOnetime returns true if the signal is valid for only one time check.

@@ -127,14 +127,15 @@ func (g *ConditionGroup) evaluate(r *runner.Runner, t *tax.Trade) bool {
 				return false
 			}
 		}
+		return true
 	case Or:
 		for _, c := range g.Conditions {
 			if c.evaluate(r, t) {
 				return true
 			}
 		}
+		return false
 	default:
 		return false
 	}
-	return true
 }
