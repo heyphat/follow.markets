@@ -3,3 +3,4 @@ configs/test_results/*
 configs/signals/*
 
 internal/cmd/market/test_result
+scripts/dev
