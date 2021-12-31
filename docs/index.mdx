@@ -1,0 +1,22 @@
+# About
+
+This project was born because I found it hard to
+1. constantly keep track of the market movements based on a set of configurable conditions/rules which is called `signal` within the scope of this project.
+2. quickly validate trading strategies with absolutely zero coding skill. When a strategy pops up in my head, just configure it and execute the backtest request.
+3. effectively trade the markets with validated & profitable strategies. 
+
+# Installation
+
+The easist way is to pull the docker image `phat/follow.markets` and from doceker hub and update the `configs/configs.json`  file with your personal credentials and likings then run this command 
+
+```
+docker run -d --rm --name follow.markets \
+  -p some_port:some_port \
+  -v $(pwd)/configs/configs.json:/configs/configs.json \
+  -v $(pwd)/configs/test_results:/configs/test_results \
+  phat/follow.markets:latest
+```
+
+change the `port` to match with your settings in the `configs/configs.json` file.
+
+If you use amd64-architecture machine or want to build it from the code, you can run the `scripts/build` to build docker images.
