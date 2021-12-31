@@ -1,0 +1,13 @@
+#!/bin/bash
+
+TELEGRAM_BOT_TOKEN=
+CHAT_ID=
+ENDPOINT=localhost:6868/ping
+
+if [ $(curl $ENDPOINT) != "pong" ]
+then
+  curl -X POST \
+       -H 'Content-Type: application/json' \
+       -d '{"chat_id": "REPLACE_CHAT_ID", "text": "Server is down"}' \
+       https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage
+fi

@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"follow.market/internal/pkg/runner"
-	tax "follow.market/internal/pkg/techanex"
+	"follow.markets/internal/pkg/runner"
+	tax "follow.markets/internal/pkg/techanex"
+	"follow.markets/pkg/util"
 	ta "github.com/itsphat/techan"
 )
 
@@ -110,17 +111,17 @@ func (s Signal) Description() string {
 	return strings.Join(out, "\n")
 }
 
-// IsOnTrade returns if a strategy is valid in term of trade evaluation support.
-// A valid trade strategy is the one which has conditions only on `s.Trade` or condition
-// groups only on `s.Trade`. Currently the system doesn't support a strategy which
-// is a combination of `Candle` and `Trade` or `Indicator` and `Trade`.
+// IsOnTrade returns true if a strategy is valid. A valid trade strategy is the one
+// which has conditions only on `s.Trade` or condition groups only on `s.Trade`.
+// Currently it doesn't support a is a combined strategy of `Candle` and `Trade`
+// or `Indicator` and `Trade`.
 func (s Signal) IsOnTrade() bool {
 	for _, c := range s.Conditions {
 		if err := c.validate(); err != nil {
 			return false
 		}
-		if c.This.Trade == nil || c.That.Trade == nil {
-			return false
+		if c.This.Trade != nil || c.That.Trade != nil {
+			return true
 		}
 	}
 	for _, g := range s.ConditionGroups {
@@ -129,11 +130,11 @@ func (s Signal) IsOnTrade() bool {
 				return false
 			}
 			if c.This.Trade != nil || c.That.Trade != nil {
-				return false
+				return true
 			}
 		}
 	}
-	return true
+	return false
 }
 
 // IsOnetime returns true if the signal is valid for only one time check.
@@ -166,8 +167,35 @@ func (s Signal) Side(side ta.OrderSide) ta.OrderSide {
 	}
 }
 
-// encodeNotify returns float64 ranging from -1 to 1 depends on signal notification options.
-// the meaning values only from 0 to 1, -1 means given data is wrong and won't be accepted.
+func (s Signal) GetPeriods() []time.Duration {
+	var periods []time.Duration
+	for _, c := range s.Conditions {
+		if !util.DurationSliceContains(periods, time.Duration(c.This.TimePeriod)*time.Second) {
+			periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+		}
+		if !util.DurationSliceContains(periods, time.Duration(c.That.TimePeriod)*time.Second) {
+			periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+		}
+	}
+	for _, g := range s.ConditionGroups {
+		if g == nil {
+			continue
+		}
+		for _, c := range g.Conditions {
+			if !util.DurationSliceContains(periods, time.Duration(c.This.TimePeriod)*time.Second) {
+				periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+			}
+			if !util.DurationSliceContains(periods, time.Duration(c.That.TimePeriod)*time.Second) {
+				periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+			}
+		}
+	}
+	return periods
+}
+
+// encodeNotify returns float64 ranging from -1 to 1 depends on signal notification option.
+// the valid values ranges from 0 to 1,
+// -1 means given data is wrong and won't be accepted.
 // 0 means only send once.
 // 1 means send all the time the signal is valid.
 // 0 -> 1 means some where between the given time period.

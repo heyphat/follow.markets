@@ -9,10 +9,10 @@ import (
 
 	tele "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
-	"follow.market/internal/pkg/strategy"
-	"follow.market/pkg/config"
-	"follow.market/pkg/log"
-	"follow.market/pkg/util"
+	"follow.markets/internal/pkg/strategy"
+	"follow.markets/pkg/config"
+	"follow.markets/pkg/log"
+	"follow.markets/pkg/util"
 )
 
 type notifier struct {
@@ -38,14 +38,14 @@ func newNotifier(participants *sharedParticipants, configs *config.Configs) (*no
 		return nil, errors.New("missing shared participants")
 	}
 	var chatIDs []int64
-	for _, id := range configs.Telegram.ChatIDs {
+	for _, id := range configs.Market.Notifier.Telegram.ChatIDs {
 		if iid, err := strconv.Atoi(id); err != nil {
 			return nil, err
 		} else {
 			chatIDs = append(chatIDs, int64(iid))
 		}
 	}
-	bot, err := tele.NewBotAPI(configs.Telegram.BotToken)
+	bot, err := tele.NewBotAPI(configs.Market.Notifier.Telegram.BotToken)
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +110,9 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 		}
 	}
 }
+
+//func (n *notifier) processTesterRequest(msg *message) {
+//}
 
 // notify sends tele message to all chatIDs for a given content.
 func (n *notifier) notify(content string) {

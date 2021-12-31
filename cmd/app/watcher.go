@@ -2,13 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 
-	tax "follow.market/internal/pkg/techanex"
+	tax "follow.markets/internal/pkg/techanex"
 )
 
 func watchlist(w http.ResponseWriter, req *http.Request) {
@@ -44,13 +46,8 @@ func watch(w http.ResponseWriter, req *http.Request) {
 }
 
 func last(w http.ResponseWriter, req *http.Request) {
-	str, ok := mux.Vars(req)["ticker"]
+	strs, ok := parseVars(mux.Vars(req), "ticker")
 	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	strs := strings.Split(str, ",")
-	if len(strs) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -65,6 +62,41 @@ func last(w http.ResponseWriter, req *http.Request) {
 		Indicators tax.IndicatorsJSON `json:"indicators"`
 	}
 	bts, err := json.Marshal(candles{Candles: clast, Indicators: ilast})
+	if err != nil {
+		logger.Error.Println(err)
+		InternalError(w)
+		return
+	}
+	header := w.Header()
+	header.Set("Content-Length", strconv.Itoa(len(bts)))
+	w.WriteHeader(http.StatusOK)
+	w.Write(bts)
+}
+
+func synced(w http.ResponseWriter, req *http.Request) {
+	strs, ok := parseVars(mux.Vars(req), "ticker")
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	ticker := strs[0]
+	strs, ok = parseVars(mux.Vars(req), "frame")
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	fmt.Println(strs)
+	frame, err := strconv.Atoi(strs[0])
+	if err != nil {
+		logger.Error.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	isSynced := market.IsSynced(ticker, time.Duration(frame)*time.Minute)
+	type out struct {
+		Result bool `json:"is_synced"`
+	}
+	bts, err := json.Marshal(out{Result: isSynced})
 	if err != nil {
 		logger.Error.Println(err)
 		InternalError(w)

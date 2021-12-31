@@ -6,11 +6,11 @@ import (
 	"regexp"
 	"time"
 
-	"follow.market/pkg/config"
+	"follow.markets/pkg/config"
 	bn "github.com/adshao/go-binance/v2"
 	ta "github.com/itsphat/techan"
 
-	tax "follow.market/internal/pkg/techanex"
+	tax "follow.markets/internal/pkg/techanex"
 )
 
 const (
@@ -23,42 +23,8 @@ type provider struct {
 
 func newProvider(configs *config.Configs) *provider {
 	return &provider{
-		binSpot: bn.NewClient(configs.Markets.Binance.APIKey, configs.Markets.Binance.SecretKey),
+		binSpot: bn.NewClient(configs.Market.Provider.Binance.APIKey, configs.Market.Provider.Binance.SecretKey),
 	}
-}
-
-func (p *provider) fetchBinanceKlines(ticker string, d time.Duration) ([]*ta.Candle, error) {
-	re, _ := regexp.Compile(timeFramePattern)
-	limit := 1000  // binance limit per request
-	iteration := 6 // minute candle need to be fetched multiple times
-	interval := re.FindString(d.String())
-	end := int64(time.Now().Unix() * 1000) // 1000 is second to millisecond
-	start := end - int64(limit*60000)
-	if d > time.Minute*15 && d < time.Hour*24 {
-		iteration = 1
-		start = end - (d * time.Duration(limit)).Milliseconds()
-	} else if d >= time.Hour*24 {
-		interval = "1d"
-		iteration = 1
-		start = end - (d * time.Duration(limit)).Milliseconds()
-	}
-	var service *bn.KlinesService
-	var klines []*bn.Kline
-	for i := 0; i < iteration; i++ {
-		service = p.binSpot.NewKlinesService().Symbol(ticker).Interval(interval).StartTime(start).EndTime(end).Limit(limit)
-		kls, err := service.Do(context.Background())
-		if err != nil {
-			return nil, err
-		}
-		klines = append(kls, klines...)
-		end = start
-		start = end - int64(limit*60000)
-	}
-	var candles []*ta.Candle
-	for _, kline := range klines {
-		candles = append(candles, tax.ConvertBinanceKline(kline, &d))
-	}
-	return candles, nil
 }
 
 func (p *provider) fetchBinanceKlinesV2(ticker string, d time.Duration, start, end time.Time) ([]*ta.Candle, error) {
@@ -90,7 +56,17 @@ func (p *provider) fetchBinanceKlinesV2(ticker string, d time.Duration, start, e
 	return candles, nil
 }
 
-func (p *provider) fetchBinanceKlinesV3(ticker string, d time.Duration) ([]*ta.Candle, error) {
+type fetchOptions struct {
+	limit int
+	start *time.Time
+	end   *time.Time
+}
+
+func (p *provider) fetchBinanceKlinesV3(ticker string, d time.Duration, opt *fetchOptions) ([]*ta.Candle, error) {
+	lmt := 1000
+	if opt != nil && opt.limit > 0 && opt.limit <= 1000 {
+		lmt = opt.limit
+	}
 	re, _ := regexp.Compile(timeFramePattern)
 	interval := re.FindString(d.String())
 	if d >= time.Hour*24 {
@@ -99,11 +75,21 @@ func (p *provider) fetchBinanceKlinesV3(ticker string, d time.Duration) ([]*ta.C
 	if d == time.Minute*10 {
 		interval = "5m"
 	}
-	end := time.Now()
-	service := p.binSpot.NewKlinesService().Symbol(ticker).Interval(interval).EndTime(end.Unix() * 1000).Limit(1000)
-	klines, err := service.Do(context.Background())
-	if err != nil {
-		return nil, err
+	end := time.Now().Unix() * 1000
+	if opt != nil && opt.end != nil {
+		end = opt.end.Unix() * 1000
+	}
+	var klines []*bn.Kline
+	for len(klines) < lmt || (opt.start != nil && len(klines) > 0 && klines[0].OpenTime > opt.start.Unix()*1000) {
+		service := p.binSpot.NewKlinesService().Symbol(ticker).Interval(interval).EndTime(end).Limit(lmt)
+		kls, err := service.Do(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		klines = append(kls, klines...)
+		if len(kls) > 0 {
+			end = kls[0].CloseTime
+		}
 	}
 	var candles []*ta.Candle
 	for _, kline := range klines {

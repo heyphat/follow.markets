@@ -8,7 +8,7 @@ import (
 
 	ta "github.com/itsphat/techan"
 
-	tax "follow.market/internal/pkg/techanex"
+	tax "follow.markets/internal/pkg/techanex"
 )
 
 var (
@@ -68,7 +68,7 @@ func NewRunner(name string, configs *RunnerConfigs) *Runner {
 		configs = NewRunnerDefaultConfigs()
 	}
 	lines := make(map[time.Duration]*tax.Series, len(configs.LFrames))
-	lines[time.Minute] = tax.NewSeries(configs.IConfigs)
+	//lines[time.Minute] = tax.NewSeries(configs.IConfigs)
 	for _, frame := range configs.LFrames {
 		lines[frame] = tax.NewSeries(configs.IConfigs)
 	}
@@ -80,14 +80,14 @@ func NewRunner(name string, configs *RunnerConfigs) *Runner {
 }
 
 // validateFrame returns true if the given duration for a line is acceptable.
-func (r *Runner) validateFrame(d time.Duration) bool {
-	for _, duration := range acceptedFrames {
-		if duration == d {
-			return true
-		}
-	}
-	return false
-}
+//func (r *Runner) validateFrame(d time.Duration) bool {
+//	for _, duration := range acceptedFrames {
+//		if duration == d {
+//			return true
+//		}
+//	}
+//	return false
+//}
 
 // GetLines returns a line of type tax.Series based on the given time frame.
 func (r *Runner) GetLines(d time.Duration) (*tax.Series, bool) { k, v := r.lines[d]; return k, v }
@@ -149,4 +149,14 @@ func (r *Runner) Initialize(series *ta.TimeSeries, d *time.Duration) bool {
 		return false
 	}
 	return line.SyncCandles(series, d)
+}
+
+// Validate the given frame
+func ValidateFrame(d time.Duration) bool {
+	for _, duration := range acceptedFrames {
+		if duration == d {
+			return true
+		}
+	}
+	return false
 }

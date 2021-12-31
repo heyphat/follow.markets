@@ -45,7 +45,10 @@ var (
 		"FIXED", "OPEN", "CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_COUNT",
 		"LOW_HIGH", "OPEN_CLOSE", "OPEN_HIGH", "OPEN_LOW", "HIGH_CLOSE", "LOW_CLOSE",
 	}
+
 	tradeLevels = []string{
 		"USD_VOLUME", "VOLUME", "PRICE", "FIXED",
 	}
+
+	AcceptablePeriods = []int64{60, 180, 300, 900, 1800, 3600, 7200, 14400, 86400}
 )

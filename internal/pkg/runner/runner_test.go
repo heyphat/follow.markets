@@ -8,7 +8,7 @@ import (
 	ta "github.com/itsphat/techan"
 	"github.com/stretchr/testify/assert"
 
-	tax "follow.market/internal/pkg/techanex"
+	tax "follow.markets/internal/pkg/techanex"
 )
 
 func Test_NewRunner(t *testing.T) {

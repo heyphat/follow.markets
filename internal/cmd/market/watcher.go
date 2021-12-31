@@ -4,12 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
-	"follow.market/internal/pkg/runner"
-	"follow.market/pkg/log"
+	"follow.markets/internal/pkg/runner"
+	"follow.markets/pkg/log"
 	ta "github.com/itsphat/techan"
 
-	tax "follow.market/internal/pkg/techanex"
+	tax "follow.markets/internal/pkg/techanex"
 )
 
 type watcher struct {
@@ -74,7 +75,28 @@ func (w *watcher) isWatchingOn(ticker string) bool {
 	return valid
 }
 
-// watch initializes the process to add a ticker to the watchlist. The process keep
+// isSynced returns whether the ticker is correctly synced with the market data on the given time frame.
+// It only checks if the last candle held timestamp is the latest one compared to the current time.
+func (w *watcher) isSynced(ticker string, duration time.Duration) bool {
+	if time.Now().Sub(time.Now().Truncate(duration)) <= time.Minute {
+		return true
+	}
+	last := w.lastCandles(ticker)
+	if len(last) == 0 {
+		return false
+	}
+	for _, c := range last {
+		if c.Period.End.Sub(c.Period.Start) != duration {
+			continue
+		}
+		if time.Now().Truncate(duration).Unix() == c.Period.Start.Unix() {
+			return true
+		}
+	}
+	return false
+}
+
+// watch initializes the process to add a ticker to the watchlist. It keeps
 // watching the ticker by comsuming the 1-minute candle and trade information boardcasted
 // from the streamer.
 func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
@@ -90,7 +112,7 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
 		tChann: make(chan *tax.Trade, 10),
 	}
 	for _, f := range m.runner.GetConfigs().LFrames {
-		candles, err := w.provider.fetchBinanceKlinesV3(ticker, f)
+		candles, err := w.provider.fetchBinanceKlinesV3(ticker, f, &fetchOptions{limit: 500})
 		if err != nil {
 			return err
 		}
@@ -165,7 +187,7 @@ func (w *watcher) lastIndicators(ticker string) []*tax.Indicator {
 }
 
 // connect connects the watcher to other market participants py listening to
-// decicated channels for the communication.
+// decicated channels for communication.
 func (w *watcher) connect() {
 	w.Lock()
 	defer w.Unlock()

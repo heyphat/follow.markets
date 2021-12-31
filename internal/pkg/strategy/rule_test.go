@@ -7,7 +7,7 @@ import (
 	"github.com/sdcoffey/big"
 	"github.com/stretchr/testify/assert"
 
-	tax "follow.market/internal/pkg/techanex"
+	tax "follow.markets/internal/pkg/techanex"
 )
 
 func Test_Rule(t *testing.T) {

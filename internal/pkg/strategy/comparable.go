@@ -6,12 +6,11 @@ import (
 	"time"
 
 	ta "github.com/itsphat/techan"
-
 	"github.com/sdcoffey/big"
 
-	"follow.market/internal/pkg/runner"
-	tax "follow.market/internal/pkg/techanex"
-	"follow.market/pkg/util"
+	"follow.markets/internal/pkg/runner"
+	tax "follow.markets/internal/pkg/techanex"
+	"follow.markets/pkg/util"
 )
 
 type Comparable struct {
@@ -62,6 +61,12 @@ func (c *Comparable) copy() *Comparable {
 func (c *Comparable) validate() error {
 	if c.Candle == nil && c.Indicator == nil && c.Trade == nil {
 		return errors.New("missing comparable values")
+	}
+	if !util.Int64SliceContains(AcceptablePeriods, int64(c.TimePeriod)) {
+		return errors.New("unknown time period")
+	}
+	if c.TimeFrame < 0 {
+		return errors.New("invalid time frame")
 	}
 	if c.Candle != nil && !util.StringSliceContains(candleLevels, string(c.Candle.Name)) {
 		return errors.New("invalid candle level")
@@ -174,11 +179,13 @@ func (c *Comparable) mapIndicator(id *tax.Indicator) (big.Decimal, bool) {
 	if id == nil {
 		return big.ZERO, false
 	}
-	window, ok := c.Indicator.Config["window"]
-	if !ok {
-		return big.ZERO, false
+	var indiName string
+	if window, ok := c.Indicator.Config["window"]; !ok {
+		indiName = c.Indicator.Name
+	} else {
+		indiName = c.Indicator.Name + "-" + strconv.Itoa(int(window))
 	}
-	if v, ok := id.IndiMap[c.Indicator.Name+"-"+strconv.Itoa(int(window))]; ok {
+	if v, ok := id.IndiMap[indiName]; ok {
 		return v, ok
 	}
 	return big.ZERO, false

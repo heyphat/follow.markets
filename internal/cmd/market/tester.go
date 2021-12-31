@@ -1,16 +1,18 @@
 package market
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/sdcoffey/big"
 
-	"follow.market/internal/pkg/runner"
-	"follow.market/internal/pkg/strategy"
-	tax "follow.market/internal/pkg/techanex"
-	"follow.market/pkg/log"
+	"follow.markets/internal/pkg/runner"
+	"follow.markets/internal/pkg/strategy"
+	tax "follow.markets/internal/pkg/techanex"
+	"follow.markets/pkg/log"
 	ta "github.com/itsphat/techan"
 )
 
@@ -37,21 +39,19 @@ type tmember struct {
 	strategy *strategy.Strategy
 }
 
-func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Strategy, start, end time.Time) (tmember, error) {
+func (t *tester) test(ticker string,
+	initBalance big.Decimal,
+	stg *strategy.Strategy,
+	start, end *time.Time,
+	file string) (tmember, error) {
 	if initBalance.LTE(big.ZERO) {
 		return tmember{}, errors.New("init balance has to be > 0")
 	}
-	if stg == nil {
-		return tmember{}, errors.New("missing trading strategy")
+	if stg == nil || stg.EntryRule == nil {
+		return tmember{}, errors.New("missing trading strategy or signal")
 	}
 	r := runner.NewRunner(ticker, &runner.RunnerConfigs{
-		LFrames: []time.Duration{
-			time.Minute * 15,
-			time.Minute * 30,
-			time.Minute * 60,
-			time.Hour * 4,
-			time.Hour * 24,
-		},
+		LFrames:  stg.EntryRule.Signal.GetPeriods(),
 		IConfigs: tax.NewDefaultIndicatorConfigs(),
 	})
 	mem := tmember{
@@ -60,8 +60,7 @@ func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Stra
 		balance:  initBalance,
 		strategy: stg.SetRunner(r),
 	}
-	//candles, err := t.provider.fetchBinanceKlinesV2(ticker, time.Minute*15, time.Now().Add(-time.Hour*24*7), time.Now())
-	candles, err := t.provider.fetchBinanceKlinesV2(ticker, time.Minute*15, start, end)
+	candles, err := t.provider.fetchBinanceKlinesV3(ticker, r.SmallestFrame(), &fetchOptions{start: start, end: end})
 	if err != nil {
 		return mem, err
 	}
@@ -89,6 +88,13 @@ func (t *tester) test(ticker string, initBalance big.Decimal, stg *strategy.Stra
 				ExecutionTime: c.Period.Start,
 			})
 		}
+	}
+	buffer := bytes.NewBufferString("")
+	logTrades := ta.LogTradesAnalysis{Writer: buffer}
+	_ = logTrades.Analyze(mem.record)
+	fmt.Println(logTrades)
+	if err := os.WriteFile(file, buffer.Bytes(), 0444); err != nil {
+		return mem, err
 	}
 	return mem, nil
 }
