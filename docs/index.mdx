@@ -13,13 +13,13 @@ The easist way is to pull the docker image `phat/follow.markets:latest` and from
 
 ```
 docker run -d --rm --name follow.markets \
-  -p port:port \
+  -p 6868:6868\
   -v $(pwd)/configs/configs.json:/configs/configs.json \
   -v $(pwd)/configs/test_results:/configs/test_results \
   phat/follow.markets:latest
 ```
 
-change the `port` flag to match with your setting of `server.port` in the `configs/configs.json` file.
+change the `port` flag to match with your setting of `server.port` in the `configs/configs.json` file if needed.
 
 If you use amd64-architecture machine or want to build it from the source code, you can run the `scripts/build` to build docker image.
 
