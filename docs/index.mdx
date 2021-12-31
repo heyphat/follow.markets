@@ -4,19 +4,27 @@ This project was born because I found it hard to
 1. constantly keep track of the market movements based on a set of configurable conditions/rules which is called `signal` within the scope of this project.
 2. quickly validate trading strategies with absolutely zero coding skill. When a strategy pops up in my head, just configure it and execute the backtest request.
 3. effectively trade the markets with validated & profitable strategies. 
-
+://hub.docker.com/repository/docker/phat/follow.markets 
 # Installation
 
-The easist way is to pull the docker image `phat/follow.markets` and from doceker hub and update the `configs/configs.json`  file with your personal credentials and likings then run this command 
+The easist way is to pull the docker image `phat/follow.markets:latest` and from doceker hub and update the `configs/configs.json`  file with your personal credentials and likings then run this command 
 
 ```
 docker run -d --rm --name follow.markets \
-  -p some_port:some_port \
+  -p port:port \
   -v $(pwd)/configs/configs.json:/configs/configs.json \
   -v $(pwd)/configs/test_results:/configs/test_results \
   phat/follow.markets:latest
 ```
 
-change the `port` to match with your settings in the `configs/configs.json` file.
+change the `port` flag to match with your setting of `server.port` in the `configs/configs.json` file.
 
-If you use amd64-architecture machine or want to build it from the code, you can run the `scripts/build` to build docker images.
+If you use amd64-architecture machine or want to build it from the source code, you can run the `scripts/build` to build docker image.
+
+# Configuration
+
+This part discusses only the mandatory configurations in the `configs/configs.json` file. For more information, refer to the docs [here](https://docs.follow.markets)
+
+1. Market data provider: `market.provider.binance`. The application targets crypto market at the moment and consumes data provided by Binance. You need to have the Binance account and get the keys, `apy_key` and `secret_key`. 
+
+2. Market notification system: `market.notifier.telegram`. Ask the [BotFather](https://core.telegram.org/bots) for a telegram `bot_token` if you don't know how to get it yet. And get you `chat_id` from the bot. Once your market `signal` is sucessfully evaluated, the bot will send you messages about it.
