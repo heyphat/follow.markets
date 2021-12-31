@@ -3,13 +3,13 @@
 This project was born because I found it hard to
 1. constantly keep track of the market movements based on a set of configurable conditions/rules which is called `signal` within the scope of this project.
 2. quickly validate trading strategies with absolutely zero coding skill. When a beautiful strategy pops up in my head, just configure it then execute the backtest request.
-3. effectively trade the markets with validated & profitable strategies. 
+3. easily trade the markets with my own validated & profitable strategies (not yet completed).
 
 So if you find yourself suffering the same pains I had, give it a shot. I would love to hear your thoughts about this.
 
 # Installation
 
-The easist way is to pull the docker image `phat/follow.markets:latest` and from the docker hub and update the `configs/configs.json`  file with your personal credentials and likings then run this command 
+The easist way is to pull the docker image `phat/follow.markets:latest` from the docker hub and update the `configs/configs.json`  file with your personal credentials and likings then run this command 
 
 ```
 docker run -d --rm --name follow.markets \
@@ -25,10 +25,19 @@ If you use amd64-architecture machine or want to build it from the source code, 
 
 # Configuration
 
-This part discusses only the mandatory configurations in the `configs/configs.json` file. For more information, refer to the docs [here](https://docs.follow.markets)
+This part discusses only the mandatory enviroment variables in the `configs/configs.json` file. For more information, refer to the docs [here](https://docs.follow.markets)
 
 1. Market data provider: `market.provider.binance`. The application targets crypto market at the moment and consumes data provided by Binance. You need to have a Binance account and get the keys, `apy_key` and `secret_key`. 
+2. Market notifier: `market.notifier.telegram`. Ask the [BotFather](https://core.telegram.org/bots) for a telegram `bot_token` if you don't know how to get it yet, then get your `chat_id` from the bot and add it to the `market.notifier.telegram.chat_ids` array. Once your market `signal` is sucessfully evaluated, the bot will send you messages about it.
+3. Visit the signal configurator [here](https://follow.markets) to craft your own signals.
+4. Market signal source path: `market.evaluator.signal.source_path`. Change the name of your signals, configured from the step `3`, to your target ticker, for example `BTCUSDT`. Place your signals into this directory. There is another way to apply signals, visit the [docs](https://docs.follow.markets) for more information.
 
-2. Market notification system: `market.notifier.telegram`. Ask the [BotFather](https://core.telegram.org/bots) for a telegram `bot_token` if you don't know how to get it yet. And get you `chat_id` from the bot. Once your market `signal` is sucessfully evaluated, the bot will send you messages about it.
+# Roadmap
 
-3. Visit the signal configurator [here](https://follow.markets) to craft your own signals and trade the markets.
+- [ ] To build the trader.
+- [ ] To add more indicators.
+- [ ] To integrate with the stock market.
+
+# Contributions
+
+Feel free to send PRs.
