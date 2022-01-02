@@ -254,6 +254,10 @@ func (m *MarketStruct) AddChatIDs(cids []int64) {
 	m.notifier.addChatIDs(cids)
 }
 
+func (m *MarketStruct) GetNotifications() map[string]time.Time {
+	return m.notifier.getNotifications()
+}
+
 // tester endpoints
 func (m *MarketStruct) Test(ticker string, balance float64, stg *strategy.Strategy, start, end *time.Time, file string) (*ta.TradingRecord, error) {
 	result, err := m.tester.test(ticker, big.NewDecimal(balance), stg, start, end, file)
