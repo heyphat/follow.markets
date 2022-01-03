@@ -11,6 +11,8 @@ func AvailableIndicators() []string {
 	return []string{
 		MA.ToString(),
 		VMA.ToString(),
+		LHMA.ToString(),
+		OCAMA.ToString(),
 		EMA.ToString(),
 		BBU.ToString(),
 		BBL.ToString(),
@@ -27,6 +29,8 @@ type IndicatorName string
 const (
 	MA    IndicatorName = "MovingAverge"
 	VMA   IndicatorName = "VolumeMovingAverage"
+	LHMA  IndicatorName = "LowHighChangeMovingAverage"
+	OCAMA IndicatorName = "OpenCloseAbsoluteChangeMovingAverage"
 	EMA   IndicatorName = "ExponentialMovingAverage"
 	BBU   IndicatorName = "BollingerUpperBand"
 	BBL   IndicatorName = "BollingerLowerBand"
@@ -45,6 +49,10 @@ func (n IndicatorName) getIndicator(ts *ta.TimeSeries, param interface{}) ta.Ind
 		return ta.NewSimpleMovingAverage(ta.NewClosePriceIndicator(ts), param.(int))
 	case VMA:
 		return ta.NewSimpleMovingAverage(ta.NewVolumeIndicator(ts), param.(int))
+	case LHMA:
+		return ta.NewSimpleMovingAverage(NewCandleLowHighChangeIndicator(ts), param.(int))
+	case OCAMA:
+		return ta.NewSimpleMovingAverage(NewCandleOpenCloseAbsoluteChange(ts), param.(int))
 	case BBU:
 		return ta.NewBollingerUpperBandIndicator(ta.NewClosePriceIndicator(ts), param.(int), 2)
 	case BBL:
