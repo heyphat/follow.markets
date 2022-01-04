@@ -142,6 +142,10 @@ func (c *Comparable) mapCandle(cd *ta.Candle) (big.Decimal, bool) {
 		return tax.HighClose(cd.MaxPrice, cd.ClosePrice), true
 	case CandleLowClose:
 		return tax.LowClose(cd.MinPrice, cd.ClosePrice), true
+	case CandleMidLowHigh:
+		return tax.MidPoint(cd.MinPrice, cd.MaxPrice), true
+	case CandleMidOpenClose:
+		return tax.MidPoint(cd.OpenPrice, cd.ClosePrice), true
 	case CandleFixed:
 		value, ok := c.Candle.Config["level"]
 		if !ok {

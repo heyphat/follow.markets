@@ -156,6 +156,7 @@ func (m *MarketStruct) initWatchlist() error {
 					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol, err.Error()))
 				}
 			}
+			time.Sleep(time.Second)
 		}
 	}
 	return nil
