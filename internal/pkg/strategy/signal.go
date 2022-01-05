@@ -12,10 +12,10 @@ import (
 )
 
 type Signal struct {
-	Name            string          `json:"name"`
-	Conditions      Conditions      `json:"conditions"`
-	ConditionGroups ConditionGroups `json:"condition_groups"`
-	TimePeriod      time.Duration   `json:"primary_period"`
+	Name       string        `json:"name"`
+	Groups     Groups        `json:"groups"`
+	Conditions Conditions    `json:"conditions"`
+	TimePeriod time.Duration `json:"primary_period"`
 
 	NotifyType string `json:"notify_type"`
 	TrackType  string `json:"track_type"`
@@ -42,7 +42,7 @@ func NewSignalFromBytes(bytes []byte) (*Signal, error) {
 			signal.TimePeriod = time.Second * time.Duration(c.This.TimePeriod)
 		}
 	}
-	for _, g := range signal.ConditionGroups {
+	for _, g := range signal.Groups {
 		if err := g.validate(); err != nil {
 			return nil, err
 		}
@@ -59,7 +59,7 @@ func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 			return false
 		}
 	}
-	for _, g := range s.ConditionGroups {
+	for _, g := range s.Groups {
 		if !g.evaluate(r, t) {
 			return false
 		}
@@ -71,7 +71,8 @@ func (s *Signal) copy() *Signal {
 	var ns Signal
 	ns.Name = s.Name
 	ns.Conditions = s.Conditions.copy()
-	ns.ConditionGroups = s.ConditionGroups.copy()
+	//ns.ConditionGroups = s.ConditionGroups.copy()
+	ns.Groups = s.Groups.copy()
 	ns.SignalType = s.SignalType
 	ns.TrackType = s.TrackType
 	ns.NotifyType = s.NotifyType
@@ -98,12 +99,14 @@ func (s Signal) Description() string {
 			thatFrame = (time.Duration(c.That.TimePeriod) * time.Second).String()
 		}
 	}
-	for _, g := range s.ConditionGroups {
-		for _, c := range g.Conditions {
-			if c.Msg != nil {
-				out = append(out, *c.Msg)
-				thisFrame = (time.Duration(c.This.TimePeriod) * time.Second).String()
-				thatFrame = (time.Duration(c.That.TimePeriod) * time.Second).String()
+	for _, cg := range s.Groups {
+		for _, g := range cg.Groups {
+			for _, c := range g.Conditions {
+				if c.Msg != nil {
+					out = append(out, *c.Msg)
+					thisFrame = (time.Duration(c.This.TimePeriod) * time.Second).String()
+					thatFrame = (time.Duration(c.That.TimePeriod) * time.Second).String()
+				}
 			}
 		}
 	}
@@ -124,13 +127,15 @@ func (s Signal) IsOnTrade() bool {
 			return true
 		}
 	}
-	for _, g := range s.ConditionGroups {
-		for _, c := range g.Conditions {
-			if err := c.validate(); err != nil {
-				return false
-			}
-			if c.This.Trade != nil || c.That.Trade != nil {
-				return true
+	for _, cgs := range s.Groups {
+		for _, g := range cgs.Groups {
+			for _, c := range g.Conditions {
+				if err := c.validate(); err != nil {
+					return false
+				}
+				if c.This.Trade != nil || c.That.Trade != nil {
+					return true
+				}
 			}
 		}
 	}
@@ -177,16 +182,18 @@ func (s Signal) GetPeriods() []time.Duration {
 			periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
 		}
 	}
-	for _, g := range s.ConditionGroups {
-		if g == nil {
-			continue
-		}
-		for _, c := range g.Conditions {
-			if !util.DurationSliceContains(periods, time.Duration(c.This.TimePeriod)*time.Second) {
-				periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+	for _, gs := range s.Groups {
+		for _, g := range gs.Groups {
+			if g == nil {
+				continue
 			}
-			if !util.DurationSliceContains(periods, time.Duration(c.That.TimePeriod)*time.Second) {
-				periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+			for _, c := range g.Conditions {
+				if !util.DurationSliceContains(periods, time.Duration(c.This.TimePeriod)*time.Second) {
+					periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+				}
+				if !util.DurationSliceContains(periods, time.Duration(c.That.TimePeriod)*time.Second) {
+					periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+				}
 			}
 		}
 	}

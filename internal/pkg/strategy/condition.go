@@ -84,8 +84,6 @@ type ConditionGroup struct {
 	Opt        *Operator  `json:"opt"`
 }
 
-type ConditionGroups []*ConditionGroup
-
 func (g *ConditionGroup) copy() *ConditionGroup {
 	var ng ConditionGroup
 	ng.Conditions = g.Conditions.copy()
@@ -93,13 +91,15 @@ func (g *ConditionGroup) copy() *ConditionGroup {
 	return &ng
 }
 
-func (gs ConditionGroups) copy() ConditionGroups {
-	var ngs ConditionGroups
-	for _, g := range gs {
-		ngs = append(ngs, g.copy())
-	}
-	return ngs
-}
+//type ConditionsGroups []*ConditionGroup
+
+//func (gs ConditionGroups) copy() ConditionGroups {
+//	var ngs ConditionGroups
+//	for _, g := range gs {
+//		ngs = append(ngs, g.copy())
+//	}
+//	return ngs
+//}
 
 func (g *ConditionGroup) validate() error {
 	if g.Opt == nil {
@@ -138,4 +138,67 @@ func (g *ConditionGroup) evaluate(r *runner.Runner, t *tax.Trade) bool {
 	default:
 		return false
 	}
+}
+
+type ConditionGroups struct {
+	Groups []*ConditionGroup `json:"condition_groups"`
+	Opt    *Operator         `json:"opt"`
+}
+
+func (gs ConditionGroups) copy() *ConditionGroups {
+	var ngs ConditionGroups
+	ngs.Opt = ngs.Opt.copy()
+	for _, g := range gs.Groups {
+		ngs.Groups = append(ngs.Groups, g.copy())
+	}
+	return &ngs
+}
+
+func (gs *ConditionGroups) validate() error {
+	if gs.Opt == nil {
+		return errors.New("missing group operator")
+	}
+	if strings.ToLower(string(*gs.Opt)) != strings.ToLower(string(Or)) && strings.ToLower(string(*gs.Opt)) != strings.ToLower(string(And)) {
+		return errors.New("invalid group condition")
+	}
+	for _, g := range gs.Groups {
+		if err := g.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (gs *ConditionGroups) evaluate(r *runner.Runner, t *tax.Trade) bool {
+	if r == nil {
+		return false
+	}
+	switch *gs.Opt {
+	case And:
+		for _, g := range gs.Groups {
+			if !g.evaluate(r, t) {
+				return false
+			}
+		}
+		return true
+	case Or:
+		for _, g := range gs.Groups {
+			if g.evaluate(r, t) {
+				return true
+			}
+		}
+		return false
+	default:
+		return false
+	}
+}
+
+type Groups []*ConditionGroups
+
+func (gs Groups) copy() Groups {
+	var ngs Groups
+	for _, g := range gs {
+		ngs = append(ngs, g.copy())
+	}
+	return ngs
 }
