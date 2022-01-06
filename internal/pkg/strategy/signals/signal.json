@@ -26,7 +26,7 @@
   ],
   "groups": [
     {
-      "opt": "AND",
+      "opt": "OR",
       "condition_groups": [
         {
           "conditions": [
@@ -50,6 +50,32 @@
                   }
                 },
               "opt": "EQUAL"
+            }
+          ],
+          "opt": "AND"
+        },
+        {
+          "conditions": [
+            {
+              "this":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "multiplier": 1,
+                    "name": "CLOSE"
+                  }
+                },
+              "that":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "name": "CLOSE",
+                    "multiplier": 1
+                  }
+                },
+              "opt": "MORE"
             }
           ],
           "opt": "AND"
@@ -87,6 +113,5 @@
         }
       ]
     }
-
   ]
 }

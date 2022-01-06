@@ -1,7 +1,6 @@
 package strategy
 
 import (
-	"fmt"
 	"io/ioutil"
 	"testing"
 
@@ -15,7 +14,6 @@ func Test_Signal(t *testing.T) {
 	path := "./signals/signal.json"
 	raw, err := ioutil.ReadFile(path)
 	assert.EqualValues(t, nil, err)
-	fmt.Println(string(raw))
 
 	signal, err := NewSignalFromBytes(raw)
 	assert.EqualValues(t, nil, err)
@@ -52,16 +50,17 @@ func Test_Signal(t *testing.T) {
 		assert.EqualValues(t, true, ok)
 	}
 
-	for _, gs := range signal.Groups {
-		for _, g := range gs.Groups {
-			err := g.validate()
-			assert.EqualValues(t, nil, err)
+	for _, g := range signal.Groups {
+		err := g.validate()
+		assert.EqualValues(t, nil, err)
 
-			ok = g.evaluate(nil, nil)
-			assert.EqualValues(t, false, ok)
+		ok = g.evaluate(nil, nil)
+		assert.EqualValues(t, false, ok)
 
-			ok = g.evaluate(r, nil)
-			assert.EqualValues(t, true, ok)
-		}
+		ok = g.evaluate(r, nil)
+		assert.EqualValues(t, true, ok)
 	}
+
+	//newSignal := signal.copy()
+	//fmt.Println(signal, newSignal)
 }

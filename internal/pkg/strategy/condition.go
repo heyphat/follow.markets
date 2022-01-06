@@ -145,9 +145,9 @@ type ConditionGroups struct {
 	Opt    *Operator         `json:"opt"`
 }
 
-func (gs ConditionGroups) copy() *ConditionGroups {
+func (gs *ConditionGroups) copy() *ConditionGroups {
 	var ngs ConditionGroups
-	ngs.Opt = ngs.Opt.copy()
+	ngs.Opt = gs.Opt.copy()
 	for _, g := range gs.Groups {
 		ngs.Groups = append(ngs.Groups, g.copy())
 	}
