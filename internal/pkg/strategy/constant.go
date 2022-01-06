@@ -3,6 +3,8 @@ package strategy
 type CandleLevel string
 
 const (
+	CandleOpenTime     CandleLevel = "OPEN_TIME"
+	CandleCloseTime    CandleLevel = "CLOSE_TIME"
 	CandleFixed        CandleLevel = "FIXED"
 	CandleOpen         CandleLevel = "OPEN"
 	CandleClose        CandleLevel = "CLOSE"
@@ -44,7 +46,7 @@ const (
 var (
 	// indicator levels are defined in the techanex package in /internal/pkg/strategy/constant.go
 	candleLevels = []string{
-		"FIXED", "OPEN", "CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_COUNT", "MID_LOW_HIGH", "MID_OPEN_CLOSE",
+		"OPEN_TIME", "CLOSE_TIME", "FIXED", "OPEN", "CLOSE", "HIGH", "LOW", "VOLUME", "TRADE_COUNT", "MID_LOW_HIGH", "MID_OPEN_CLOSE",
 		"LOW_HIGH", "OPEN_CLOSE", "OPEN_HIGH", "OPEN_LOW", "HIGH_CLOSE", "LOW_CLOSE",
 	}
 

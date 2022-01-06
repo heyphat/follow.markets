@@ -146,6 +146,10 @@ func (c *Comparable) mapCandle(cd *ta.Candle) (big.Decimal, bool) {
 		return tax.MidPoint(cd.MinPrice, cd.MaxPrice), true
 	case CandleMidOpenClose:
 		return tax.MidPoint(cd.OpenPrice, cd.ClosePrice), true
+	case CandleOpenTime:
+		return big.NewFromInt(int(cd.Period.Start.Unix())), true
+	case CandleCloseTime:
+		return big.NewFromInt(int(cd.Period.End.Unix())), true
 	case CandleFixed:
 		value, ok := c.Candle.Config["level"]
 		if !ok {
