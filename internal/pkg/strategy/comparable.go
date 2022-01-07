@@ -85,10 +85,11 @@ func (c *Comparable) convertTimePeriod() time.Duration {
 }
 
 func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Decimal, bool) {
+	minFloatingPoints := 3
 	if c.Trade != nil {
 		val, ok := c.mapTrade(t)
 		val = val.Mul(c.Trade.parseMultiplier())
-		mess := "Trade: " + c.Trade.Name + "@" + val.FormattedString(2)
+		mess := "Trade: " + c.Trade.Name + "@" + val.FormattedString(minFloatingPoints)
 		return mess, val, ok
 	}
 	if r == nil {
@@ -101,13 +102,13 @@ func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Dec
 	if c.Candle != nil {
 		val, ok := c.mapCandle(line.CandleByIndex(len(line.Candles.Candles) - 1 - c.TimeFrame))
 		val = val.Mul(c.Candle.parseMultiplier())
-		mess := "Candle: " + c.Candle.Name + "@" + val.FormattedString(2)
+		mess := "Candle: " + c.Candle.Name + "@" + val.FormattedString(minFloatingPoints)
 		return mess, val.Mul(c.Candle.parseMultiplier()), ok
 	}
 	if c.Indicator != nil {
 		val, ok := c.mapIndicator(line.IndicatorByIndex(len(line.Indicators.Indicators) - 1 - c.TimeFrame))
 		val = val.Mul(c.Indicator.parseMultiplier())
-		mess := "Indicator: " + c.Indicator.Name + "@" + val.FormattedString(2)
+		mess := "Indicator: " + c.Indicator.Name + "@" + val.FormattedString(minFloatingPoints)
 		return mess, val.Mul(c.Indicator.parseMultiplier()), ok
 	}
 	return "", big.ZERO, false
