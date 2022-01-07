@@ -2,6 +2,8 @@ package strategy
 
 import (
 	"encoding/json"
+	"errors"
+	"sort"
 	"strings"
 	"time"
 
@@ -14,7 +16,6 @@ import (
 type Signal struct {
 	Name       string        `json:"name"`
 	Groups     Groups        `json:"groups"`
-	Conditions Conditions    `json:"conditions"`
 	TimePeriod time.Duration `json:"primary_period"`
 
 	NotifyType string `json:"notify_type"`
@@ -33,31 +34,22 @@ func NewSignalFromBytes(bytes []byte) (*Signal, error) {
 	if err != nil {
 		return nil, err
 	}
-	for i, c := range signal.Conditions {
-		if err := c.validate(); err != nil {
-			return nil, err
-		}
-		// TODO: need to find a better structure to parse the primary duration
-		if i == 0 {
-			signal.TimePeriod = time.Second * time.Duration(c.This.TimePeriod)
-		}
+	if len(signal.Groups) == 0 {
+		return nil, errors.New("not a valid signale")
 	}
 	for _, g := range signal.Groups {
 		if err := g.validate(); err != nil {
 			return nil, err
 		}
 	}
+	periods := signal.GetPeriods()
+	signal.TimePeriod = periods[0]
 	return &signal, err
 }
 
 func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 	if r == nil && t == nil {
 		return false
-	}
-	for _, c := range s.Conditions {
-		if !c.evaluate(r, t) {
-			return false
-		}
 	}
 	for _, g := range s.Groups {
 		if !g.evaluate(r, t) {
@@ -70,8 +62,6 @@ func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 func (s *Signal) copy() *Signal {
 	var ns Signal
 	ns.Name = s.Name
-	ns.Conditions = s.Conditions.copy()
-	//ns.ConditionGroups = s.ConditionGroups.copy()
 	ns.Groups = s.Groups.copy()
 	ns.SignalType = s.SignalType
 	ns.TrackType = s.TrackType
@@ -92,13 +82,6 @@ func (ss Signals) Copy() Signals {
 func (s Signal) Description() string {
 	var out []string
 	var thisFrame, thatFrame string
-	for _, c := range s.Conditions {
-		if c.Msg != nil {
-			out = append(out, *c.Msg)
-			thisFrame = (time.Duration(c.This.TimePeriod) * time.Second).String()
-			thatFrame = (time.Duration(c.That.TimePeriod) * time.Second).String()
-		}
-	}
 	for _, cg := range s.Groups {
 		for _, g := range cg.Groups {
 			for _, c := range g.Conditions {
@@ -119,14 +102,6 @@ func (s Signal) Description() string {
 // Currently it doesn't support a is a combined strategy of `Candle` and `Trade`
 // or `Indicator` and `Trade`.
 func (s Signal) IsOnTrade() bool {
-	for _, c := range s.Conditions {
-		if err := c.validate(); err != nil {
-			return false
-		}
-		if c.This.Trade != nil || c.That.Trade != nil {
-			return true
-		}
-	}
 	for _, cgs := range s.Groups {
 		for _, g := range cgs.Groups {
 			for _, c := range g.Conditions {
@@ -174,14 +149,6 @@ func (s Signal) Side(side ta.OrderSide) ta.OrderSide {
 
 func (s Signal) GetPeriods() []time.Duration {
 	var periods []time.Duration
-	for _, c := range s.Conditions {
-		if !util.DurationSliceContains(periods, time.Duration(c.This.TimePeriod)*time.Second) {
-			periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
-		}
-		if !util.DurationSliceContains(periods, time.Duration(c.That.TimePeriod)*time.Second) {
-			periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
-		}
-	}
 	for _, gs := range s.Groups {
 		for _, g := range gs.Groups {
 			if g == nil {
@@ -192,11 +159,14 @@ func (s Signal) GetPeriods() []time.Duration {
 					periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
 				}
 				if !util.DurationSliceContains(periods, time.Duration(c.That.TimePeriod)*time.Second) {
-					periods = append(periods, time.Duration(c.This.TimePeriod)*time.Second)
+					periods = append(periods, time.Duration(c.That.TimePeriod)*time.Second)
 				}
 			}
 		}
 	}
+	sort.Slice(periods, func(i, j int) bool {
+		return periods[i] < periods[j]
+	})
 	return periods
 }
 
