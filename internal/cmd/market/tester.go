@@ -93,6 +93,7 @@ func (t *tester) test(ticker string,
 	logTrades := ta.LogTradesAnalysis{Writer: buffer}
 	_ = logTrades.Analyze(mem.record)
 	fmt.Println(logTrades)
+	fmt.Println(mem.strategy.EntryRule.Signal.Description())
 	if err := os.WriteFile(file, buffer.Bytes(), 0444); err != nil {
 		return mem, err
 	}
