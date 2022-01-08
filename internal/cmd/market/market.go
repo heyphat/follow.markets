@@ -180,7 +180,7 @@ func (m *MarketStruct) initSignals() error {
 		if err != nil {
 			return err
 		}
-		tickers := `(?=(?<!(BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)`
+		tickers := `(?=(?<!(SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)`
 		m.evaluator.add([]string{tickers}, signal)
 	}
 	return nil
