@@ -35,7 +35,7 @@ func NewSignalFromBytes(bytes []byte) (*Signal, error) {
 		return nil, err
 	}
 	if len(signal.Groups) == 0 {
-		return nil, errors.New("not a valid signale")
+		return nil, errors.New("not a valid signal")
 	}
 	for _, g := range signal.Groups {
 		if err := g.validate(); err != nil {
@@ -101,21 +101,21 @@ func (s Signal) Description() string {
 // which has conditions only on `s.Trade` or condition groups only on `s.Trade`.
 // Currently it doesn't support a is a combined strategy of `Candle` and `Trade`
 // or `Indicator` and `Trade`.
-func (s Signal) IsOnTrade() bool {
-	for _, cgs := range s.Groups {
-		for _, g := range cgs.Groups {
-			for _, c := range g.Conditions {
-				if err := c.validate(); err != nil {
-					return false
-				}
-				if c.This.Trade != nil || c.That.Trade != nil {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
+//func (s Signal) IsOnTrade() bool {
+//	for _, cgs := range s.Groups {
+//		for _, g := range cgs.Groups {
+//			for _, c := range g.Conditions {
+//				if err := c.validate(); err != nil {
+//					return false
+//				}
+//				if c.This.Trade != nil || c.That.Trade != nil {
+//					return true
+//				}
+//			}
+//		}
+//	}
+//	return false
+//}
 
 // IsOnetime returns true if the signal is valid for only one time check.
 func (s Signal) IsOnetime() bool {
