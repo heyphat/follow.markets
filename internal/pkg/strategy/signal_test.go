@@ -50,7 +50,7 @@ func Test_Signal(t *testing.T) {
 		assert.EqualValues(t, true, ok)
 	}
 
-	for _, g := range signal.ConditionGroups {
+	for _, g := range signal.Groups {
 		err := g.validate()
 		assert.EqualValues(t, nil, err)
 
@@ -60,4 +60,7 @@ func Test_Signal(t *testing.T) {
 		ok = g.evaluate(r, nil)
 		assert.EqualValues(t, true, ok)
 	}
+
+	//newSignal := signal.copy()
+	//fmt.Println(signal, newSignal)
 }

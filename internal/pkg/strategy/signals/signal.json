@@ -24,32 +24,94 @@
     "opt": "EQUAL"
     }
   ],
-  "condition_groups": [
+  "groups": [
     {
-      "conditions": [
+      "opt": "OR",
+      "condition_groups": [
         {
-          "this":
+          "conditions": [
             {
-              "time_period": 60,
-              "time_frame": 0,
-              "candle": {
-                "multiplier": 1,
-                "name": "CLOSE"
-              }
-            },
-          "that":
+              "this":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "multiplier": 1,
+                    "name": "CLOSE"
+                  }
+                },
+              "that":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "name": "CLOSE",
+                    "multiplier": 1
+                  }
+                },
+              "opt": "EQUAL"
+            }
+          ],
+          "opt": "AND"
+        },
+        {
+          "conditions": [
             {
-              "time_period": 60,
-              "time_frame": 0,
-              "candle": {
-                "name": "CLOSE",
-                "multiplier": 1
-              }
-            },
-          "opt": "EQUAL"
+              "this":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "multiplier": 1,
+                    "name": "CLOSE"
+                  }
+                },
+              "that":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "name": "CLOSE",
+                    "multiplier": 1
+                  }
+                },
+              "opt": "MORE"
+            }
+          ],
+          "opt": "AND"
         }
-      ],
-      "opt": "AND"
+      ]
+    },
+    {
+      "opt": "AND",
+      "condition_groups": [
+        {
+          "conditions": [
+            {
+              "this":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "multiplier": 1,
+                    "name": "CLOSE"
+                  }
+                },
+              "that":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "name": "CLOSE",
+                    "multiplier": 1
+                  }
+                },
+              "opt": "EQUAL"
+            }
+          ],
+          "opt": "AND"
+        }
+      ]
     }
   ]
 }

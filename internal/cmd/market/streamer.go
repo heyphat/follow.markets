@@ -242,7 +242,7 @@ func (s *streamer) unsubscribe(name string) {
 
 func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 	klineHandler func(e *bn.WsKlineEvent)) chan struct{} {
-	errorHandler := func(err error) { s.logger.Error.Println(err) }
+	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())) }
 	go func(stopC chan struct{}) {
 		var err error
 		var done chan struct{}
@@ -260,8 +260,8 @@ func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 
 func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
 	tradeHandler func(e *bn.WsAggTradeEvent)) chan struct{} {
+	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())) }
 	go func(stopC chan struct{}) {
-		errorHandler := func(err error) { s.logger.Error.Println(err) }
 		var err error
 		var done chan struct{}
 		for {
