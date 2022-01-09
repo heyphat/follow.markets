@@ -43,6 +43,7 @@ func Test_MapDecimal(t *testing.T) {
 	ok = r.SyncCandle(candle2)
 	assert.EqualValues(t, true, ok)
 
+	// map candle test
 	_, val, ok := comparable.mapDecimal(r, nil)
 	assert.EqualValues(t, true, ok)
 	assert.EqualValues(t, "0.0", val.FormattedString(1))
@@ -56,4 +57,26 @@ func Test_MapDecimal(t *testing.T) {
 	_, val, ok = comparable.mapDecimal(r, nil)
 	assert.EqualValues(t, true, ok)
 	assert.EqualValues(t, "0.0", val.FormattedString(1))
+
+	/// map fundamental test
+	fundamental := runner.Fundamental{
+		MaxSupply:         10,
+		TotalSupply:       5,
+		CirculatingSupply: 2,
+	}
+	r.SetFundamental(&fundamental)
+
+	fundamentalComparable := ComparableObject{
+		Name:       "MARKET_CAP",
+		Multiplier: nil,
+	}
+	comparable = Comparable{
+		TimePeriod:  300,
+		TimeFrame:   1,
+		Fundamental: &fundamentalComparable,
+	}
+	_, val, ok = comparable.mapDecimal(r, nil)
+	assert.EqualValues(t, true, ok)
+	assert.EqualValues(t, "1.0", val.FormattedString(1))
+
 }

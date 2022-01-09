@@ -38,11 +38,11 @@ func (c *ComparableObject) parseMultiplier() big.Decimal {
 }
 
 type Comparable struct {
-	TimePeriod int               `json:"time_period"` // mustt be in second
-	TimeFrame  int               `json:"time_frame"`
-	Candle     *ComparableObject `json:"candle,omitempty"`
-	Indicator  *ComparableObject `json:"indicator,omitempty"`
-	//Trade      *ComparableObject `json:"trade",omitempty`
+	TimePeriod  int               `json:"time_period"` // mustt be in second
+	TimeFrame   int               `json:"time_frame"`
+	Candle      *ComparableObject `json:"candle,omitempty"`
+	Indicator   *ComparableObject `json:"indicator,omitempty"`
+	Fundamental *ComparableObject `json:"fundamental,omitempty"`
 }
 
 func (c *Comparable) copy() *Comparable {
@@ -52,9 +52,9 @@ func (c *Comparable) copy() *Comparable {
 	var nc Comparable
 	nc.TimePeriod = c.TimePeriod
 	nc.TimeFrame = c.TimeFrame
-	//nc.Trade = c.Trade.copy()
 	nc.Candle = c.Candle.copy()
 	nc.Indicator = c.Indicator.copy()
+	nc.Fundamental = c.Fundamental.copy()
 	return &nc
 }
 
@@ -63,7 +63,7 @@ func (c *Comparable) convertTimePeriod() time.Duration {
 }
 
 func (c *Comparable) validate() error {
-	if c.Candle == nil && c.Indicator == nil { // c.Trade == nil
+	if c.Candle == nil && c.Indicator == nil && c.Fundamental == nil { // c.Trade == nil
 		return errors.New("missing comparable values")
 	}
 	if !util.Int64SliceContains(AcceptablePeriods, int64(c.TimePeriod)) {
@@ -78,9 +78,9 @@ func (c *Comparable) validate() error {
 	if c.Indicator != nil && (!util.StringSliceContains(tax.AvailableIndicators(), string(c.Indicator.Name)) || len(c.Indicator.Config) == 0) {
 		return errors.New("invalid indicator name or config")
 	}
-	//if c.Trade != nil && !util.StringSliceContains(tradeLevels, string(c.Trade.Name)) {
-	//	return errors.New("invalid trade name")
-	//}
+	if c.Fundamental != nil && (!util.StringSliceContains(fundamentals, string(c.Fundamental.Name))) {
+		return errors.New("invalid fundamental name")
+	}
 	return nil
 }
 
@@ -105,15 +105,18 @@ func (c *Comparable) mapDecimal(r *runner.Runner, t *tax.Trade) (string, big.Dec
 	currentPeriod := line.Candles.LastCandle().Period
 	if c.Candle != nil {
 		val, ok := c.mapCandle(line.CandleByIndex(len(line.Candles.Candles)-1-c.TimeFrame), currentPeriod)
-		val = val.Mul(c.Candle.parseMultiplier())
 		mess := "Candle: " + c.Candle.Name + "@" + val.FormattedString(minFloatingPoints)
 		return mess, val.Mul(c.Candle.parseMultiplier()), ok
 	}
 	if c.Indicator != nil {
 		val, ok := c.mapIndicator(line.IndicatorByIndex(len(line.Indicators.Indicators)-1-c.TimeFrame), currentPeriod)
-		val = val.Mul(c.Indicator.parseMultiplier())
 		mess := "Indicator: " + c.Indicator.Name + "@" + val.FormattedString(minFloatingPoints)
 		return mess, val.Mul(c.Indicator.parseMultiplier()), ok
+	}
+	if c.Fundamental != nil && r != nil {
+		val, ok := c.mapFundamental(r)
+		mess := "Fundamental: " + c.Fundamental.Name + "@" + val.FormattedString(minFloatingPoints)
+		return mess, val.Mul(c.Fundamental.parseMultiplier()), ok
 	}
 	return "", big.ZERO, false
 }
@@ -140,6 +143,8 @@ func (c *Comparable) mapCandle(cd *ta.Candle, currentPeriod ta.TimePeriod) (big.
 		return cd.MinPrice, true
 	case CandleVolume:
 		return cd.Volume, true
+	case CandleUSDVolume:
+		return cd.Volume.Mul(cd.ClosePrice), true
 	case CandleTrade:
 		return big.NewFromInt(int(cd.TradeCount)), true
 	case CandleLowHigh:
@@ -190,6 +195,24 @@ func (c *Comparable) mapIndicator(id *tax.Indicator, currentPeriod ta.TimePeriod
 		return v, ok
 	}
 	return big.ZERO, false
+}
+
+func (c *Comparable) mapFundamental(r *runner.Runner) (big.Decimal, bool) {
+	if c == nil || r == nil {
+		return big.ZERO, false
+	}
+	switch Fundamental(c.Fundamental.Name) {
+	case FundMarketCap:
+		return r.GetCap(), true
+	case FundMaxSupply:
+		return r.GetMaxSupply(), true
+	case FundTotalSupply:
+		return r.GetTotalSupply(), true
+	case FundCirculatingSupply:
+		return r.GetFloat(), true
+	default:
+		return big.ZERO, false
+	}
 }
 
 //func (c *Comparable) mapTrade(td *tax.Trade) (big.Decimal, bool) {
