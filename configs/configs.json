@@ -26,6 +26,9 @@
       "alpaca": {
         "api_key": "your_key",
         "secret_key": "your_key"
+      },
+      "coinmarketcap": {
+        "api_key": "your_key"
       }
     },
     "notifier": {
@@ -38,6 +41,7 @@
       }
     },
     "watcher": {
+      "base_market": "USDT",
       "watchlist": [
        "(?=(?<!(SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)"
       ],
