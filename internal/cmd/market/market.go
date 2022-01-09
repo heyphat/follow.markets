@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"sync"
 	"time"
 
@@ -141,6 +142,10 @@ func (m *MarketStruct) initWatchlist() error {
 	if err != nil {
 		return err
 	}
+	listings, err := m.watcher.provider.fetchCoinFundamentals(m.configs.Market.Watcher.BaseMarket, 5000)
+	if err != nil {
+		m.watcher.logger.Error.Println(m.watcher.newLog("CMC", err.Error()))
+	}
 	for _, p := range m.configs.Market.Watcher.Watchlist {
 		re, err := regexp2.Compile(p, 0)
 		if err != nil {
@@ -152,7 +157,11 @@ func (m *MarketStruct) initWatchlist() error {
 				return err
 			}
 			if isMatched {
-				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs()); err != nil {
+				var fd *runner.Fundamental
+				if val, ok := listings[s.Symbol]; ok {
+					fd = &val
+				}
+				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs(), fd); err != nil {
 					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol, err.Error()))
 				}
 			}
@@ -179,7 +188,7 @@ func (m *MarketStruct) initSignals() error {
 		if err != nil {
 			return err
 		}
-		tickers := `(?=(?<!(SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)`
+		tickers := strings.Replace("(?=(?<!(SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?={base_market}$)", "{base_market}", m.configs.Market.Watcher.BaseMarket, 1)
 		m.evaluator.add([]string{tickers}, signal)
 	}
 	return nil
@@ -194,7 +203,7 @@ func (m *MarketStruct) connect() {
 
 // watcher endpoints
 func (m *MarketStruct) Watch(ticker string) error {
-	return m.watcher.watch(ticker, m.parseRunnerConfigs())
+	return m.watcher.watch(ticker+m.configs.Market.Watcher.BaseMarket, m.parseRunnerConfigs(), nil)
 }
 
 func (m *MarketStruct) Watchlist() []string {
