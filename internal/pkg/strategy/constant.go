@@ -35,6 +35,7 @@ const (
 type Fundamental string
 
 const (
+	FundFixed             Fundamental = "FIXED"
 	FundMarketCap         Fundamental = "MARKET_CAP"
 	FundMaxSupply         Fundamental = "MAX_SUPPLY"
 	FundTotalSupply       Fundamental = "TOTAL_SUPPLY"
@@ -61,11 +62,11 @@ var (
 	}
 
 	tradeLevels = []string{
-		"USD_VOLUME", "VOLUME", "PRICE", "FIXED",
+		"FIXED", "USD_VOLUME", "VOLUME", "PRICE",
 	}
 
 	fundamentals = []string{
-		"MARKET_CAP", "TOTAL_SUPPLY", "MAX_SUPPLY", "CIRCULATING_SUPPLY",
+		"FIXED", "MARKET_CAP", "TOTAL_SUPPLY", "MAX_SUPPLY", "CIRCULATING_SUPPLY",
 	}
 
 	AcceptablePeriods = []int64{60, 180, 300, 900, 1800, 3600, 7200, 14400, 86400}

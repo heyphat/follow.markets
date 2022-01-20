@@ -210,6 +210,12 @@ func (c *Comparable) mapFundamental(r *runner.Runner) (big.Decimal, bool) {
 		return r.GetTotalSupply(), true
 	case FundCirculatingSupply:
 		return r.GetFloat(), true
+	case FundFixed:
+		value, ok := c.Fundamental.Config["level"]
+		if !ok {
+			return big.ZERO, false
+		}
+		return big.NewDecimal(value), true
 	default:
 		return big.ZERO, false
 	}
