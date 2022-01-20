@@ -1,0 +1,120 @@
+{
+  "name": "sample",
+  "signal_type": "BULLISH",
+  "track_type": "CONTINUOUS",
+  "notify_type": "FIRST",
+  "conditions":
+  [
+    {
+    "this":
+      {
+        "time_period": 60,
+        "time_frame": 0,
+        "candle": {
+          "name": "CLOSE",
+          "multiplier": 1 
+        }
+      },
+    "that":
+      {
+        "time_period": 60,
+        "time_frame": 0,
+        "candle": {
+          "name": "CLOSE",
+          "multiplier": 1 
+        }
+      },
+    "opt": "EQUAL"
+    }
+  ],
+  "groups": [
+    {
+      "opt": "OR",
+      "condition_groups": [
+        {
+          "conditions": [
+            {
+              "this":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "multiplier": 1,
+                    "name": "CLOSE"
+                  }
+                },
+              "that":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "name": "CLOSE",
+                    "multiplier": 1
+                  }
+                },
+              "opt": "EQUAL"
+            }
+          ],
+          "opt": "AND"
+        },
+        {
+          "conditions": [
+            {
+              "this":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "multiplier": 1,
+                    "name": "CLOSE"
+                  }
+                },
+              "that":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "name": "CLOSE",
+                    "multiplier": 1
+                  }
+                },
+              "opt": "MORE"
+            }
+          ],
+          "opt": "AND"
+        }
+      ]
+    },
+    {
+      "opt": "AND",
+      "condition_groups": [
+        {
+          "conditions": [
+            {
+              "this":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "multiplier": 1,
+                    "name": "CLOSE"
+                  }
+                },
+              "that":
+                {
+                  "time_period": 60,
+                  "time_frame": 0,
+                  "candle": {
+                    "name": "CLOSE",
+                    "multiplier": 1
+                  }
+                },
+              "opt": "EQUAL"
+            }
+          ],
+          "opt": "AND"
+        }
+      ]
+    }
+  ]
+}
