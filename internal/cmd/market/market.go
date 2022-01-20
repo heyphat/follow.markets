@@ -142,7 +142,11 @@ func (m *MarketStruct) initWatchlist() error {
 	if err != nil {
 		return err
 	}
-	listings, err := m.watcher.provider.fetchCoinFundamentals(m.configs.Market.Watcher.BaseMarket, 5000)
+	limit := 1
+	if m.configs.IsProduction() {
+		limit = 5000
+	}
+	listings, err := m.watcher.provider.fetchCoinFundamentals(m.configs.Market.Watcher.BaseMarket, limit)
 	if err != nil {
 		m.watcher.logger.Error.Println(m.watcher.newLog("CMC", err.Error()))
 	}
