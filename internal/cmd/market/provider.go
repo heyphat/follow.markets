@@ -7,6 +7,7 @@ import (
 
 	"follow.markets/pkg/config"
 	bn "github.com/adshao/go-binance/v2"
+	bnf "github.com/adshao/go-binance/v2/futures"
 	ta "github.com/itsphat/techan"
 	cc "github.com/miguelmota/go-coinmarketcap/pro/v1"
 
@@ -26,6 +27,7 @@ type provider struct {
 func newProvider(configs *config.Configs) *provider {
 	return &provider{
 		binSpot: bn.NewClient(configs.Market.Provider.Binance.APIKey, configs.Market.Provider.Binance.SecretKey),
+		binFutu: bnf.NewClient(configs.Market.Provider.Binance.APIKey, configs.Market.Provider.Binance.SecretKey),
 		coinCap: cc.NewClient(&cc.Config{
 			ProAPIKey: configs.Market.Provider.CoinMarketCap.APIKey,
 		}),
