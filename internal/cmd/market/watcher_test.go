@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"follow.markets/internal/pkg/runner"
 	"follow.markets/pkg/config"
 )
 
@@ -30,7 +31,7 @@ func Test_Watcher(t *testing.T) {
 		}
 	}()
 
-	err = watcher.watch(ticker, nil, nil)
+	err = watcher.watch(ticker, runner.NewRunnerDefaultConfigs(), nil)
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, watcher.isConnected())
 	assert.EqualValues(t, true, watcher.isWatchingOn(ticker))
@@ -42,11 +43,11 @@ func Test_Watcher(t *testing.T) {
 		assert.EqualValues(t, true, ok)
 		switch d {
 		case time.Minute:
-			assert.EqualValues(t, 500, len(line.Candles.Candles))
+			assert.EqualValues(t, 499, len(line.Candles.Candles))
 		case time.Minute * 5:
-			assert.EqualValues(t, 500, len(line.Candles.Candles))
+			assert.EqualValues(t, 499, len(line.Candles.Candles))
 		case time.Minute * 15:
-			assert.EqualValues(t, 500, len(line.Candles.Candles))
+			assert.EqualValues(t, 499, len(line.Candles.Candles))
 		}
 	}
 }

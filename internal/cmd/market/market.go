@@ -2,6 +2,7 @@ package market
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -112,8 +113,11 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	return Market, nil
 }
 
-func (m *MarketStruct) parseRunnerConfigs() *runner.RunnerConfigs {
+func (m *MarketStruct) parseRunnerConfigs(market runner.MarketType) *runner.RunnerConfigs {
 	out := runner.NewRunnerDefaultConfigs()
+	if market == runner.Cash || market == runner.Futures {
+		out.Market = runner.MarketType(market)
+	}
 	frames := []time.Duration{}
 	if len(m.configs.Market.Watcher.Runner.Frames) > 0 {
 		for _, f := range m.configs.Market.Watcher.Runner.Frames {
@@ -142,6 +146,10 @@ func (m *MarketStruct) initWatchlist() error {
 	if err != nil {
 		return err
 	}
+	futuStats, err := m.watcher.provider.binFutu.NewListPriceChangeStatsService().Do(context.Background())
+	if err != nil {
+		return err
+	}
 	limit := 1
 	if m.configs.IsProduction() {
 		limit = 5000
@@ -165,8 +173,26 @@ func (m *MarketStruct) initWatchlist() error {
 				if val, ok := listings[s.Symbol]; ok {
 					fd = &val
 				}
-				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs(), fd); err != nil {
-					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol, err.Error()))
+				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs(runner.Cash), fd); err != nil {
+					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol+"-"+string(runner.Cash), err.Error()))
+				}
+			}
+		}
+		for _, s := range futuStats {
+			if len(strings.Split(s.Symbol, "_")) > 1 {
+				continue
+			}
+			isMatched, err := re.MatchString(s.Symbol)
+			if err != nil {
+				return err
+			}
+			if isMatched {
+				var fd *runner.Fundamental
+				if val, ok := listings[s.Symbol]; ok {
+					fd = &val
+				}
+				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs(runner.Futures), fd); err != nil {
+					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol+"-"+string(runner.Futures), err.Error()))
 				}
 			}
 		}
@@ -206,8 +232,12 @@ func (m *MarketStruct) connect() {
 }
 
 // watcher endpoints
-func (m *MarketStruct) Watch(ticker string) error {
-	return m.watcher.watch(ticker+m.configs.Market.Watcher.BaseMarket, m.parseRunnerConfigs(), nil)
+func (m *MarketStruct) Watch(ticker, market string) error {
+	mk, ok := runner.ValidateMarket(market)
+	if !ok {
+		return errors.New("unsupported market")
+	}
+	return m.watcher.watch(ticker+m.configs.Market.Watcher.BaseMarket, m.parseRunnerConfigs(mk), nil)
 }
 
 func (m *MarketStruct) Watchlist() []string {

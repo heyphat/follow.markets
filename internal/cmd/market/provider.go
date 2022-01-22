@@ -21,6 +21,7 @@ const (
 
 type provider struct {
 	binSpot *bn.Client
+	binFutu *bnf.Client
 	coinCap *cc.Client
 }
 
@@ -69,7 +70,7 @@ type fetchOptions struct {
 	end   *time.Time
 }
 
-func (p *provider) fetchBinanceKlinesV3(ticker string, d time.Duration, opt *fetchOptions) ([]*ta.Candle, error) {
+func (p *provider) fetchBinanceSpotKlinesV3(ticker string, d time.Duration, opt *fetchOptions) ([]*ta.Candle, error) {
 	lmt := 1000
 	if opt != nil && opt.limit > 0 && opt.limit <= 1000 {
 		lmt = opt.limit
@@ -101,6 +102,42 @@ func (p *provider) fetchBinanceKlinesV3(ticker string, d time.Duration, opt *fet
 	var candles []*ta.Candle
 	for _, kline := range klines {
 		candles = append(candles, tax.ConvertBinanceKline(kline, &d))
+	}
+	return candles, nil
+}
+
+func (p *provider) fetchBinanceFuturesKlinesV3(ticker string, d time.Duration, opt *fetchOptions) ([]*ta.Candle, error) {
+	lmt := 1000
+	if opt != nil && opt.limit > 0 && opt.limit <= 1000 {
+		lmt = opt.limit
+	}
+	re, _ := regexp.Compile(timeFramePattern)
+	interval := re.FindString(d.String())
+	if d >= time.Hour*24 {
+		interval = "1d"
+	}
+	if d == time.Minute*10 {
+		interval = "5m"
+	}
+	end := time.Now().Unix() * 1000
+	if opt != nil && opt.end != nil {
+		end = opt.end.Unix() * 1000
+	}
+	var klines []*bnf.Kline
+	for len(klines) < lmt || (opt.start != nil && len(klines) > 0 && klines[0].OpenTime > opt.start.Unix()*1000) {
+		service := p.binFutu.NewKlinesService().Symbol(ticker).Interval(interval).EndTime(end).Limit(lmt)
+		kls, err := service.Do(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		klines = append(kls, klines...)
+		if len(kls) > 0 {
+			end = kls[0].CloseTime
+		}
+	}
+	var candles []*ta.Candle
+	for _, kline := range klines {
+		candles = append(candles, tax.ConvertBinanceFuturesKline(kline, &d))
 	}
 	return candles, nil
 }
