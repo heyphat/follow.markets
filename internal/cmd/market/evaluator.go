@@ -171,7 +171,7 @@ func (e *evaluator) processingWatcherRequest(msg *message) {
 	signals := e.getByTicker(r.GetName())
 	for _, s := range signals {
 		if s.Evaluate(r, nil) {
-			e.communicator.evaluator2Notifier <- e.communicator.newMessageWithPayloadID(r.GetName()+"-"+s.Name, s, nil)
+			e.communicator.evaluator2Notifier <- e.communicator.newMessageWithPayloadID(r.GetUniqueName()+"-"+s.Name, s, nil)
 			if s.IsOnetime() {
 				_ = e.drop(s.Name)
 			}
