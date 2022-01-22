@@ -99,7 +99,7 @@ func (w *watcher) isSynced(ticker string, duration time.Duration) bool {
 // watch initializes the process to add a ticker to the watchlist. It keeps
 // watching the ticker by comsuming the 1-minute candle and trade information boardcasted
 // from the streamer.
-func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
+func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs, fd *runner.Fundamental) error {
 	if !w.connected {
 		w.connect()
 	}
@@ -110,6 +110,9 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
 		runner: runner.NewRunner(ticker, rc),
 		bChann: make(chan *ta.Candle, 3),
 		tChann: make(chan *tax.Trade, 10),
+	}
+	if fd != nil {
+		m.runner.SetFundamental(fd)
 	}
 	for _, f := range m.runner.GetConfigs().LFrames {
 		candles, err := w.provider.fetchBinanceKlinesV3(ticker, f, &fetchOptions{limit: 500})

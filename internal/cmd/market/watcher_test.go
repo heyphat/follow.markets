@@ -30,7 +30,7 @@ func Test_Watcher(t *testing.T) {
 		}
 	}()
 
-	err = watcher.watch(ticker, nil)
+	err = watcher.watch(ticker, nil, nil)
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, watcher.isConnected())
 	assert.EqualValues(t, true, watcher.isWatchingOn(ticker))
