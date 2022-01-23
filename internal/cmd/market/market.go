@@ -237,15 +237,29 @@ func (m *MarketStruct) Watch(ticker, market string) error {
 	if !ok {
 		return errors.New("unsupported market")
 	}
-	return m.watcher.watch(ticker+m.configs.Market.Watcher.BaseMarket, m.parseRunnerConfigs(mk), nil)
+	return m.watcher.watch(ticker, m.parseRunnerConfigs(mk), nil)
+}
+
+func (m *MarketStruct) Drop(ticker, market string) error {
+	mk, ok := runner.ValidateMarket(market)
+	if !ok {
+		return errors.New("unsupported market")
+	}
+	return m.watcher.drop(ticker, m.parseRunnerConfigs(mk))
 }
 
 func (m *MarketStruct) Watchlist() []string {
 	return m.watcher.watchlist()
 }
 
-func (m *MarketStruct) IsWatchingOn(ticker string) bool {
-	return m.watcher.isWatchingOn(ticker)
+func (m *MarketStruct) IsWatchingOn(ticker string, market string) bool {
+	mk, ok := runner.ValidateMarket(market)
+	if !ok {
+		return ok
+	}
+	rc := runner.NewRunnerDefaultConfigs()
+	rc.Market = mk
+	return m.watcher.isWatchingOn(runner.NewRunner(ticker, rc).GetUniqueName())
 }
 
 func (m *MarketStruct) LastCandles(ticker string) tax.CandlesJSON {
