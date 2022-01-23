@@ -170,6 +170,25 @@ func (w *watcher) await(mem wmember) {
 	}()
 }
 
+// drop removes the given ticker from the watchlist. It closes all the streaming channels.
+func (w *watcher) drop(ticker string, rc *runner.RunnerConfigs) error {
+	if rc == nil {
+		return errors.New("missing runner config")
+	}
+	w.Lock()
+	defer w.Unlock()
+	mem, ok := w.runners.Load(runner.NewRunner(ticker, rc).GetUniqueName())
+	if !ok {
+		return errors.New("runner not found")
+	}
+	r := mem.(wmember).runner
+	for !w.registerStreamingChannel(mem.(wmember)) {
+		w.logger.Error.Println(w.newLog(r.GetName(), "failed to deregister streaming data"))
+	}
+	w.runners.Delete(r.GetUniqueName())
+	return nil
+}
+
 // lastCandles returns all last candles from all time frames of a member in the watchlist
 func (w *watcher) lastCandles(ticker string) []*ta.Candle {
 	candles := make([]*ta.Candle, 0)
@@ -219,7 +238,7 @@ func (w *watcher) connect() {
 }
 
 // registerStreamingChannel registers the runners with the streamer in order to
-// recevie and consume candles broadcasted by data providor. Every time the Watch
+// recevie and consume candles broadcasted by data providor. Every time the drop
 // method is called and the ticker is vallid, it will invoke this method.
 func (w *watcher) registerStreamingChannel(mem wmember) bool {
 	doneStreamingRegister := false
@@ -232,6 +251,21 @@ func (w *watcher) registerStreamingChannel(mem wmember) bool {
 	}
 	return doneStreamingRegister
 }
+
+// deregisterStreamingChannel deregisters the runners with the streamer in order to
+// cancle streaming channels broadcasted by data providor. Every time the drop
+// method is called and the ticker is vallid, it will invoke this method.
+//func (w *watcher) deregisterStreamingChannel(mem wmember) bool {
+//	doneStreamingDeregister := false
+//	var maxTries int
+//	for !doneStreamingDeregister && maxTries <= 3 {
+//		resC := make(chan *payload)
+//		w.communicator.watcher2Streamer <- w.communicator.newMessage(mem, resC)
+//		doneStreamingDeregister = (<-resC).what.(bool)
+//		maxTries++
+//	}
+//	return doneStreamingDeregister
+//}
 
 // This processes the request from the streamer, currently the streamer only requests
 // for the `mem` channels in order to reinitialize the streaming data if necessary.

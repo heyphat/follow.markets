@@ -31,6 +31,7 @@ func Test_Watcher(t *testing.T) {
 		}
 	}()
 
+	// test watch runner
 	err = watcher.watch(ticker, runner.NewRunnerDefaultConfigs(), nil)
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, watcher.isConnected())
@@ -50,4 +51,10 @@ func Test_Watcher(t *testing.T) {
 			assert.EqualValues(t, 499, len(line.Candles.Candles))
 		}
 	}
+
+	// test drop runner
+	err = watcher.drop(ticker, runner.NewRunnerDefaultConfigs())
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, false, watcher.isWatchingOn(ticker))
+	assert.EqualValues(t, []string{}, watcher.watchlist())
 }
