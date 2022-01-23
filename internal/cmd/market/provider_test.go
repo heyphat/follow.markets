@@ -45,7 +45,7 @@ func Test_Provider(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, len(listings) == 1)
 
-	_, err := provider.binFutu.NewListPriceChangeStatsService().Do(context.Background())
+	_, err = provider.binFutu.NewListPriceChangeStatsService().Do(context.Background())
 	assert.EqualValues(t, nil, err)
 	//for _, s := range stats {
 	//	fmt.Println(fmt.Sprintf("%v", s.Symbol))
