@@ -101,7 +101,7 @@ func (e *evaluator) add(patterns []string, s *strategy.Signal) error {
 	return nil
 }
 
-// remove removes the given signal from the evaluator. After the removal, the singal won't be
+// drop removes the given signal from the evaluator. After the removal, the singal won't be
 // evaluated any longer.
 func (e *evaluator) drop(name string) error {
 	e.Lock()
