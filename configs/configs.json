@@ -43,7 +43,7 @@
     "watcher": {
       "base_market": "USDT",
       "watchlist": [
-       "(?=(?<!(SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)"
+       "(?=(?<!(USDP|SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)"
       ],
       "runner": {
         "frames": [

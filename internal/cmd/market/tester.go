@@ -60,7 +60,7 @@ func (t *tester) test(ticker string,
 		balance:  initBalance,
 		strategy: stg.SetRunner(r),
 	}
-	candles, err := t.provider.fetchBinanceKlinesV3(ticker, r.SmallestFrame(), &fetchOptions{start: start, end: end})
+	candles, err := t.provider.fetchBinanceSpotKlinesV3(ticker, r.SmallestFrame(), &fetchOptions{start: start, end: end})
 	if err != nil {
 		return mem, err
 	}

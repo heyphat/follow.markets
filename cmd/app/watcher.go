@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -31,12 +30,16 @@ func watchlist(w http.ResponseWriter, req *http.Request) {
 }
 
 func watch(w http.ResponseWriter, req *http.Request) {
-	str, ok := mux.Vars(req)["ticker"]
+	tickers, ok := parseVars(mux.Vars(req), "ticker")
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 	}
-	for _, t := range strings.Split(str, ",") {
-		if err := market.Watch(t); err != nil {
+	mk, ok := parseOptions(req.URL.Query(), "market")
+	if !ok {
+		mk = []string{"CASH"}
+	}
+	for _, t := range tickers {
+		if err := market.Watch(t, mk[0]); err != nil {
 			logger.Error.Println(err)
 			InternalError(w)
 			return
