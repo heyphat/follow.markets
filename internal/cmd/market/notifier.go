@@ -88,7 +88,7 @@ func (n *notifier) await() {
 			continue
 		}
 		go n.addChatIDs([]int64{update.Message.Chat.ID})
-		msg := tele.NewMessage(update.Message.Chat.ID, "You're all set.")
+		msg := tele.NewMessage(update.Message.Chat.ID, fmt.Sprintf("You're all set. Your chatID is %d.", update.Message.Chat.ID))
 		msg.ReplyToMessageID = update.Message.MessageID
 		n.bot.Send(msg)
 	}
