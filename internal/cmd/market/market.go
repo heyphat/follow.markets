@@ -102,9 +102,8 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 			for {
 				time.Sleep(time.Minute)
 				// the duration must be the time period that the watcher is watching on.
-				duration := time.Minute * 5
 				ticker := "BTCUSDT"
-				if synced := Market.IsSynced(ticker, duration); !synced {
+				if synced := Market.IsSynced(ticker, time.Minute*5); !synced {
 					Market.notifier.notify(fmt.Sprintf("%s is out of sync for %s", ticker, duration.String()))
 				}
 			}
