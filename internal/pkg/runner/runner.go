@@ -3,10 +3,12 @@ package runner
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
 	ta "github.com/itsphat/techan"
+	"github.com/sdcoffey/big"
 
 	tax "follow.markets/internal/pkg/techanex"
 )
@@ -32,6 +34,8 @@ func ChangeMaxSize(size int) {
 }
 
 type RunnerConfigs struct {
+	Asset    AssetClass
+	Market   MarketType
 	LFrames  []time.Duration
 	IConfigs tax.IndicatorConfigs
 }
@@ -50,17 +54,27 @@ func NewRunnerDefaultConfigs() *RunnerConfigs {
 		24 * time.Hour,
 	}
 	return &RunnerConfigs{
+		Asset:    Crypto,
+		Market:   Cash,
 		LFrames:  lineFrames,
 		IConfigs: tax.NewDefaultIndicatorConfigs(),
 	}
 }
 
+type Fundamental struct {
+	//cmcRank           int     `json:"cmc_rank"`
+	MaxSupply         float64 `json:"max_supply"`
+	TotalSupply       float64 `json:"total_supply"`
+	CirculatingSupply float64 `json:"circulating_supply"`
+}
+
 type Runner struct {
 	sync.Mutex
 
-	name    string
-	lines   map[time.Duration]*tax.Series
-	configs *RunnerConfigs
+	name        string
+	lines       map[time.Duration]*tax.Series
+	configs     *RunnerConfigs
+	fundamental *Fundamental
 }
 
 func NewRunner(name string, configs *RunnerConfigs) *Runner {
@@ -79,24 +93,69 @@ func NewRunner(name string, configs *RunnerConfigs) *Runner {
 	}
 }
 
-// validateFrame returns true if the given duration for a line is acceptable.
-//func (r *Runner) validateFrame(d time.Duration) bool {
-//	for _, duration := range acceptedFrames {
-//		if duration == d {
-//			return true
-//		}
-//	}
-//	return false
-//}
+// SetFundamental set the fundamental values to the runner.
+func (r *Runner) SetFundamental(fund *Fundamental) { r.fundamental = fund }
 
 // GetLines returns a line of type tax.Series based on the given time frame.
 func (r *Runner) GetLines(d time.Duration) (*tax.Series, bool) { k, v := r.lines[d]; return k, v }
 
-// GetConfigs returns the runner's configurations
+// GetConfigs returns the runner's configurations.
 func (r *Runner) GetConfigs() *RunnerConfigs { return r.configs }
 
-// GetName return the runner's name
+// GetName returns the runner's name.
 func (r *Runner) GetName() string { return r.name }
+
+// GetUniqueName returns the unique name for the runner.
+func (r *Runner) GetUniqueName() string {
+	switch r.configs.Market {
+	case Cash:
+		return r.name
+	case Futures:
+		return r.name + "PERP"
+	case Margin:
+		return r.name + "MARG"
+	default:
+		return r.name + strconv.Itoa(int(time.Now().Unix()))
+	}
+}
+
+// GetMarketType returns the runner market.
+func (r *Runner) GetMarketType() MarketType { return r.configs.Market }
+
+// GetCap return the current marketcap based on the current price of the runner.
+func (r *Runner) GetCap() big.Decimal {
+	if r == nil || r.fundamental == nil {
+		return big.ZERO
+	}
+	if candle := r.LastCandle(r.SmallestFrame()); candle != nil {
+		return candle.ClosePrice.Mul(big.NewDecimal(r.fundamental.TotalSupply))
+	}
+	return big.ZERO
+}
+
+// GetFloat returns the circulating supply of the runner.
+func (r *Runner) GetFloat() big.Decimal {
+	if r == nil || r.fundamental == nil {
+		return big.ZERO
+	}
+	return big.NewDecimal(r.fundamental.CirculatingSupply)
+}
+
+// GetTotalSupply returns the total supply of the runner.
+func (r *Runner) GetTotalSupply() big.Decimal {
+	if r == nil || r.fundamental == nil {
+		return big.ZERO
+	}
+	return big.NewDecimal(r.fundamental.TotalSupply)
+}
+
+// GetMaxSupply returns the max supply of the runner.
+func (r *Runner) GetMaxSupply() big.Decimal {
+	if r == nil || r.fundamental == nil {
+		return big.ZERO
+	}
+	return big.NewDecimal(r.fundamental.MaxSupply)
+}
 
 // SyncCandle aggregate the lines with the values of the given candle.
 // The syncing process will be different for different lines based on its frame.

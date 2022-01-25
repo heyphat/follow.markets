@@ -191,3 +191,53 @@ func Test_AddNewLineWithNewTimeSeries(t *testing.T) {
 		}
 	}
 }
+
+func Test_Fundamental(t *testing.T) {
+	configs := &RunnerConfigs{
+		LFrames: []time.Duration{
+			time.Minute,
+			5 * time.Minute,
+		},
+		IConfigs: tax.NewDefaultIndicatorConfigs(),
+	}
+	runner := NewRunner("BTCUSDT", configs)
+
+	kline := &bn.Kline{
+		OpenTime: 1499040000000,
+		Open:     "0.0",
+		High:     "0.8",
+		Low:      "0.01",
+		Close:    "0.2",
+		Volume:   "148976.1",
+		TradeNum: 308,
+	}
+
+	candle1 := tax.ConvertBinanceKline(kline, nil)
+
+	ok := runner.SyncCandle(candle1)
+	assert.EqualValues(t, true, ok)
+
+	candle2 := tax.ConvertBinanceKline(kline, nil)
+	candle2.Period.Start = candle2.Period.End
+	candle2.Period.End = candle2.Period.Start.Add(time.Minute)
+
+	ok = runner.SyncCandle(candle2)
+	assert.EqualValues(t, true, ok)
+
+	fundamental := Fundamental{
+		MaxSupply:         10,
+		TotalSupply:       5,
+		CirculatingSupply: 2,
+	}
+
+	mcap := runner.GetCap()
+	assert.EqualValues(t, "0.0", mcap.FormattedString(1))
+
+	runner.SetFundamental(fundamental)
+
+	mcap = runner.GetCap()
+	assert.EqualValues(t, "1.0", mcap.FormattedString(1))
+
+	float := runner.GetFloat()
+	assert.EqualValues(t, "2.0", float.FormattedString(1))
+}

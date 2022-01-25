@@ -64,5 +64,4 @@ func (c *communicator) newPayloadWithID(id string, data interface{}) *payload {
 		when: time.Now(),
 		what: data,
 	}
-
 }

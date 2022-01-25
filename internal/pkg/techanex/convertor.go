@@ -4,6 +4,7 @@ import (
 	"time"
 
 	bn "github.com/adshao/go-binance/v2"
+	bnf "github.com/adshao/go-binance/v2/futures"
 	ta "github.com/itsphat/techan"
 	"github.com/sdcoffey/big"
 )
@@ -35,7 +36,39 @@ func ConvertBinanceKline(kline *bn.Kline, duration *time.Duration) *ta.Candle {
 	return candle
 }
 
+func ConvertBinanceFuturesKline(kline *bnf.Kline, duration *time.Duration) *ta.Candle {
+	d := time.Minute
+	if duration != nil {
+		d = *duration
+	}
+	period := ta.NewTimePeriod(time.Unix(kline.OpenTime/1000, 0), d)
+	candle := ta.NewCandle(period)
+	candle.OpenPrice = big.NewFromString(kline.Open)
+	candle.ClosePrice = big.NewFromString(kline.Close)
+	candle.MaxPrice = big.NewFromString(kline.High)
+	candle.MinPrice = big.NewFromString(kline.Low)
+	candle.Volume = big.NewFromString(kline.Volume)
+	candle.TradeCount = uint(kline.TradeNum)
+	return candle
+}
+
 func ConvertBinanceStreamingKline(kline *bn.WsKlineEvent, duration *time.Duration) *ta.Candle {
+	d := time.Minute
+	if duration != nil {
+		d = *duration
+	}
+	period := ta.NewTimePeriod(time.Unix(kline.Kline.StartTime/1000, 0), d)
+	candle := ta.NewCandle(period)
+	candle.OpenPrice = big.NewFromString(kline.Kline.Open)
+	candle.ClosePrice = big.NewFromString(kline.Kline.Close)
+	candle.MaxPrice = big.NewFromString(kline.Kline.High)
+	candle.MinPrice = big.NewFromString(kline.Kline.Low)
+	candle.Volume = big.NewFromString(kline.Kline.Volume)
+	candle.TradeCount = uint(kline.Kline.TradeNum)
+	return candle
+}
+
+func ConvertBinanceFuturesStreamingKline(kline *bnf.WsKlineEvent, duration *time.Duration) *ta.Candle {
 	d := time.Minute
 	if duration != nil {
 		d = *duration
@@ -66,6 +99,15 @@ func ConvertBinanceStreamingAggTrade(t *bn.WsAggTradeEvent) *Trade {
 	trade.Quantity = big.NewFromString(t.Quantity)
 	trade.TradeTime = t.TradeTime
 	trade.IsBuyerMaker = t.IsBuyerMaker
+	return trade
+}
+
+func ConvertBinanceFrturesStreamingAggTrade(t *bnf.WsAggTradeEvent) *Trade {
+	trade := NewTrade()
+	trade.Price = big.NewFromString(t.Price)
+	trade.Quantity = big.NewFromString(t.Quantity)
+	trade.TradeTime = t.TradeTime
+	//trade.IsBuyerMaker = t.IsBuyerMaker
 	return trade
 }
 

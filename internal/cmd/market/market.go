@@ -2,8 +2,10 @@ package market
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"sync"
 	"time"
 
@@ -100,9 +102,8 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 			for {
 				time.Sleep(time.Minute)
 				// the duration must be the time period that the watcher is watching on.
-				duration := time.Minute * 5
 				ticker := "BTCUSDT"
-				if synced := Market.IsSynced(ticker, duration); !synced {
+				if synced := Market.IsSynced(ticker, time.Minute*5); !synced {
 					Market.notifier.notify(fmt.Sprintf("%s is out of sync for %s", ticker, duration.String()))
 				}
 			}
@@ -111,8 +112,11 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	return Market, nil
 }
 
-func (m *MarketStruct) parseRunnerConfigs() *runner.RunnerConfigs {
+func (m *MarketStruct) parseRunnerConfigs(market runner.MarketType) *runner.RunnerConfigs {
 	out := runner.NewRunnerDefaultConfigs()
+	if market == runner.Cash || market == runner.Futures {
+		out.Market = runner.MarketType(market)
+	}
 	frames := []time.Duration{}
 	if len(m.configs.Market.Watcher.Runner.Frames) > 0 {
 		for _, f := range m.configs.Market.Watcher.Runner.Frames {
@@ -141,6 +145,18 @@ func (m *MarketStruct) initWatchlist() error {
 	if err != nil {
 		return err
 	}
+	futuStats, err := m.watcher.provider.binFutu.NewListPriceChangeStatsService().Do(context.Background())
+	if err != nil {
+		return err
+	}
+	limit := 1
+	if m.configs.IsProduction() {
+		limit = 5000
+	}
+	listings, err := m.watcher.provider.fetchCoinFundamentals(m.configs.Market.Watcher.BaseMarket, limit)
+	if err != nil {
+		m.watcher.logger.Error.Println(m.watcher.newLog("CMC", err.Error()))
+	}
 	for _, p := range m.configs.Market.Watcher.Watchlist {
 		re, err := regexp2.Compile(p, 0)
 		if err != nil {
@@ -152,11 +168,32 @@ func (m *MarketStruct) initWatchlist() error {
 				return err
 			}
 			if isMatched {
-				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs()); err != nil {
-					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol, err.Error()))
+				var fd *runner.Fundamental
+				if val, ok := listings[s.Symbol]; ok {
+					fd = &val
+				}
+				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs(runner.Cash), fd); err != nil {
+					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol+"-"+string(runner.Cash), err.Error()))
 				}
 			}
-			time.Sleep(time.Second)
+		}
+		for _, s := range futuStats {
+			if len(strings.Split(s.Symbol, "_")) > 1 {
+				continue
+			}
+			isMatched, err := re.MatchString(s.Symbol)
+			if err != nil {
+				return err
+			}
+			if isMatched {
+				var fd *runner.Fundamental
+				if val, ok := listings[s.Symbol]; ok {
+					fd = &val
+				}
+				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs(runner.Futures), fd); err != nil {
+					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol+"-"+string(runner.Futures), err.Error()))
+				}
+			}
 		}
 	}
 	return nil
@@ -180,7 +217,7 @@ func (m *MarketStruct) initSignals() error {
 		if err != nil {
 			return err
 		}
-		tickers := `(?=(?<!(BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)`
+		tickers := strings.Replace("(?=(?<!(SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?={base_market}$)", "{base_market}", m.configs.Market.Watcher.BaseMarket, 1)
 		m.evaluator.add([]string{tickers}, signal)
 	}
 	return nil
@@ -194,16 +231,34 @@ func (m *MarketStruct) connect() {
 }
 
 // watcher endpoints
-func (m *MarketStruct) Watch(ticker string) error {
-	return m.watcher.watch(ticker, m.parseRunnerConfigs())
+func (m *MarketStruct) Watch(ticker, market string) error {
+	mk, ok := runner.ValidateMarket(market)
+	if !ok {
+		return errors.New("unsupported market")
+	}
+	return m.watcher.watch(ticker, m.parseRunnerConfigs(mk), nil)
+}
+
+func (m *MarketStruct) Drop(ticker, market string) error {
+	mk, ok := runner.ValidateMarket(market)
+	if !ok {
+		return errors.New("unsupported market")
+	}
+	return m.watcher.drop(ticker, m.parseRunnerConfigs(mk))
 }
 
 func (m *MarketStruct) Watchlist() []string {
 	return m.watcher.watchlist()
 }
 
-func (m *MarketStruct) IsWatchingOn(ticker string) bool {
-	return m.watcher.isWatchingOn(ticker)
+func (m *MarketStruct) IsWatchingOn(ticker string, market string) bool {
+	mk, ok := runner.ValidateMarket(market)
+	if !ok {
+		return ok
+	}
+	rc := runner.NewRunnerDefaultConfigs()
+	rc.Market = mk
+	return m.watcher.isWatchingOn(runner.NewRunner(ticker, rc).GetUniqueName())
 }
 
 func (m *MarketStruct) LastCandles(ticker string) tax.CandlesJSON {
@@ -252,6 +307,10 @@ func (m *MarketStruct) GetSingals(names []string) strategy.Signals {
 // notifier endpoints
 func (m *MarketStruct) AddChatIDs(cids []int64) {
 	m.notifier.addChatIDs(cids)
+}
+
+func (m *MarketStruct) GetNotifications() map[string]time.Time {
+	return m.notifier.getNotifications()
 }
 
 // tester endpoints

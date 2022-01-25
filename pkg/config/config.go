@@ -36,6 +36,9 @@ type Configs struct {
 				APIKey    string `json:"api_key"`
 				SecretKey string `json:"secret_key"`
 			} `json:"binance"`
+			CoinMarketCap struct {
+				APIKey string `json:"api_key"`
+			} `json:"coinmarketcap"`
 		} `json:"provider"`
 		Notifier struct {
 			Telegram struct {
@@ -44,8 +47,9 @@ type Configs struct {
 			} `json:"telegram"`
 		} `json:"notifier"`
 		Watcher struct {
-			Watchlist []string `json:"watchlist"`
-			Runner    struct {
+			BaseMarket string   `json:"base_market"`
+			Watchlist  []string `json:"watchlist"`
+			Runner     struct {
 				Frames     []int            `json:"frames"`
 				Indicators map[string][]int `json:"indicators"`
 			} `json:"runner"`
@@ -96,6 +100,9 @@ func NewConfigs(filePath *string) (*Configs, error) {
 	}
 	if len(configs.Datadog.Host) > 0 {
 		os.Setenv("DD_AGENT_HOST", configs.Datadog.Host)
+	}
+	if len(configs.Market.Watcher.BaseMarket) == 0 {
+		configs.Market.Watcher.BaseMarket = "USDT"
 	}
 	if len(configs.Market.Provider.Binance.APIKey) == 0 {
 		return &configs, errors.New("missing binance api key and secret")

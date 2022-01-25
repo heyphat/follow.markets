@@ -60,7 +60,7 @@ func (t *tester) test(ticker string,
 		balance:  initBalance,
 		strategy: stg.SetRunner(r),
 	}
-	candles, err := t.provider.fetchBinanceKlinesV3(ticker, r.SmallestFrame(), &fetchOptions{start: start, end: end})
+	candles, err := t.provider.fetchBinanceSpotKlinesV3(ticker, r.SmallestFrame(), &fetchOptions{start: start, end: end})
 	if err != nil {
 		return mem, err
 	}
@@ -93,6 +93,7 @@ func (t *tester) test(ticker string,
 	logTrades := ta.LogTradesAnalysis{Writer: buffer}
 	_ = logTrades.Analyze(mem.record)
 	fmt.Println(logTrades)
+	fmt.Println(mem.strategy.EntryRule.Signal.Description())
 	if err := os.WriteFile(file, buffer.Bytes(), 0444); err != nil {
 		return mem, err
 	}

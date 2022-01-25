@@ -101,7 +101,7 @@ func (e *evaluator) add(patterns []string, s *strategy.Signal) error {
 	return nil
 }
 
-// remove removes the given signal from the evaluator. After the removal, the singal won't be
+// drop removes the given signal from the evaluator. After the removal, the singal won't be
 // evaluated any longer.
 func (e *evaluator) drop(name string) error {
 	e.Lock()
@@ -171,7 +171,7 @@ func (e *evaluator) processingWatcherRequest(msg *message) {
 	signals := e.getByTicker(r.GetName())
 	for _, s := range signals {
 		if s.Evaluate(r, nil) {
-			e.communicator.evaluator2Notifier <- e.communicator.newMessageWithPayloadID(r.GetName()+"-"+s.Name, s, nil)
+			e.communicator.evaluator2Notifier <- e.communicator.newMessageWithPayloadID(r.GetUniqueName()+"-"+s.Name, s, nil)
 			if s.IsOnetime() {
 				_ = e.drop(s.Name)
 			}
