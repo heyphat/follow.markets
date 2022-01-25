@@ -76,7 +76,22 @@ func (n *notifier) connect() {
 			go n.processEvaluatorRequest(msg)
 		}
 	}()
+	go n.await()
 	n.connected = true
+}
+
+// await awaits for message from user to add chatID.
+func (n *notifier) await() {
+	updates := n.bot.GetUpdatesChan(tele.NewUpdate(0))
+	for update := range updates {
+		if update.Message == nil {
+			continue
+		}
+		go n.addChatIDs([]int64{update.Message.Chat.ID})
+		msg := tele.NewMessage(update.Message.Chat.ID, fmt.Sprintf("You're all set. Your chatID is %d.", update.Message.Chat.ID))
+		msg.ReplyToMessageID = update.Message.MessageID
+		n.bot.Send(msg)
+	}
 }
 
 // isConnected returns true if the notifier is connected to the system, false otherwise.

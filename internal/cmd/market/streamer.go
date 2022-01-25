@@ -114,7 +114,10 @@ func (s *streamer) processingWatcherRequest(msg *message) {
 	//defer s.Unlock()
 	m := msg.request.what.(wmember)
 	if s.isStreamingOn(m.runner.GetUniqueName(), WATCHER) {
-		s.logger.Info.Println(s.newLog(m.runner.GetUniqueName(), "already streaming this ticker"))
+		// TODO: this only works if streamer receives request from one market participant.
+		s.unsubscribe(m.runner.GetUniqueName())
+		close(m.bChann)
+		close(m.tChann)
 	} else {
 		// TODO: need to check if it is streaming for other participants
 		bChann := []chan *ta.Candle{m.bChann}
@@ -213,7 +216,7 @@ func (s *streamer) subscribe(
 	tChann []chan *tax.Trade) (chan struct{}, chan struct{}) {
 	s.Lock()
 	defer s.Unlock()
-	// cash types
+	// cash handlers
 	tradeHandler := func(event *bn.WsAggTradeEvent) {
 		for _, c := range tChann {
 			c <- tax.ConvertBinanceStreamingAggTrade(event)
@@ -227,7 +230,7 @@ func (s *streamer) subscribe(
 			c <- tax.ConvertBinanceStreamingKline(event, nil)
 		}
 	}
-	// futures types
+	// futures handlers
 	futuTradeHandler := func(event *bnf.WsAggTradeEvent) {
 		for _, c := range tChann {
 			c <- tax.ConvertBinanceFrturesStreamingAggTrade(event)
@@ -272,9 +275,9 @@ func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 	klineHandler func(e *bn.WsKlineEvent)) chan struct{} {
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())) }
 	go func(stopC chan struct{}) {
-		var err error
+		err := errors.New("not an error")
 		var done chan struct{}
-		for {
+		for err != nil {
 			done, stop, err = bn.WsKlineServe(name, "1m", klineHandler, errorHandler)
 			if err != nil {
 				s.logger.Error.Println(s.newLog(name, err.Error()))
@@ -290,9 +293,9 @@ func (s *streamer) streamingBinanceFuturesKline(name string, stop chan struct{},
 	klineHandler func(e *bnf.WsKlineEvent)) chan struct{} {
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())) }
 	go func(stopC chan struct{}) {
-		var err error
+		err := errors.New("not an error")
 		var done chan struct{}
-		for {
+		for err != nil {
 			done, stop, err = bnf.WsKlineServe(name, "1m", klineHandler, errorHandler)
 			if err != nil {
 				s.logger.Error.Println(s.newLog(name, err.Error()))
@@ -308,9 +311,9 @@ func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
 	tradeHandler func(e *bn.WsAggTradeEvent)) chan struct{} {
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())) }
 	go func(stopC chan struct{}) {
-		var err error
+		err := errors.New("not an error")
 		var done chan struct{}
-		for {
+		for err != nil {
 			done, stop, err = bn.WsAggTradeServe(name, tradeHandler, errorHandler)
 			if err != nil {
 				s.logger.Error.Println(s.newLog(name, err.Error()))
@@ -326,9 +329,9 @@ func (s *streamer) streamingBinanceFuturesTrade(name string, stop chan struct{},
 	tradeHandler func(e *bnf.WsAggTradeEvent)) chan struct{} {
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())) }
 	go func(stopC chan struct{}) {
-		var err error
+		err := errors.New("not an error")
 		var done chan struct{}
-		for {
+		for err != nil {
 			done, stop, err = bnf.WsAggTradeServe(name, tradeHandler, errorHandler)
 			if err != nil {
 				s.logger.Error.Println(s.newLog(name, err.Error()))
