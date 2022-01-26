@@ -11,7 +11,7 @@ So if you find yourself suffering the same pains I had, give it a shot. I would 
 
 # Installation
 
-The easist way is to pull the docker image `phat/follow.markets:latest` from the docker hub and update the `configs/configs.json`  file with your personal credentials and likings then run this command 
+The easist way is to pull the docker image `phat/follow.markets:latest` from the docker hub, clone this project and update the `configs/configs.json` file with your personal credentials and likings then run the docker command 
 
 ```
 docker run -d --rm --name follow.markets \
@@ -23,7 +23,7 @@ docker run -d --rm --name follow.markets \
 
 change the `port` flag to match with your setting of `server.port` in the `configs/configs.json` file if needed.
 
-If you use amd64-architecture machine or want to build it from the source code, you can run the `scripts/build` to build docker image.
+If you use amd64-architecture machine or want to build it from the source code, run the `scripts/build` to build docker image.
 
 # Configuration
 
@@ -32,7 +32,7 @@ This part discusses only the mandatory enviroment variables in the `configs/conf
 1. Market data provider: `market.provider.binance`. The application targets crypto market at the moment and consumes data provided by Binance. You need to have a Binance account and get the keys, `apy_key` and `secret_key`. 
 2. Market notifier: `market.notifier.telegram`. Ask the [BotFather](https://core.telegram.org/bots) for a telegram `bot_token` if you don't know how to get it yet, then get your `chat_id` from the bot and add it to the `market.notifier.telegram.chat_ids` array. Once your market `signal` is sucessfully evaluated, the bot will send you messages about it.
 3. Visit the signal configurator [here](https://follow.markets) to craft your own signals.
-4. Market signal source path: `market.evaluator.signal.source_path`. Change the name of your signals, configured from the step `3`, to your target ticker, for example `BTCUSDT`. Place your signals into this directory. There is another way to apply signals, visit the [docs](https://docs.follow.markets) for more information.
+4. Market signal source path: `market.evaluator.signal.source_path`. Place your signals into this directory before deployment. There is another way to add signals to the system, visit the [docs](https://docs.follow.markets) for more information.
 
 # Roadmap
 
