@@ -36,21 +36,7 @@ func Test_Signal(t *testing.T) {
 	ok = r.SyncCandle(candle1)
 	assert.EqualValues(t, true, ok)
 
-	for _, c := range signal.Conditions {
-		err := c.This.validate()
-		assert.EqualValues(t, nil, err)
-
-		err = c.That.validate()
-		assert.EqualValues(t, nil, err)
-
-		ok := c.evaluate(nil, nil)
-		assert.EqualValues(t, false, ok)
-
-		ok = c.evaluate(r, nil)
-		assert.EqualValues(t, true, ok)
-	}
-
-	for _, g := range signal.ConditionGroups {
+	for _, g := range signal.Groups {
 		err := g.validate()
 		assert.EqualValues(t, nil, err)
 
@@ -60,4 +46,7 @@ func Test_Signal(t *testing.T) {
 		ok = g.evaluate(r, nil)
 		assert.EqualValues(t, true, ok)
 	}
+
+	//newSignal := signal.copy()
+	//fmt.Println(signal, newSignal)
 }

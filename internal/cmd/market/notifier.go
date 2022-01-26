@@ -31,6 +31,8 @@ type notifier struct {
 type nmember struct {
 	id       string
 	lastSent time.Time
+	//runnerName   string
+	//strategyName string
 }
 
 func newNotifier(participants *sharedParticipants, configs *config.Configs) (*notifier, error) {
@@ -74,7 +76,22 @@ func (n *notifier) connect() {
 			go n.processEvaluatorRequest(msg)
 		}
 	}()
+	go n.await()
 	n.connected = true
+}
+
+// await awaits for message from user to add chatID.
+func (n *notifier) await() {
+	updates := n.bot.GetUpdatesChan(tele.NewUpdate(0))
+	for update := range updates {
+		if update.Message == nil {
+			continue
+		}
+		go n.addChatIDs([]int64{update.Message.Chat.ID})
+		msg := tele.NewMessage(update.Message.Chat.ID, fmt.Sprintf("You're all set. Your chatID is %d.", update.Message.Chat.ID))
+		msg.ReplyToMessageID = update.Message.MessageID
+		n.bot.Send(msg)
+	}
 }
 
 // isConnected returns true if the notifier is connected to the system, false otherwise.
@@ -91,9 +108,20 @@ func (n *notifier) addChatIDs(cids []int64) {
 	}
 }
 
+// getNotifications returns a list of notifications the notifier has sent.
+func (n *notifier) getNotifications() map[string]time.Time {
+	out := make(map[string]time.Time)
+	n.notis.Range(func(k, v interface{}) bool {
+		out[k.(string)] = v.(nmember).lastSent
+		return true
+	})
+	return out
+}
+
 func (n *notifier) processEvaluatorRequest(msg *message) {
 	s := msg.request.what.(*strategy.Signal)
 	mess := msg.request.id + "\n" + s.Description()
+	//names := strings.Split(msg.request.id, "-")
 	if s.IsOnetime() {
 		n.notify(mess)
 		return
@@ -101,12 +129,22 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	if val, ok := n.notis.Load(msg.request.id); !ok {
 		n.notify(mess)
 		n.notis.Store(msg.request.id,
-			nmember{id: msg.request.id, lastSent: time.Now().Add(-time.Minute)})
+			nmember{
+				id:       msg.request.id,
+				lastSent: time.Now().Add(-time.Minute),
+				//runnerName:   names[0],
+				//strategyName: names[1],
+			})
 	} else {
 		if s.ShouldSend(val.(nmember).lastSent) {
 			n.notify(mess)
 			n.notis.Store(msg.request.id,
-				nmember{id: msg.request.id, lastSent: time.Now().Add(-time.Minute)})
+				nmember{
+					id:       msg.request.id,
+					lastSent: time.Now().Add(-time.Minute),
+					//runnerName:   names[0],
+					//strategyName: names[1],
+				})
 		}
 	}
 }

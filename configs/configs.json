@@ -26,6 +26,9 @@
       "alpaca": {
         "api_key": "your_key",
         "secret_key": "your_key"
+      },
+      "coinmarketcap": {
+        "api_key": "your_key"
       }
     },
     "notifier": {
@@ -38,8 +41,9 @@
       }
     },
     "watcher": {
+      "base_market": "USDT",
       "watchlist": [
-       "(?=(?<!(BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)"
+       "(?=(?<!(USDP|SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)"
       ],
       "runner": {
         "frames": [
@@ -48,6 +52,8 @@
         "indicators": {
           "MovingAverge": [9, 26, 50],
           "VolumeMovingAverage": [200],
+          "LowHighChangeMovingAverage": [200],
+          "OpenCloseAbsoluteChangeMovingAverage": [200],
           "ExponentialMovingAverage": [99, 200],
           "BollingerUpperBand": [26, 50],
           "BollingerLowerBand": [26, 50],

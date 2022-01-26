@@ -15,7 +15,7 @@ import (
 )
 
 func Test_Strategy(t *testing.T) {
-	path := "./signals/strategy_test.json"
+	path := "./signals/signal.json"
 	raw, err := ioutil.ReadFile(path)
 	assert.EqualValues(t, nil, err)
 

@@ -46,6 +46,10 @@ func HighClose(high, closeP big.Decimal) big.Decimal {
 	return change(high, closeP)
 }
 
+func MidPoint(this, that big.Decimal) big.Decimal {
+	return this.Add(that).Div(big.NewDecimal(2.0))
+}
+
 type CandleJSON struct {
 	StartTime string `json:"st"`
 	EndTime   string `json:"et"`

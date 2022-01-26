@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -31,12 +30,37 @@ func watchlist(w http.ResponseWriter, req *http.Request) {
 }
 
 func watch(w http.ResponseWriter, req *http.Request) {
-	str, ok := mux.Vars(req)["ticker"]
+	tickers, ok := parseVars(mux.Vars(req), "ticker")
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
-	for _, t := range strings.Split(str, ",") {
-		if err := market.Watch(t); err != nil {
+	mk, ok := parseOptions(req.URL.Query(), "market")
+	if !ok {
+		mk = []string{"CASH"}
+	}
+	for _, t := range tickers {
+		if err := market.Watch(t, mk[0]); err != nil {
+			logger.Error.Println(err)
+			InternalError(w)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func dropRunner(w http.ResponseWriter, req *http.Request) {
+	tickers, ok := parseVars(mux.Vars(req), "ticker")
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	mk, ok := parseOptions(req.URL.Query(), "market")
+	if !ok {
+		mk = []string{"CASH"}
+	}
+	for _, t := range tickers {
+		if err := market.Drop(t, mk[0]); err != nil {
 			logger.Error.Println(err)
 			InternalError(w)
 			return
@@ -46,17 +70,26 @@ func watch(w http.ResponseWriter, req *http.Request) {
 }
 
 func last(w http.ResponseWriter, req *http.Request) {
-	strs, ok := parseVars(mux.Vars(req), "ticker")
+	tickers, ok := parseVars(mux.Vars(req), "ticker")
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if !market.IsWatchingOn(strs[0]) {
+	mk, ok := parseOptions(req.URL.Query(), "market")
+	if !ok {
+		mk = []string{"CASH"}
+	}
+	//strs, ok := parseVars(mux.Vars(req), "ticker")
+	//if !ok {
+	//	w.WriteHeader(http.StatusBadRequest)
+	//	return
+	//}
+	if !market.IsWatchingOn(tickers[0], mk[0]) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	clast := market.LastCandles(strs[0])
-	ilast := market.LastIndicators(strs[0])
+	clast := market.LastCandles(tickers[0])
+	ilast := market.LastIndicators(tickers[0])
 	type candles struct {
 		Candles    tax.CandlesJSON    `json:"candles"`
 		Indicators tax.IndicatorsJSON `json:"indicators"`

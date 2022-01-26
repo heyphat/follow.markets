@@ -29,9 +29,6 @@ func (gr GenericRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
 	if gr.runner == nil {
 		return false
 	}
-	if gr.Signal.IsOnTrade() {
-		return false
-	}
 	return gr.Signal.Evaluate(gr.runner, nil)
 }
 

@@ -7,8 +7,10 @@ import (
 	"time"
 
 	bn "github.com/adshao/go-binance/v2"
+	bnf "github.com/adshao/go-binance/v2/futures"
 	ta "github.com/itsphat/techan"
 
+	"follow.markets/internal/pkg/runner"
 	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/log"
 	"follow.markets/pkg/util"
@@ -42,6 +44,7 @@ func newStreamer(participants *sharedParticipants) (*streamer, error) {
 
 type controller struct {
 	name  string
+	uName string
 	from  []string
 	stops []chan struct{}
 }
@@ -110,17 +113,20 @@ func (s *streamer) processingWatcherRequest(msg *message) {
 	//s.Lock()
 	//defer s.Unlock()
 	m := msg.request.what.(wmember)
-	if s.isStreamingOn(m.runner.GetName(), WATCHER) {
-		s.logger.Info.Println(s.newLog(m.runner.GetName(), "already streaming this ticker"))
+	if s.isStreamingOn(m.runner.GetUniqueName(), WATCHER) {
+		// TODO: this only works if streamer receives request from one market participant.
+		s.unsubscribe(m.runner.GetUniqueName())
+		close(m.bChann)
+		close(m.tChann)
 	} else {
 		// TODO: need to check if it is streaming for other participants
 		bChann := []chan *ta.Candle{m.bChann}
 		tChann := []chan *tax.Trade{m.tChann}
 		from := []string{}
-		c := s.get(m.runner.GetName())
+		c := s.get(m.runner.GetUniqueName())
 		if c != nil {
 			for _, f := range c.from {
-				bc, tc := s.collectStreamingChannels(m.runner.GetName(), f)
+				bc, tc := s.collectStreamingChannels(m.runner.GetUniqueName(), f)
 				if bc != nil {
 					bChann = append(bChann, bc)
 				}
@@ -129,12 +135,13 @@ func (s *streamer) processingWatcherRequest(msg *message) {
 				}
 			}
 			from = c.from
-			s.unsubscribe(m.runner.GetName())
+			s.unsubscribe(m.runner.GetUniqueName())
 		}
-		bStopC, tStopC := s.subscribe(m.runner.GetName(), bChann, tChann)
-		s.controllers.Store(m.runner.GetName(),
+		bStopC, tStopC := s.subscribe(m.runner.GetName(), m.runner.GetMarketType(), bChann, tChann)
+		s.controllers.Store(m.runner.GetUniqueName(),
 			controller{
 				name:  m.runner.GetName(),
+				uName: m.runner.GetUniqueName(),
 				from:  append(from, WATCHER),
 				stops: []chan struct{}{bStopC, tStopC},
 			},
@@ -147,40 +154,41 @@ func (s *streamer) processingWatcherRequest(msg *message) {
 }
 
 func (s *streamer) processingEvaluatorRequest(msg *message) {
-	m := msg.request.what.(emember)
-	if s.isStreamingOn(m.name, EVALUATOR) {
-		s.logger.Info.Println(s.newLog(m.name, "already streaming this ticker"))
-	} else {
-		bChann := []chan *ta.Candle{}
-		tChann := []chan *tax.Trade{m.tChann}
-		from := []string{}
-		c := s.get(m.name)
-		if c != nil {
-			for _, f := range c.from {
-				bc, tc := s.collectStreamingChannels(m.name, f)
-				if bc != nil {
-					bChann = append(bChann, bc)
-				}
-				if tc != nil {
-					tChann = append(tChann, tc)
-				}
-			}
-			from = c.from
-			s.unsubscribe(m.name)
-		}
-		bStopC, tStopC := s.subscribe(m.name, bChann, tChann)
-		s.controllers.Store(m.name,
-			controller{
-				name:  m.name,
-				from:  append(from, EVALUATOR),
-				stops: []chan struct{}{bStopC, tStopC},
-			},
-		)
-	}
-	if msg.response != nil {
-		msg.response <- s.communicator.newPayload(true)
-		close(msg.response)
-	}
+	return
+	//m := msg.request.what.(emember)
+	//if s.isStreamingOn(m.name, EVALUATOR) {
+	//	s.logger.Info.Println(s.newLog(m.name, "already streaming this ticker"))
+	//} else {
+	//	bChann := []chan *ta.Candle{}
+	//	tChann := []chan *tax.Trade{m.tChann}
+	//	from := []string{}
+	//	c := s.get(m.name)
+	//	if c != nil {
+	//		for _, f := range c.from {
+	//			bc, tc := s.collectStreamingChannels(m.name, f)
+	//			if bc != nil {
+	//				bChann = append(bChann, bc)
+	//			}
+	//			if tc != nil {
+	//				tChann = append(tChann, tc)
+	//			}
+	//		}
+	//		from = c.from
+	//		s.unsubscribe(m.name)
+	//	}
+	//	bStopC, tStopC := s.subscribe(m.name, bChann, tChann)
+	//	s.controllers.Store(m.name,
+	//		controller{
+	//			name:  m.name,
+	//			from:  append(from, EVALUATOR),
+	//			stops: []chan struct{}{bStopC, tStopC},
+	//		},
+	//	)
+	//}
+	//if msg.response != nil {
+	//	msg.response <- s.communicator.newPayload(true)
+	//	close(msg.response)
+	//}
 }
 
 func (s *streamer) collectStreamingChannels(name string, from string) (chan *ta.Candle, chan *tax.Trade) {
@@ -201,11 +209,14 @@ func (s *streamer) collectStreamingChannels(name string, from string) (chan *ta.
 	return bChann, tChann
 }
 
-func (s *streamer) subscribe(name string,
+func (s *streamer) subscribe(
+	name string,
+	market runner.MarketType,
 	bChann []chan *ta.Candle,
 	tChann []chan *tax.Trade) (chan struct{}, chan struct{}) {
 	s.Lock()
 	defer s.Unlock()
+	// cash handlers
 	tradeHandler := func(event *bn.WsAggTradeEvent) {
 		for _, c := range tChann {
 			c <- tax.ConvertBinanceStreamingAggTrade(event)
@@ -219,17 +230,37 @@ func (s *streamer) subscribe(name string,
 			c <- tax.ConvertBinanceStreamingKline(event, nil)
 		}
 	}
+	// futures handlers
+	futuTradeHandler := func(event *bnf.WsAggTradeEvent) {
+		for _, c := range tChann {
+			c <- tax.ConvertBinanceFrturesStreamingAggTrade(event)
+		}
+	}
+	futuKlineHandler := func(event *bnf.WsKlineEvent) {
+		if !event.Kline.IsFinal {
+			return
+		}
+		for _, c := range bChann {
+			c <- tax.ConvertBinanceFuturesStreamingKline(event, nil)
+		}
+	}
 	var bStopC, tStopC chan struct{}
-	bStopC = s.streamingBinanceKline(name, bStopC, klineHandler)
-	tStopC = s.streamingBinanceTrade(name, tStopC, tradeHandler)
+	switch market {
+	case runner.Cash:
+		bStopC = s.streamingBinanceKline(name, bStopC, klineHandler)
+		tStopC = s.streamingBinanceTrade(name, tStopC, tradeHandler)
+	case runner.Futures:
+		bStopC = s.streamingBinanceFuturesKline(name, bStopC, futuKlineHandler)
+		tStopC = s.streamingBinanceFuturesTrade(name, tStopC, futuTradeHandler)
+	}
 	return bStopC, tStopC
 }
 
-func (s *streamer) unsubscribe(name string) {
+func (s *streamer) unsubscribe(uName string) {
 	s.Lock()
 	defer s.Unlock()
 	s.controllers.Range(func(key, value interface{}) bool {
-		if name == key.(string) {
+		if uName == key.(string) {
 			for _, c := range value.(controller).stops {
 				c <- struct{}{}
 			}
@@ -237,17 +268,35 @@ func (s *streamer) unsubscribe(name string) {
 		}
 		return true
 	})
-	s.controllers.Delete(name)
+	s.controllers.Delete(uName)
 }
 
 func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 	klineHandler func(e *bn.WsKlineEvent)) chan struct{} {
-	errorHandler := func(err error) { s.logger.Error.Println(err) }
+	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())) }
 	go func(stopC chan struct{}) {
-		var err error
+		err := errors.New("not an error")
 		var done chan struct{}
-		for {
+		for err != nil {
 			done, stop, err = bn.WsKlineServe(name, "1m", klineHandler, errorHandler)
+			if err != nil {
+				s.logger.Error.Println(s.newLog(name, err.Error()))
+			}
+			<-done
+		}
+	}(stop)
+	time.Sleep(time.Second)
+	return stop
+}
+
+func (s *streamer) streamingBinanceFuturesKline(name string, stop chan struct{},
+	klineHandler func(e *bnf.WsKlineEvent)) chan struct{} {
+	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())) }
+	go func(stopC chan struct{}) {
+		err := errors.New("not an error")
+		var done chan struct{}
+		for err != nil {
+			done, stop, err = bnf.WsKlineServe(name, "1m", klineHandler, errorHandler)
 			if err != nil {
 				s.logger.Error.Println(s.newLog(name, err.Error()))
 			}
@@ -260,12 +309,30 @@ func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 
 func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
 	tradeHandler func(e *bn.WsAggTradeEvent)) chan struct{} {
+	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())) }
 	go func(stopC chan struct{}) {
-		errorHandler := func(err error) { s.logger.Error.Println(err) }
-		var err error
+		err := errors.New("not an error")
 		var done chan struct{}
-		for {
+		for err != nil {
 			done, stop, err = bn.WsAggTradeServe(name, tradeHandler, errorHandler)
+			if err != nil {
+				s.logger.Error.Println(s.newLog(name, err.Error()))
+			}
+			<-done
+		}
+	}(stop)
+	time.Sleep(time.Second)
+	return stop
+}
+
+func (s *streamer) streamingBinanceFuturesTrade(name string, stop chan struct{},
+	tradeHandler func(e *bnf.WsAggTradeEvent)) chan struct{} {
+	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())) }
+	go func(stopC chan struct{}) {
+		err := errors.New("not an error")
+		var done chan struct{}
+		for err != nil {
+			done, stop, err = bnf.WsAggTradeServe(name, tradeHandler, errorHandler)
 			if err != nil {
 				s.logger.Error.Println(s.newLog(name, err.Error()))
 			}

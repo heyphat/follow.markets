@@ -99,22 +99,38 @@ func (w *watcher) isSynced(ticker string, duration time.Duration) bool {
 // watch initializes the process to add a ticker to the watchlist. It keeps
 // watching the ticker by comsuming the 1-minute candle and trade information boardcasted
 // from the streamer.
-func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
+func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs, fd *runner.Fundamental) error {
+	if rc == nil {
+		return errors.New("missing runner configs")
+	}
+	var err error
 	if !w.connected {
 		w.connect()
-	}
-	if w.isWatchingOn(ticker) {
-		return nil
 	}
 	m := wmember{
 		runner: runner.NewRunner(ticker, rc),
 		bChann: make(chan *ta.Candle, 3),
 		tChann: make(chan *tax.Trade, 10),
 	}
+	if w.isWatchingOn(m.runner.GetUniqueName()) {
+		return nil
+	}
+	if fd != nil {
+		m.runner.SetFundamental(fd)
+	}
 	for _, f := range m.runner.GetConfigs().LFrames {
-		candles, err := w.provider.fetchBinanceKlinesV3(ticker, f, &fetchOptions{limit: 500})
-		if err != nil {
-			return err
+		var candles []*ta.Candle
+		switch rc.Market {
+		case runner.Cash:
+			candles, err = w.provider.fetchBinanceSpotKlinesV3(ticker, f, &fetchOptions{limit: 499})
+			if err != nil {
+				return err
+			}
+		case runner.Futures:
+			candles, err = w.provider.fetchBinanceFuturesKlinesV3(ticker, f, &fetchOptions{limit: 499})
+			if err != nil {
+				return err
+			}
 		}
 		if len(candles) == 0 {
 			return errors.New(fmt.Sprintf("failed to fetch data for frame %v", f))
@@ -125,9 +141,9 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs) error {
 	}
 	w.Lock()
 	defer w.Unlock()
-	w.runners.Store(ticker, m)
+	w.runners.Store(m.runner.GetUniqueName(), m)
 	go w.await(m)
-	w.logger.Info.Println(w.newLog(ticker, "started to watch"))
+	w.logger.Info.Println(w.newLog(m.runner.GetUniqueName(), "started to watch"))
 	return nil
 }
 
@@ -152,6 +168,25 @@ func (w *watcher) await(mem wmember) {
 			//w.logger.Info.Println(msg)
 		}
 	}()
+}
+
+// drop removes the given ticker from the watchlist. It closes all the streaming channels.
+func (w *watcher) drop(ticker string, rc *runner.RunnerConfigs) error {
+	if rc == nil {
+		return errors.New("missing runner config")
+	}
+	w.Lock()
+	defer w.Unlock()
+	mem, ok := w.runners.Load(runner.NewRunner(ticker, rc).GetUniqueName())
+	if !ok {
+		return errors.New("runner not found")
+	}
+	r := mem.(wmember).runner
+	for !w.registerStreamingChannel(mem.(wmember)) {
+		w.logger.Error.Println(w.newLog(r.GetName(), "failed to deregister streaming data"))
+	}
+	w.runners.Delete(r.GetUniqueName())
+	return nil
 }
 
 // lastCandles returns all last candles from all time frames of a member in the watchlist
@@ -203,7 +238,7 @@ func (w *watcher) connect() {
 }
 
 // registerStreamingChannel registers the runners with the streamer in order to
-// recevie and consume candles broadcasted by data providor. Every time the Watch
+// recevie and consume candles broadcasted by data providor. Every time the drop
 // method is called and the ticker is vallid, it will invoke this method.
 func (w *watcher) registerStreamingChannel(mem wmember) bool {
 	doneStreamingRegister := false
@@ -216,6 +251,21 @@ func (w *watcher) registerStreamingChannel(mem wmember) bool {
 	}
 	return doneStreamingRegister
 }
+
+// deregisterStreamingChannel deregisters the runners with the streamer in order to
+// cancle streaming channels broadcasted by data providor. Every time the drop
+// method is called and the ticker is vallid, it will invoke this method.
+//func (w *watcher) deregisterStreamingChannel(mem wmember) bool {
+//	doneStreamingDeregister := false
+//	var maxTries int
+//	for !doneStreamingDeregister && maxTries <= 3 {
+//		resC := make(chan *payload)
+//		w.communicator.watcher2Streamer <- w.communicator.newMessage(mem, resC)
+//		doneStreamingDeregister = (<-resC).what.(bool)
+//		maxTries++
+//	}
+//	return doneStreamingDeregister
+//}
 
 // This processes the request from the streamer, currently the streamer only requests
 // for the `mem` channels in order to reinitialize the streaming data if necessary.

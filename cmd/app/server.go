@@ -108,22 +108,26 @@ func Mux(middleware Func) *mux.Router {
 		middleware(http.HandlerFunc(watchlist))).Methods("GET")
 	router.Handle("/watcher/last/{ticker}",
 		middleware(http.HandlerFunc(last))).Methods("GET")
-	router.Handle("/watcher/watch/{ticker}",
-		middleware(http.HandlerFunc(watch))).Methods("POST")
 	router.Handle("/watcher/is_synced/{ticker}/{frame}",
 		middleware(http.HandlerFunc(synced))).Methods("GET")
+	router.Handle("/watcher/watch/{ticker}",
+		middleware(http.HandlerFunc(watch))).Methods("POST")
+	router.Handle("/watcher/drop/{ticker}",
+		middleware(http.HandlerFunc(dropRunner))).Methods("POST")
 
 	// evaluator endpoints
 	router.Handle("/evaluator/list",
 		middleware(http.HandlerFunc(listSignals))).Methods("GET")
-	router.Handle("/evaluator/add_signal/{patterns}",
+	router.Handle("/evaluator/add/{patterns}",
 		middleware(http.HandlerFunc(addSignal))).Methods("POST")
-	router.Handle("/evaluator/drop_signals/{names}",
+	router.Handle("/evaluator/drop/{names}",
 		middleware(http.HandlerFunc(dropSignals))).Methods("POST")
 
 	// notifier enpoints
 	router.Handle("/notifier/add_chat_ids/{chat_ids}",
 		middleware(http.HandlerFunc(addChatIDs))).Methods("POST")
+	router.Handle("/notifier/get_notifications",
+		middleware(http.HandlerFunc(getNotifications))).Methods("GET")
 
 	// tester endpoints
 	router.Handle("/tester/test/{ticker}",
