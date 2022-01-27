@@ -5,4 +5,5 @@ if [ -z "$1" ]; then
     STAGE=dev
 fi
 
+bash scripts/build ${STAGE}
 docker push phat/follow.markets:${STAGE}
