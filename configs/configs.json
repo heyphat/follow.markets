@@ -14,16 +14,12 @@
     "host": "",
     "port": "8126",
     "env": "development|production",
-    "service": "follow.market",
+    "service": "follow.markets",
     "version": "0.1.0"
   },
   "market": {
     "provider": {
       "binance": {
-        "api_key": "your_key",
-        "secret_key": "your_key"
-      },
-      "alpaca": {
         "api_key": "your_key",
         "secret_key": "your_key"
       },
