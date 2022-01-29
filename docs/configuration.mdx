@@ -13,14 +13,14 @@
         1. `bot_token`: a telegram bot token. Ask the [BotFather](https://core.telegram.org/bots) for a telegram `bot_token` if you don't know how to get it yet. Then start a conversation with your bot after deploying the system. The bot'll notify you messages when your signals are sucessfully evaluated.
         2. `chat_ids`: a list of chatIDs. If you know your tele account chatID, you can configure it here. Otherwise, you can obtain it from the `bot`.
     3. `watcher`: is responsible for watching the market. It holds the market data of all runners on the watchlist. 
-        1. `base_market`: usually `USDT`, if you want `BUSD`, you can set it here. 
+        1. `base_market`: usually `USDT`, if you want `BUSD` or others, you can set it here. 
         2. `watchlist`: a list of regex patterns that are matched against all tradable tickers on Binance spot and futures markets. The sample watchlist in `configs/configs.json` matches all `USDT`-based pairs.
         3. `runner`: when a ticker matches the `watchlist` patterns, the watcher initializes it as a runner entity and starts to watch on it. A runner consists of multiple timeseries of candles and indicators. One timeseries is associated with one timeframe. 
             1. `frames`: a list of timeframes you want the watcher to watch on. The supported frames are: `1m`, `5m`, `10m`, `15m`, `30m`, `1h`, `2h`, `4h`, `1d`. The values must be in second. 
             2. `indicators`: a list of indicators. Refer to the `indicator` docs for a list of supported indicators. An indicator comes with a list of parameters, often be a list of window frames.
-    4. `evaluator`: is responsible for evaluating your signals. Refer to the `evaluator` docs for more information about how to build a signal. The values should only be changed if you know what you are doing. 
+    4. `evaluator`: is responsible for evaluating your signals. Refer to the `evaluator` [docs]() for more information about how to build a signal. The values under this session should only be changed if you know what you are doing. 
         1. `singal.source_path`: the place to store all the signals. 
-    5. `tester`: is responsible for testing your strategies. Refer to the `tester` docs for more information about how to execute a backtest. The values should only be changed if you know what you are doing.
+    5. `tester`: is responsible for testing your strategies. Refer to the `tester` [docs]() for more information about how to execute a backtest. The values under this session should only be changed if you know what you are doing.
         1. `save_path`: the place to save all the test results.
         2. `init_balance`: the initialized balance before testing.
         2. `profit_margin`: the profit margin.
