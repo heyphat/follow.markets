@@ -1,0 +1,18 @@
+
+1. `env`: the targeted enviroment when deploying the application, `development` or `production`. If it is `development`, some part of the application won't be fully initialized to save API call credit. For example, `coinmarketcap` API calls.
+
+3. `server`: this is the basic configuration of the application. The variables are self-explainatory. If you want to change the port where the application will be lestining to, you can do it on `server.port`. 
+
+4. `datadog`: if you want to monitor the application performance on datadog, you can set up a datadog agent and update the corresponding variables in this session. Otherwise, leaving it unchanged will be fine.
+
+5. `market`: the main configuration you will need to understand and update for your system. The market consists of a few components which have their own configurations. 
+    1. `provider`: data providers.
+        1. `binance`: currently the application tracks Binance spot and futures markets,  you need to have a Binance account and obtain the keys, `api_key` and `secret_key`.
+        2. `coinmarketcap`: coinmarketcap APIs provide the fundamental data for coins and tokens, for example: supply and circulation. If the coinmarketcap `api_key` is missing, you won't be able to configure signals based on fundamentals.
+    2. `notifier`: the application uses telegram as a communication tool to users. Telegram is free and easy to use. 
+        1. `bot_token`: a telegram bot token. Ask the [BotFather](https://core.telegram.org/bots) for a telegram `bot_token` if you don't know how to get it yet. Then start a conversation with your bot after deploying the system. The bot'll notify you a message when your signals are sucessfully evaluated.
+        2. `chat_ids`: a list of chatIDs. If you know your tele account chatID, you can configure it here. Otherwise, you can obtain it from the `bot`.
+    3. `watcher`: is responsible for watching the market. It holds the current market values of all runners on the watchlist. 
+        1. `base_market`: usually `USDT`, if you want `BUSD`, you can set it here. 
+        2. `watchlist`: a list of regex patterns that match all tradble tickers on Binance spot and futures markets. The sample watchlist is all `USDT`-based pairs.
+        3. `runner`: 
