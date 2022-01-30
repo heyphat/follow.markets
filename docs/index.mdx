@@ -31,7 +31,7 @@ If you use amd64-based machine or want to build it from the source code, run the
 
 # Configuration
 
-This part discusses only the mandatory environment variables in the `configs/configs.json` file. For more information, refer to the docs [here](https://docs.follow.markets/followmarkets/configuration)
+This part discusses only the mandatory environment variables in the `configs/configs.json` file. For more information, refer to the docs [here](https://docs.follow.markets/followmarkets/configuration).
 
 1. Market data provider: `market.provider.binance`. The application targets crypto market at the moment and consumes data provided by Binance. You need to have a Binance account and get the keys, `api_key` and `secret_key`. 
 2. Market notifier bot: `market.notifier.telegram.bot_token`. Ask the [BotFather](https://core.telegram.org/bots) for a telegram `bot_token` if you don't know how to get it yet. Then start a conversation with your bot after deploying the system. If you know your tele account `chatID`, you can add it to the `market.notifier.telegram.chat_ids` in advance. Otherwise, you can obtain it from the `bot`.
@@ -46,13 +46,13 @@ This part discusses only the mandatory environment variables in the `configs/con
 - [ ] Integrate with the stock market.
 
 # More docs 
-1. Configuration
-2. The market APIs 
-    1. Watcher
-    2. [Evaluator](https://github.com/itsphat/follow.markets/blob/docs/docs/evaluator.mdx#evaluator)
-    3. Streamer
-    4. Notifier
-    5. Tetster
+1. [Configuration](https://docs.follow.markets/followmarkets/configuration)
+2. The market components & APIs 
+    1. [Watcher](https://docs.follow.markets/followmarkets/watcher)
+    2. [Evaluator](https://docs.follow.markets/followmarkets/evaluator)
+    3. [Streamer](https://docs.follow.markets/followmarkets/streamer)
+    4. [Notifier](https://docs.follow.markets/followmarkets/notifier)
+    5. [Tetster](https://docs.follow.markets/followmarkets/tester)
 3. Indicators
 
 # Contribution
