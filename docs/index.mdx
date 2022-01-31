@@ -18,6 +18,8 @@ git clone https://github.com/itsphat/follow.markets.git
 
 cd follow.markets
 
+docker pull phat/follow.markets:latest
+
 docker run -d --rm --name follow.markets \
   -p 6868:6868\
   -v $(pwd)/configs/configs.json:/configs/configs.json \
