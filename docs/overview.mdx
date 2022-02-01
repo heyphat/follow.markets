@@ -1,0 +1,20 @@
+# Introduction
+Introduces the market structure at a high-level perspective.
+
+## What is the market structure?
+The market is a group of agents communicating to each other via dedicated go channels to perform their tasks. 
+
+Generally, the idea is that markets produce data constantly, for example trades and candles, and there are repeatedly numerous tasks to process these data points. We build each agent to be in charge of handling a few specific tasks to consume the data so that the application can identify trading opportunities in a timely and accuracy manner. An agent communicates with the others in either these scenarios
+
+  * An agent completes its tasks, then it triggers messages to the other agents to finish the data processing pipeline.
+  * An agent needs a piece of data from other agents, it throws a message asking for help.
+
+## What are the market agents?
+The agents: `watcher`, `evaluator`, `streamer`, `notifier`, `trader`, `provider`. 
+1. `watcher` monitors the market, consuming the data from the `streamer`, syncing it to watched runners. User can communicate with `watcher` to add or drop runners.
+2. User is able to configure `signal` easily based on observable levels from candles or indicators.
+3. `evaluator` validate signals when `watcher` receives newly formed candles/indicators. User can communicate with `evaluator` to add or drop signals.
+4. `notifier` notify user with successfully evaluated `signal` or trigger `trader` to trade if allowed by user. User can communicate with `notifier` for the market information, such as evaluated signals, trade-related metrics (WIP).
+5. `trader` trade the markets. Fully automated. (WIP)
+6. `streamer` is an internal agent which provides realtime data for other market participants. This agent doesn't expose to user. 
+7. `runner` is not a market agent, it's simply a go struct representing a ticker with related methods. All the market participants operate directly on a runner. For example, `watcher` watches on a `runner`, `evaluator` evaluates signals against `runner`'s data, etc.
