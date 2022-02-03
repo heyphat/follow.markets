@@ -6,7 +6,7 @@ The market is a group of agents communicating to each other via dedicated go cha
 
 Generally, the idea is that markets produce data constantly, for example trades and candles, and there are repeatedly numerous tasks to process these data points. We build each agent to be in charge of handling a few specific tasks to consume the data so that the application can identify trading opportunities on the entire markets in a timely and accuracy manner. An agent communicates with the others in either these scenarios
 
-  * An agent completes its tasks, then it triggers messages to the other agents to finish the data processing pipeline.
+  * An agent completes its tasks, then it triggers messages to the other agents to finish data processing pipelines.
   * An agent needs a piece of data from other agents, it throws a message asking for help.
 
 ## What are the market agents?
