@@ -15,7 +15,8 @@ import (
 func dropSignals(w http.ResponseWriter, req *http.Request) {
 	str, ok := mux.Vars(req)["names"]
 	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
+		BadRequest("missing signal names", w)
+		//w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	for _, s := range strings.Split(str, ",") {
