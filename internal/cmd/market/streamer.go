@@ -66,6 +66,11 @@ func (s *streamer) connect() {
 			go s.processingEvaluatorRequest(msg)
 		}
 	}()
+	go func() {
+		for msg := range s.communicator.trader2Streamer {
+			go s.processingTraderRequest(msg)
+		}
+	}()
 	s.connected = true
 }
 
@@ -120,6 +125,29 @@ func (s *streamer) processingWatcherRequest(msg *message) {
 			controller{
 				name:  m.runner.GetName(),
 				uName: m.runner.GetUniqueName(WATCHER),
+				from:  WATCHER,
+				stops: []chan struct{}{bStopC, tStopC},
+			},
+		)
+	}
+	if msg.response != nil {
+		msg.response <- s.communicator.newPayload(true)
+		close(msg.response)
+	}
+}
+
+func (s *streamer) processingTraderRequest(msg *message) {
+	m := msg.request.what.(tdmember)
+	if s.isStreamingOn(m.runner.GetUniqueName(TRADER), TRADER) {
+		s.unsubscribe(m.runner.GetUniqueName(TRADER))
+		//close(m.bChann)
+		close(m.tChann)
+	} else {
+		bStopC, tStopC := s.subscribe(m.runner.GetName(), m.runner.GetMarketType(), nil, m.tChann)
+		s.controllers.Store(m.runner.GetUniqueName(TRADER),
+			controller{
+				name:  m.runner.GetName(),
+				uName: m.runner.GetUniqueName(TRADER),
 				from:  WATCHER,
 				stops: []chan struct{}{bStopC, tStopC},
 			},

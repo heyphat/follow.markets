@@ -9,7 +9,11 @@ import (
 
 	bn "github.com/adshao/go-binance/v2"
 	bnf "github.com/adshao/go-binance/v2/futures"
+	"github.com/dlclark/regexp2"
 
+	"follow.markets/internal/pkg/runner"
+	tax "follow.markets/internal/pkg/techanex"
+	"follow.markets/pkg/config"
 	"follow.markets/pkg/log"
 )
 
@@ -18,6 +22,7 @@ type trader struct {
 	connected        bool
 	binSpotListenKey string
 	binFutuListenKey string
+	tradablePatterns []*regexp2.Regexp
 
 	// shared properties with other market participants
 	logger       *log.Logger
@@ -25,9 +30,15 @@ type trader struct {
 	communicator *communicator
 }
 
-func newTrader(participants *sharedParticipants) (*trader, error) {
-	if participants == nil || participants.communicator == nil || participants.logger == nil {
-		return nil, errors.New("missing shared participants")
+type tdmember struct {
+	runner *runner.Runner
+	//bChann chan *ta.Candle
+	tChann chan *tax.Trade
+}
+
+func newTrader(participants *sharedParticipants, configs *config.Configs) (*trader, error) {
+	if configs == nil || participants == nil || participants.communicator == nil || participants.logger == nil {
+		return nil, errors.New("missing shared participants or configs")
 	}
 	t := &trader{
 		connected: false,
@@ -36,6 +47,15 @@ func newTrader(participants *sharedParticipants) (*trader, error) {
 		provider:     participants.provider,
 		communicator: participants.communicator,
 	}
+	reges := make([]*regexp2.Regexp, 0)
+	for _, t := range configs.Trader.AllowedPatterns {
+		reg, err := regexp2.Compile(t, 0)
+		if err != nil {
+			return nil, err
+		}
+		reges = append(reges, reg)
+	}
+	t.tradablePatterns = reges
 	var err error
 	t.binSpotListenKey, err = t.provider.binSpot.NewStartUserStreamService().Do(context.Background())
 	if err != nil {
