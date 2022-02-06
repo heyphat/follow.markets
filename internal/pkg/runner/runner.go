@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -106,17 +107,22 @@ func (r *Runner) GetConfigs() *RunnerConfigs { return r.configs }
 func (r *Runner) GetName() string { return r.name }
 
 // GetUniqueName returns the unique name for the runner.
-func (r *Runner) GetUniqueName() string {
+func (r *Runner) GetUniqueName(prefix ...string) string {
+	var out string
 	switch r.configs.Market {
 	case Cash:
-		return r.name
+		out = r.name
 	case Futures:
-		return r.name + "PERP"
+		out = r.name + "PERP"
 	case Margin:
-		return r.name + "MARG"
+		out = r.name + "MARG"
 	default:
-		return r.name + strconv.Itoa(int(time.Now().Unix()))
+		out = r.name + strconv.Itoa(int(time.Now().Unix()))
 	}
+	if len(prefix) > 0 {
+		out = strings.Join(prefix, "-") + "-" + out
+	}
+	return out
 }
 
 // GetMarketType returns the runner market.

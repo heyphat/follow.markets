@@ -16,8 +16,8 @@ import (
 
 func Test_Streamer(t *testing.T) {
 	// comment return to test streamer
-	return
-	path := "./../../../configs/dev_configs.json"
+	//return
+	path := "./../../../configs/deploy.configs.json"
 	configs, err := config.NewConfigs(&path)
 	assert.EqualValues(t, nil, err)
 
@@ -66,8 +66,8 @@ func Test_Streamer(t *testing.T) {
 	time.Sleep(time.Second * 5)
 	assert.EqualValues(t, 2, len(streamer.streamList(WATCHER)))
 
-	streamer.unsubscribe(btcT)
-	time.Sleep(time.Second)
+	streamer.communicator.watcher2Streamer <- streamer.communicator.newMessage(btc, nil)
+	time.Sleep(time.Second * 10)
 	assert.EqualValues(t, 1, len(streamer.streamList(WATCHER)))
 
 	go func() {
@@ -109,4 +109,9 @@ func Test_Streamer(t *testing.T) {
 	streamer.communicator.evaluator2Streamer <- streamer.communicator.newMessage(manaE, nil)
 	time.Sleep(time.Second * 5)
 	assert.EqualValues(t, 2, len(streamer.streamList(EVALUATOR)))
+
+	streamer.communicator.evaluator2Streamer <- streamer.communicator.newMessage(manaE, nil)
+	time.Sleep(time.Second * 2)
+	assert.EqualValues(t, 1, len(streamer.streamList(EVALUATOR)))
+
 }
