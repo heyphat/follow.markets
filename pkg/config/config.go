@@ -67,7 +67,7 @@ type Configs struct {
 		} `json:"tester"`
 		Trader struct {
 			AllowedPatterns []string `json:"allowed"`
-		}
+		} `json:"trader"`
 	} `json:"market"`
 }
 
