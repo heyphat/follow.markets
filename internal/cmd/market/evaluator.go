@@ -25,10 +25,11 @@ type evaluator struct {
 }
 
 type emember struct {
-	name    string
-	regex   []*regexp2.Regexp
-	tChann  chan *tax.Trade
-	signals strategy.Signals
+	name     string
+	regex    []*regexp2.Regexp
+	tChann   chan *tax.Trade
+	signals  strategy.Signals
+	patterns []string
 }
 
 func newEvaluator(participants *sharedParticipants) (*evaluator, error) {
@@ -83,10 +84,11 @@ func (e *evaluator) add(patterns []string, s *strategy.Signal) error {
 			reges = append(reges, reg)
 		}
 		mem = emember{
-			name:    s.Name,
-			regex:   reges,
-			tChann:  nil,
-			signals: strategy.Signals{s},
+			name:     s.Name,
+			regex:    reges,
+			tChann:   nil,
+			signals:  strategy.Signals{s},
+			patterns: patterns,
 			//tChann:  make(chan *tax.Trade),
 		}
 		e.signals.Store(s.Name, mem)
