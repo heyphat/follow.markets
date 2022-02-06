@@ -22,7 +22,7 @@ type trader struct {
 	connected        bool
 	binSpotListenKey string
 	binFutuListenKey string
-	tradablePatterns []*regexp2.Regexp
+	allowedPatterns  []*regexp2.Regexp
 
 	// shared properties with other market participants
 	logger       *log.Logger
@@ -55,7 +55,7 @@ func newTrader(participants *sharedParticipants, configs *config.Configs) (*trad
 		}
 		reges = append(reges, reg)
 	}
-	t.tradablePatterns = reges
+	t.allowedPatterns = reges
 	var err error
 	t.binSpotListenKey, err = t.provider.binSpot.NewStartUserStreamService().Do(context.Background())
 	if err != nil {
