@@ -14,7 +14,7 @@ func Test_Trader(t *testing.T) {
 	configs, err := config.NewConfigs(&path)
 	assert.EqualValues(t, nil, err)
 
-	trader, err := newTrader(initSharedParticipants(configs))
+	trader, err := newTrader(initSharedParticipants(configs), configs)
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, false, trader.isConnected())
 	//for {
