@@ -80,6 +80,10 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	if err != nil {
 		return nil, err
 	}
+	trader, err := newTrader(common, configs)
+	if err != nil {
+		return nil, err
+	}
 	once.Do(func() {
 		Market = &MarketStruct{}
 		Market.configs = configs
@@ -228,6 +232,7 @@ func (m *MarketStruct) connect() {
 	m.streamer.connect()
 	m.evaluator.connect()
 	m.notifier.connect()
+	m.trader.connect()
 }
 
 // watcher endpoints
