@@ -71,6 +71,11 @@
       "init_balance": 10000,
       "profit_margin": 0.1,
       "loss_tolerance": 0.05
+    },
+    "trader": {
+      "allowed": [
+        "BTCUSDT"
+      ]
     }
   }
 }

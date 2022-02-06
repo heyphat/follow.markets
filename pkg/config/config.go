@@ -65,6 +65,9 @@ type Configs struct {
 			ProfitMargin  float64 `json:"profit_margin"`
 			LossTolerance float64 `json:"loss_tolerance"`
 		} `json:"tester"`
+		Trader struct {
+			AllowedPatterns []string `json:"allowed"`
+		}
 	} `json:"market"`
 }
 
