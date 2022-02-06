@@ -36,8 +36,8 @@ type nmember struct {
 }
 
 func newNotifier(participants *sharedParticipants, configs *config.Configs) (*notifier, error) {
-	if participants == nil || participants.communicator == nil || participants.logger == nil {
-		return nil, errors.New("missing shared participants")
+	if configs == nil || participants == nil || participants.communicator == nil || participants.logger == nil {
+		return nil, errors.New("missing shared participants or configs")
 	}
 	var chatIDs []int64
 	for _, id := range configs.Market.Notifier.Telegram.ChatIDs {
