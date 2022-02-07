@@ -102,7 +102,7 @@ func ConvertBinanceStreamingAggTrade(t *bn.WsAggTradeEvent) *Trade {
 	return trade
 }
 
-func ConvertBinanceFrturesStreamingAggTrade(t *bnf.WsAggTradeEvent) *Trade {
+func ConvertBinanceFuturesStreamingAggTrade(t *bnf.WsAggTradeEvent) *Trade {
 	trade := NewTrade()
 	trade.Price = big.NewFromString(t.Price)
 	trade.Quantity = big.NewFromString(t.Quantity)
