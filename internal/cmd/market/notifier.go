@@ -9,7 +9,6 @@ import (
 
 	tele "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
-	"follow.markets/internal/pkg/strategy"
 	"follow.markets/pkg/config"
 	"follow.markets/pkg/log"
 	"follow.markets/pkg/util"
@@ -24,7 +23,6 @@ type notifier struct {
 
 	// shared properties with other market participants
 	logger       *log.Logger
-	provider     *provider
 	communicator *communicator
 }
 
@@ -58,7 +56,6 @@ func newNotifier(participants *sharedParticipants, configs *config.Configs) (*no
 		chatIDs:   chatIDs,
 
 		logger:       participants.logger,
-		provider:     participants.provider,
 		communicator: participants.communicator,
 	}, nil
 }
@@ -119,38 +116,32 @@ func (n *notifier) getNotifications() map[string]time.Time {
 }
 
 func (n *notifier) processEvaluatorRequest(msg *message) {
-	s := msg.request.what.(*strategy.Signal)
-	mess := msg.request.id + "\n" + s.Description()
-	//names := strings.Split(msg.request.id, "-")
+	s := msg.request.what.signal
+	r := msg.request.what.runner
+	id := r.GetUniqueName() + "-" + s.Name
+	mess := id + "\n" + s.Description()
 	if s.IsOnetime() {
 		n.notify(mess)
 		return
 	}
-	if val, ok := n.notis.Load(msg.request.id); !ok {
+	if val, ok := n.notis.Load(id); !ok {
 		n.notify(mess)
-		n.notis.Store(msg.request.id,
+		n.notis.Store(id,
 			nmember{
-				id:       msg.request.id,
+				id:       id,
 				lastSent: time.Now().Add(-time.Minute),
-				//runnerName:   names[0],
-				//strategyName: names[1],
 			})
 	} else {
 		if s.ShouldSend(val.(nmember).lastSent) {
 			n.notify(mess)
-			n.notis.Store(msg.request.id,
+			n.notis.Store(id,
 				nmember{
-					id:       msg.request.id,
+					id:       id,
 					lastSent: time.Now().Add(-time.Minute),
-					//runnerName:   names[0],
-					//strategyName: names[1],
 				})
 		}
 	}
 }
-
-//func (n *notifier) processTesterRequest(msg *message) {
-//}
 
 // notify sends tele message to all chatIDs for a given content.
 func (n *notifier) notify(content string) {
