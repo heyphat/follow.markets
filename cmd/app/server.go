@@ -133,6 +133,10 @@ func Mux(middleware Func) *mux.Router {
 	router.Handle("/tester/test/{ticker}",
 		middleware(http.HandlerFunc(test))).Methods("POST")
 
+	// trader endpoints
+	router.Handle("/trader/balances",
+		middleware(http.HandlerFunc(balances))).Methods("GET")
+
 	return router
 }
 
