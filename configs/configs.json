@@ -18,6 +18,11 @@
     "version": "0.1.0"
   },
   "market": {
+    "base": {
+      "crypto": {
+        "quote_currency": "USDT"
+      }
+    },
     "provider": {
       "binance": {
         "api_key": "your_key",
@@ -37,7 +42,6 @@
       }
     },
     "watcher": {
-      "base_market": "USDT",
       "watchlist": [
        "(?=(?<!(USDP|SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)"
       ],
@@ -73,9 +77,18 @@
       "loss_tolerance": 0.05
     },
     "trader": {
-      "allowed": [
+      "allowed_patterns": [
         "BTCUSDT"
-      ]
+      ],
+      "allowed_markets": [
+        "CASH" 
+      ],
+      "min_leverage": 1,
+      "max_leverage": 1,
+      "min_balance_to_trade": 1,
+      "max_concurrent_positions": 1,
+      "loss_tolerance": 0.03,
+      "profit_margin": 0.05
     }
   }
 }
