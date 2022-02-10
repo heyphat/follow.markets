@@ -2,6 +2,7 @@ package market
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -17,31 +18,7 @@ func Test_Provider(t *testing.T) {
 
 	provider := newProvider(configs)
 
-	//candles, err := provider.fetchBinanceKlines("BTCUSDT", time.Minute)
-	//assert.EqualValues(t, nil, err)
-	//assert.EqualValues(t, 6000, len(candles))
-
-	//candles, err = provider.fetchBinanceKlines("BTCUSDT", time.Minute*30)
-	//assert.EqualValues(t, nil, err)
-	//assert.EqualValues(t, 1000, len(candles))
-	////fmt.Println(candles[len(candles)-1])
-
-	//candles, err = provider.fetchBinanceKlines("BTCUSDT", time.Minute*60)
-	//assert.EqualValues(t, nil, err)
-	//assert.EqualValues(t, 1000, len(candles))
-	////fmt.Println(candles[len(candles)-1])
-
-	//candles, err = provider.fetchBinanceKlines("BTCUSDT", time.Minute*120)
-	//assert.EqualValues(t, nil, err)
-	//assert.EqualValues(t, 1000, len(candles))
-	////fmt.Println(candles[len(candles)-1])
-
-	//candles, err = provider.fetchBinanceKlines("BTCUSDT", time.Hour*4)
-	//assert.EqualValues(t, nil, err)
-	//assert.EqualValues(t, 1000, len(candles))
-	////fmt.Println(candles[len(candles)-1])
-
-	listings, err := provider.fetchCoinFundamentals(configs.Market.Watcher.BaseMarket, 1)
+	listings, err := provider.fetchCoinFundamentals(configs.Market.Base.Crypto.QuoteCurrency, 1)
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, len(listings) == 1)
 
@@ -54,4 +31,13 @@ func Test_Provider(t *testing.T) {
 	klines, err := provider.fetchBinanceFuturesKlinesV3("BTCUSDT", time.Minute, &fetchOptions{limit: 60})
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, 60, len(klines))
+
+	acc, err := provider.binSpot.NewGetAccountService().Do(context.Background())
+	assert.EqualValues(t, nil, err)
+	fmt.Println(fmt.Sprintf("%+v", *acc))
+	for _, b := range acc.Balances {
+		if b.Asset == "BNB" {
+			fmt.Println(fmt.Sprintf("%+v", b))
+		}
+	}
 }
