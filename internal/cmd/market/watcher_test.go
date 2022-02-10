@@ -24,9 +24,9 @@ func Test_Watcher(t *testing.T) {
 
 	go func() {
 		for msg := range watcher.communicator.watcher2Streamer {
-			mem := msg.request.what.(wmember)
-			assert.EqualValues(t, ticker, mem.runner.GetName())
-			msg.response <- watcher.communicator.newPayload(true)
+			r := msg.request.what.runner
+			assert.EqualValues(t, ticker, r.GetName())
+			msg.response <- watcher.communicator.newPayload(nil, nil, nil, true)
 			close(msg.response)
 		}
 	}()
