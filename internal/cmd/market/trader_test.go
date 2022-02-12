@@ -21,7 +21,7 @@ func Test_Trader(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, false, trader.isConnected())
 
-	mem := tdmember{
+	mem := setup{
 		runner: runner.NewRunner("BTCUSDT", runner.NewRunnerDefaultConfigs()),
 		channels: &streamingChannels{
 			bar:   nil,

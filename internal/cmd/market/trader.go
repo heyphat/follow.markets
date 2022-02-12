@@ -50,7 +50,7 @@ type trader struct {
 	communicator *communicator
 }
 
-type tdmember struct {
+type setup struct {
 	runner   *runner.Runner
 	signal   *strategy.Signal
 	channels *streamingChannels
@@ -301,11 +301,11 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 		return nil
 	}
 	r, s := msg.request.what.runner, msg.request.what.signal
-	mem := &tdmember{runner: r, signal: s}
+	mem := &setup{runner: r, signal: s}
 	switch r.GetMarketType() {
 	case runner.Cash:
 		// TODO: think of position sizing based on the current balances and signal performance.
-		price, ok := s.TradeExcutionPrice(r)
+		price, ok := s.TradeExecutionPrice(r)
 		if !ok {
 			t.logger.Warning.Println(t.newLog("cannot find a price to place trade"))
 			return nil
@@ -321,7 +321,7 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 			// timeInFore is always good-to-cancle
 			TimeInForce(bn.TimeInForceTypeGTC).
 			// set the limit price, quantity deduced from price and minimum trading balance for a position
-			Price(price).Quantity(t.minBalance.Div(big.NewFromString(price)).FormattedString(8)).
+			Price(price.FormattedString(8)).Quantity(t.minBalance.Div(price).FormattedString(8)).
 			// place the order
 			Do(context.Background())
 		if err != nil {
@@ -363,7 +363,7 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 }
 
 // monitorBinSpotTrade monitors the trade after an order is placed.
-func (t *trader) monitorBinSpotTrade(m *tdmember, o *bn.CreateOrderResponse) {
+func (t *trader) monitorBinSpotTrade(m *setup, o *bn.CreateOrderResponse) {
 	nw := time.Now()
 	// Waiting for the order to be (partially) filled
 	for m.orderStatus != "TRADE" {
@@ -470,7 +470,7 @@ func (t *trader) binFutuUserDataStreaming() {
 
 // registerStreamingChannel registers the runners with the streamer in order to
 // recevie and consume candles broadcasted by data providor.
-func (t *trader) registerStreamingChannel(m tdmember) bool {
+func (t *trader) registerStreamingChannel(m setup) bool {
 	doneStreamingRegister := false
 	var maxTries int
 	for !doneStreamingRegister && maxTries <= 3 {
