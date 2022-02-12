@@ -241,7 +241,7 @@ func (t *trader) initialChecks(r *runner.Runner) bool {
 	return true
 }
 
-// shouldStop checks if the current price exceeds the limit given by the loss tolerance
+// shouldClose checks if the current price exceeds the limit given by the loss tolerance
 // or the current price surpass the profit margin.
 func (t *trader) shouldClose(orderPrice, currentPrice big.Decimal, tradingSide string) (bool, big.Decimal) {
 	if currentPrice.LTE(orderPrice) {
@@ -262,7 +262,8 @@ func (t *trader) shouldClose(orderPrice, currentPrice big.Decimal, tradingSide s
 	return false, big.ZERO
 }
 
-// placeMarketOrder places an order on a given runner.
+// placeMarketOrder places a market order on a given runner.
+// this can be used in different scenarios, such as close positions.
 func (t *trader) placeMarketOrder(r *runner.Runner, side, quantity string) error {
 	if r.GetMarketType() == runner.Cash {
 		_, err := t.provider.binSpot.NewCreateOrderService().
@@ -277,6 +278,8 @@ func (t *trader) placeMarketOrder(r *runner.Runner, side, quantity string) error
 }
 
 // cancleOpenOrder cancels an outstanding order, given its orderID.
+// the bot has to manage all the order it's initialized. In some case,
+// it needs to cancel all the outstanding orders before completing trades.
 func (t *trader) cancleOpenOrder(r *runner.Runner, oid int64) error {
 	if r.GetMarketType() == runner.Cash {
 		_, err := t.provider.binSpot.NewCancelOrderService().
@@ -288,7 +291,8 @@ func (t *trader) cancleOpenOrder(r *runner.Runner, oid int64) error {
 	return nil
 }
 
-// processEvaluatorRequest take care of the request from the evaluator, which will place trades on successfully evaluated signals.
+// processEvaluatorRequest take care of the request from the evaluator,
+// which will place trades on successfully evaluated signals.
 func (t *trader) processEvaluatorRequest(msg *message) error {
 	if msg.request.what.runner == nil || msg.request.what.signal == nil {
 		return errors.New("missing runner or signal")
@@ -300,8 +304,7 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 	mem := &tdmember{runner: r, signal: s}
 	switch r.GetMarketType() {
 	case runner.Cash:
-		// TODO: think of the price and position sizing
-		// currently no position sizing as it uses predetermined price of minBalance
+		// TODO: think of position sizing based on the current balances and signal performance.
 		price, ok := s.TradeExcutionPrice(r)
 		if !ok {
 			t.logger.Warning.Println(t.newLog("cannot find a price to place trade"))
@@ -313,14 +316,12 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 			Symbol(r.GetName()).
 			// set the trading side from the signal
 			Side(bn.SideType(s.OpenTradingSide())).
-			// order type is always stop loss
+			// order type is always limit
 			Type(bn.OrderTypeLimit).
-			// timeInFore is always good-to-candle
+			// timeInFore is always good-to-cancle
 			TimeInForce(bn.TimeInForceTypeGTC).
-			// set the limit price
-			Price(price).
-			// quantity deduced from price and minimum trading balance for a position
-			Quantity(t.minBalance.Div(big.NewFromString(price)).FormattedString(8)).
+			// set the limit price, quantity deduced from price and minimum trading balance for a position
+			Price(price).Quantity(t.minBalance.Div(big.NewFromString(price)).FormattedString(8)).
 			// place the order
 			Do(context.Background())
 		if err != nil {
