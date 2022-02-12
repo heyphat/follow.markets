@@ -122,8 +122,7 @@ func (s *streamer) processingWatcherRequest(msg *message) {
 		bStopC, tStopC, dStopC := s.subscribe(r, cs)
 		s.controllers.Store(r.GetUniqueName(WATCHER),
 			controller{
-				name: r.GetUniqueName(WATCHER),
-				//uName: r.GetUniqueName(WATCHER),
+				name:  r.GetUniqueName(WATCHER),
 				from:  WATCHER,
 				stops: []chan struct{}{bStopC, tStopC, dStopC},
 			},
@@ -145,8 +144,7 @@ func (s *streamer) processingTraderRequest(msg *message) {
 		bStopC, tStopC, dStopC := s.subscribe(r, cs)
 		s.controllers.Store(r.GetUniqueName(TRADER),
 			controller{
-				name: r.GetUniqueName(WATCHER),
-				//uName: r.GetUniqueName(TRADER),
+				name:  r.GetUniqueName(WATCHER),
 				from:  TRADER,
 				stops: []chan struct{}{bStopC, tStopC, dStopC},
 			},

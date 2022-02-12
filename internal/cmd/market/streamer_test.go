@@ -119,5 +119,4 @@ func Test_Streamer(t *testing.T) {
 	//streamer.communicator.evaluator2Streamer <- streamer.communicator.newMessage(nil, nil, nil, nil, nil)
 	//time.Sleep(time.Second * 2)
 	//assert.EqualValues(t, 1, len(streamer.streamList(EVALUATOR)))
-
 }
