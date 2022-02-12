@@ -30,7 +30,7 @@ func newCommunicator() *communicator {
 		streamer2Evaluator: make(chan *message),
 		evaluator2Notifier: make(chan *message),
 		evaluator2Streamer: make(chan *message),
-		evaluator2Trader:   make(chan *message),
+		evaluator2Trader:   make(chan *message, 10),
 		trader2Streamer:    make(chan *message),
 	}
 }
