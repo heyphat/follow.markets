@@ -244,20 +244,16 @@ func (t *trader) initialChecks(r *runner.Runner) bool {
 // shouldStop checks if the current price exceeds the limit given by the loss tolerance
 // or the current price surpass the profit margin.
 func (t *trader) shouldClose(orderPrice, currentPrice big.Decimal, tradingSide string) (bool, big.Decimal) {
-	side := big.NewFromString("1")
-	if strings.ToUpper(tradingSide) == "SELL" {
-		side = big.NewFromString("-1")
-	}
 	if currentPrice.LTE(orderPrice) {
 		pnl := orderPrice.Sub(currentPrice).Div(currentPrice)
-		if side.GT(big.ZERO) {
+		if strings.ToUpper(tradingSide) == "BUY" {
 			return pnl.GTE(t.lossTolerance), pnl.Mul(big.NewFromString("-1"))
 		} else {
 			return pnl.GTE(t.profitMargin), pnl
 		}
 	} else {
 		pnl := currentPrice.Sub(orderPrice).Div(orderPrice)
-		if side.LTE(big.ZERO) {
+		if strings.ToUpper(tradingSide) == "SELL" {
 			return pnl.GTE(t.lossTolerance), pnl.Mul(big.NewFromString("-1"))
 		} else {
 			return pnl.GTE(t.profitMargin), pnl
@@ -306,8 +302,11 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 	case runner.Cash:
 		// TODO: think of the price and position sizing
 		// currently no position sizing as it uses predetermined price of minBalance
-		price := "30000"
-
+		price, ok := s.TradeExcutionPrice(r)
+		if !ok {
+			t.logger.Warning.Println(t.newLog("cannot find a price to place trade"))
+			return nil
+		}
 		// place a LIMIT order always.
 		order, err := t.provider.binSpot.NewCreateOrderService().
 			// set the symbol from the runner
@@ -365,6 +364,7 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 // monitorBinSpotTrade monitors the trade after an order is placed.
 func (t *trader) monitorBinSpotTrade(m *tdmember, o *bn.CreateOrderResponse) {
 	nw := time.Now()
+	// Waiting for the order to be (partially) filled
 	for m.orderStatus != "TRADE" {
 		time.Sleep(time.Second)
 		if m.orderStatus == "CANCELED" {
@@ -405,8 +405,7 @@ func (t *trader) monitorBinSpotTrade(m *tdmember, o *bn.CreateOrderResponse) {
 			}
 		}
 	}
-
-	// Upto this point, the trade should be close, the trade should be converted back to
+	// Upto this point, the trade should be close, and converted back to
 	// the quote currency, which should be in USDT, and report PNLs.
 	// The outstanding portion or the order should be canceled.
 	if !t.isOrdering(m.runner) {
