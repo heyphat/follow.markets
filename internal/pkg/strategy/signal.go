@@ -11,11 +11,13 @@ import (
 	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/util"
 	ta "github.com/itsphat/techan"
+	"github.com/sdcoffey/big"
 )
 
 type Signal struct {
 	Name       string        `json:"name"`
 	Groups     Groups        `json:"groups"`
+	TradePrice *Comparable   `json:"trade_price"`
 	TimePeriod time.Duration `json:"primary_period"`
 
 	NotifyType string `json:"notify_type"`
@@ -42,11 +44,15 @@ func NewSignalFromBytes(bytes []byte) (*Signal, error) {
 			return nil, err
 		}
 	}
+	//if err := signal.TradePrice.validate(); err != nil {
+	//	return nil, err
+	//}
 	periods := signal.GetPeriods()
 	signal.TimePeriod = periods[0]
 	return &signal, err
 }
 
+// Evaluate evaluates signal against the current status of the runner.
 func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 	if r == nil && t == nil {
 		return false
@@ -59,6 +65,7 @@ func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 	return true
 }
 
+// copy does a deep copy on the signal.
 func (s *Signal) copy() *Signal {
 	var ns Signal
 	ns.Name = s.Name
@@ -67,9 +74,11 @@ func (s *Signal) copy() *Signal {
 	ns.TrackType = s.TrackType
 	ns.NotifyType = s.NotifyType
 	ns.TimePeriod = s.TimePeriod
+	ns.TradePrice = s.TradePrice.copy()
 	return &ns
 }
 
+// Copy operates on a list of signal.
 func (ss Signals) Copy() Signals {
 	var out Signals
 	for _, s := range ss {
@@ -97,26 +106,6 @@ func (s Signal) Description() string {
 	return strings.Join(out, "\n")
 }
 
-// IsOnTrade returns true if a strategy is valid. A valid trade strategy is the one
-// which has conditions only on `s.Trade` or condition groups only on `s.Trade`.
-// Currently it doesn't support a is a combined strategy of `Candle` and `Trade`
-// or `Indicator` and `Trade`.
-//func (s Signal) IsOnTrade() bool {
-//	for _, cgs := range s.Groups {
-//		for _, g := range cgs.Groups {
-//			for _, c := range g.Conditions {
-//				if err := c.validate(); err != nil {
-//					return false
-//				}
-//				if c.This.Trade != nil || c.That.Trade != nil {
-//					return true
-//				}
-//			}
-//		}
-//	}
-//	return false
-//}
-
 // IsOnetime returns true if the signal is valid for only one time check.
 func (s Signal) IsOnetime() bool {
 	return strings.ToLower(s.TrackType) == strings.ToLower(OnetimeTrack)
@@ -136,6 +125,21 @@ func (s Signal) CloseTradingSide() string {
 		return "SELL"
 	}
 	return "BUY"
+}
+
+// TradeExecutionPrice returns a price level for trade, ideally after the signal is successfully evaluated.
+func (s Signal) TradeExecutionPrice(r *runner.Runner) (big.Decimal, bool) {
+	if s.TradePrice == nil {
+		return big.ZERO, false
+	}
+	if err := s.TradePrice.validate(); err != nil {
+		return big.ZERO, false
+	}
+	if s.TradePrice.Fundamental != nil && s.TradePrice.Candle == nil && s.TradePrice.Indicator == nil {
+		return big.ZERO, false
+	}
+	_, price, ok := s.TradePrice.mapDecimal(r, nil)
+	return price, ok
 }
 
 // IsBullish return true if the signal is bullish, false otherwise.
