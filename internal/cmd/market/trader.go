@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	bn "github.com/adshao/go-binance/v2"
 	bnf "github.com/adshao/go-binance/v2/futures"
@@ -13,6 +14,8 @@ import (
 	"github.com/sdcoffey/big"
 
 	"follow.markets/internal/pkg/runner"
+	"follow.markets/internal/pkg/strategy"
+	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/config"
 	"follow.markets/pkg/log"
 )
@@ -20,11 +23,13 @@ import (
 type trader struct {
 	sync.Mutex
 	connected        bool
-	binSpotListenKey string
-	binSpotBalances  *sync.Map
 	binFutuListenKey string
+	binSpotListenKey string
 
-	// trader configuration
+	binSpotOrders   *sync.Map
+	binSpotBalances *sync.Map
+
+	// trader configurations
 	quoteCurrency   string
 	allowedPatterns []*regexp2.Regexp
 	allowedMarkets  []runner.MarketType
@@ -33,6 +38,9 @@ type trader struct {
 	maxLeverage   big.Decimal
 	minBalance    big.Decimal
 	maxPositions  big.Decimal
+	maxWaitToFill time.Duration
+
+	// risk controlling factors
 	profitMargin  big.Decimal
 	lossTolerance big.Decimal
 
@@ -44,7 +52,10 @@ type trader struct {
 
 type tdmember struct {
 	runner   *runner.Runner
+	signal   *strategy.Signal
 	channels *streamingChannels
+
+	orderStatus string
 }
 
 func newTrader(participants *sharedParticipants, configs *config.Configs) (*trader, error) {
@@ -54,11 +65,13 @@ func newTrader(participants *sharedParticipants, configs *config.Configs) (*trad
 	t := &trader{
 		connected:       false,
 		binSpotBalances: &sync.Map{},
+		binSpotOrders:   &sync.Map{},
 
 		minBalance:    big.ZERO,
 		maxPositions:  big.ZERO,
 		minLeverage:   big.NewDecimal(1.0),
 		maxLeverage:   big.NewDecimal(1.0),
+		maxWaitToFill: time.Second * 60,
 		lossTolerance: big.NewDecimal(0.01),
 		profitMargin:  big.NewDecimal(0.02),
 
@@ -112,6 +125,9 @@ func (t *trader) updateConfigs(configs *config.Configs) error {
 	if configs.Market.Trader.ProfitMargin > 0 {
 		t.profitMargin = big.NewDecimal(configs.Market.Trader.ProfitMargin)
 	}
+	if configs.Market.Trader.MaxWaitToFill > 0 {
+		t.maxWaitToFill = time.Duration(configs.Market.Trader.MaxWaitToFill) * time.Second
+	}
 	t.quoteCurrency = configs.Market.Base.Crypto.QuoteCurrency
 	return nil
 }
@@ -129,7 +145,10 @@ func (t *trader) connect() {
 	}
 	go func() {
 		for msg := range t.communicator.evaluator2Trader {
-			go t.processEvaluatorRequest(msg)
+			err := t.processEvaluatorRequest(msg)
+			if err != nil {
+				t.logger.Error.Println(t.newLog(err.Error()))
+			}
 		}
 	}()
 	t.connected = true
@@ -154,7 +173,7 @@ func (t *trader) updatebinSpotBalances(bl bn.Balance) {
 		t.binSpotBalances.Delete(bl.Asset)
 		return
 	}
-	t.binSpotBalances.Store(bl.Asset, bl)
+	t.binSpotBalances.Store(bl.Asset+t.quoteCurrency, bl)
 }
 
 // isAllowedMarkets checks if the runner is allowed to trade based on its targered markets, which are SPOT or FUTURES.
@@ -194,45 +213,97 @@ func (t *trader) isHolding(r *runner.Runner) bool {
 	return valid
 }
 
+func (t *trader) isOrdering(r *runner.Runner) bool {
+	// this request costs 3WI as it hits a binance API
+	if r.GetMarketType() == runner.Cash {
+		orders, err := t.provider.binSpot.NewListOpenOrdersService().Symbol(r.GetName()).Do(context.Background())
+		if err != nil {
+			t.logger.Error.Println(t.newLog(err.Error()))
+		}
+		return len(orders) > 0 || err != nil
+	}
+	return true
+}
+
 // initialCheck validates if a runner is currently allowed to be traded before placing an order to the markets.
 func (t *trader) initialChecks(r *runner.Runner) bool {
-	t.Lock()
-	defer t.Unlock()
-
-	if !t.isAllowedMarkets(r) {
+	//t.Lock()
+	//defer t.Unlock()
+	if !t.isAllowedMarkets(r) || !t.isAllowedPatterns(r) {
 		return false
 	}
-	if !t.isAllowedPatterns(r) {
+	if t.isHolding(r) || t.isOrdering(r) {
 		return false
 	}
-	if t.isHolding(r) {
-		return false
-	}
-	if val, ok := t.binSpotBalances.Load(t.quoteCurrency); !ok || !big.NewFromString(val.(bn.Balance).Free).GT(t.minBalance) {
+	if val, ok := t.binSpotBalances.Load(t.quoteCurrency + t.quoteCurrency); !ok || !big.NewFromString(val.(bn.Balance).Free).GT(t.minBalance) {
 		return false
 	}
 	return true
 }
 
-// stopLoss calculates the stop loss price given a price.
-func (t *trader) stopLoss(price, tradingSide string) string {
-	quantity := t.minBalance.Div(big.NewFromString(price))
-	if strings.ToUpper(tradingSide) == "BUY" {
-		return t.minBalance.Mul(big.NewDecimal(1.0).Sub(t.lossTolerance)).Div(quantity).FormattedString(8)
+// shouldStop checks if the current price exceeds the limit given by the loss tolerance
+// or the current price surpass the profit margin.
+func (t *trader) shouldClose(orderPrice, currentPrice big.Decimal, tradingSide string) (bool, big.Decimal) {
+	side := big.NewFromString("1")
+	if strings.ToUpper(tradingSide) == "SELL" {
+		side = big.NewFromString("-1")
 	}
-	return t.minBalance.Mul(big.NewDecimal(1.0).Add(t.lossTolerance)).Div(quantity).FormattedString(8)
+	if currentPrice.LTE(orderPrice) {
+		pnl := orderPrice.Sub(currentPrice).Div(currentPrice)
+		if side.GT(big.ZERO) {
+			return pnl.GTE(t.lossTolerance), pnl.Mul(big.NewFromString("-1"))
+		} else {
+			return pnl.GTE(t.profitMargin), pnl
+		}
+	} else {
+		pnl := currentPrice.Sub(orderPrice).Div(orderPrice)
+		if side.LTE(big.ZERO) {
+			return pnl.GTE(t.lossTolerance), pnl.Mul(big.NewFromString("-1"))
+		} else {
+			return pnl.GTE(t.profitMargin), pnl
+		}
+	}
+	return false, big.ZERO
+}
+
+// placeMarketOrder places an order on a given runner.
+func (t *trader) placeMarketOrder(r *runner.Runner, side, quantity string) error {
+	if r.GetMarketType() == runner.Cash {
+		_, err := t.provider.binSpot.NewCreateOrderService().
+			Symbol(r.GetName()).
+			Side(bn.SideType(side)).
+			Type(bn.OrderTypeMarket).
+			Quantity(quantity).
+			Do(context.Background())
+		return err
+	}
+	return nil
+}
+
+// cancleOpenOrder cancels an outstanding order, given its orderID.
+func (t *trader) cancleOpenOrder(r *runner.Runner, oid int64) error {
+	if r.GetMarketType() == runner.Cash {
+		_, err := t.provider.binSpot.NewCancelOrderService().
+			Symbol(r.GetName()).
+			OrderID(oid).
+			Do(context.Background())
+		return err
+	}
+	return nil
 }
 
 // processEvaluatorRequest take care of the request from the evaluator, which will place trades on successfully evaluated signals.
-func (t *trader) processEvaluatorRequest(msg *message) {
+func (t *trader) processEvaluatorRequest(msg *message) error {
 	if msg.request.what.runner == nil || msg.request.what.signal == nil {
-		return
+		return errors.New("missing runner or signal")
 	}
 	if !t.initialChecks(msg.request.what.runner) {
-		return
+		return nil
 	}
 	r, s := msg.request.what.runner, msg.request.what.signal
-	if r.GetMarketType() == runner.Cash {
+	mem := &tdmember{runner: r, signal: s}
+	switch r.GetMarketType() {
+	case runner.Cash:
 		// TODO: think of the price and position sizing
 		// currently no position sizing as it uses predetermined price of minBalance
 		price := "30000"
@@ -242,7 +313,7 @@ func (t *trader) processEvaluatorRequest(msg *message) {
 			// set the symbol from the runner
 			Symbol(r.GetName()).
 			// set the trading side from the signal
-			Side(bn.SideType(s.TradingSide())).
+			Side(bn.SideType(s.OpenTradingSide())).
 			// order type is always stop loss
 			Type(bn.OrderTypeLimit).
 			// timeInFore is always good-to-candle
@@ -254,11 +325,95 @@ func (t *trader) processEvaluatorRequest(msg *message) {
 			// place the order
 			Do(context.Background())
 		if err != nil {
-			t.logger.Error.Println(t.newLog(err.Error()))
+			return err
+		}
+		orderC := make(chan bn.WsOrderUpdate, 2)
+		go func() {
+			for msg := range orderC {
+				if msg.Id != order.OrderID {
+					continue
+				}
+				mem.orderStatus = msg.Status
+				switch msg.Status {
+				case "NEW":
+					continue
+				case "TRADE":
+					fallthrough
+				case "EXPIRED":
+					fallthrough
+				case "REJECTED":
+					fallthrough
+				case "CANCELED":
+					t.binSpotOrders.Delete(r.GetName())
+					close(orderC)
+				default:
+					t.logger.Warning.Println(t.newLog(fmt.Sprintf("unknow status: %s", msg.Status)))
+					continue
+				}
+			}
+		}()
+		t.binSpotOrders.Store(r.GetName(), orderC)
+		go t.monitorBinSpotTrade(mem, order)
+	case runner.Futures:
+		return errors.New("futures market is not currently supported to trade yet")
+	default:
+		return errors.New("unknow market type")
+	}
+	return nil
+}
+
+// monitorBinSpotTrade monitors the trade after an order is placed.
+func (t *trader) monitorBinSpotTrade(m *tdmember, o *bn.CreateOrderResponse) {
+	nw := time.Now()
+	for m.orderStatus != "TRADE" {
+		time.Sleep(time.Second)
+		if m.orderStatus == "CANCELED" {
 			return
 		}
-		// after placing an order, the trader goes on to monitor the trade
-		fmt.Println(fmt.Sprintf("%+v", *order))
+		if time.Now().Sub(nw) > t.maxWaitToFill {
+			err := t.cancleOpenOrder(m.runner, o.OrderID)
+			if err != nil {
+				t.logger.Error.Println(t.newLog(err.Error()))
+				continue
+			}
+			return
+		}
+	}
+	// Upto this point, the order has been filled,
+	// you basically could place a stop order or an OCO order to control your risk and return
+	// or listen to streaming channels, depth or trade event, to manage the trade yourself.
+	m.channels = &streamingChannels{depth: make(chan interface{}, 20)}
+	for !t.registerStreamingChannel(*m) {
+		t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to register streaming service", m.runner.GetName())))
+	}
+	for msg := range m.channels.depth {
+		bestPrice := tax.BinanceSpotBestBidAskFromDepth(msg.(bn.WsPartialDepthEvent)).L1ForClosingTrade(string(o.Side))
+		if ok, _ := t.shouldClose(big.NewFromString(o.Price), bestPrice.Price, string(o.Side)); !ok {
+			continue
+		}
+		val, ok := t.binSpotBalances.Load(m.runner.GetName())
+		if !ok {
+			t.logger.Error.Println(t.newLog("there is no asset to trade"))
+			for !t.registerStreamingChannel(*m) {
+				t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", m.runner.GetName())))
+			}
+		}
+		if err := t.placeMarketOrder(m.runner, m.signal.CloseTradingSide(), val.(bn.Balance).Free); err != nil {
+			t.logger.Error.Println(t.newLog(err.Error()))
+			for !t.registerStreamingChannel(*m) {
+				t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", m.runner.GetName())))
+			}
+		}
+	}
+
+	// Upto this point, the trade should be close, the trade should be converted back to
+	// the quote currency, which should be in USDT, and report PNLs.
+	// The outstanding portion or the order should be canceled.
+	if !t.isOrdering(m.runner) {
+		return
+	}
+	if err := t.cancleOpenOrder(m.runner, o.OrderID); err != nil {
+		t.logger.Error.Println(t.newLog(err.Error()))
 	}
 }
 
@@ -278,10 +433,13 @@ func (t *trader) binSpotUserDataStreaming() {
 		case bn.UserDataEventTypeBalanceUpdate:
 			t.logger.Info.Println(t.newLog(fmt.Sprintf("cash %+v", *e)))
 		case bn.UserDataEventTypeExecutionReport:
-			t.logger.Info.Println(t.newLog(fmt.Sprintf("cash %+v", *e)))
+			if val, ok := t.binSpotOrders.Load(e.OrderUpdate.Symbol); ok {
+				val.(chan bn.WsOrderUpdate) <- e.OrderUpdate
+			}
 		case bn.UserDataEventTypeListStatus:
 			t.logger.Info.Println(t.newLog(fmt.Sprintf("cash %+v", *e)))
 		default:
+			t.logger.Info.Println(t.newLog(fmt.Sprintf("cash %+v", *e)))
 		}
 	}
 	errorHandler := func(err error) { t.logger.Error.Println(t.newLog(err.Error())); isError = true }
@@ -312,12 +470,12 @@ func (t *trader) binFutuUserDataStreaming() {
 
 // registerStreamingChannel registers the runners with the streamer in order to
 // recevie and consume candles broadcasted by data providor.
-func (t *trader) registerStreamingChannel(mem tdmember) bool {
+func (t *trader) registerStreamingChannel(m tdmember) bool {
 	doneStreamingRegister := false
 	var maxTries int
 	for !doneStreamingRegister && maxTries <= 3 {
 		resC := make(chan *payload)
-		t.communicator.trader2Streamer <- t.communicator.newMessage(mem.runner, nil, mem.channels, nil, resC)
+		t.communicator.trader2Streamer <- t.communicator.newMessage(m.runner, nil, m.channels, nil, resC)
 		doneStreamingRegister = (<-resC).what.dynamic.(bool)
 		maxTries++
 	}
