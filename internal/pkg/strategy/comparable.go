@@ -63,7 +63,10 @@ func (c *Comparable) convertTimePeriod() time.Duration {
 }
 
 func (c *Comparable) validate() error {
-	if c.Candle == nil && c.Indicator == nil && c.Fundamental == nil { // c.Trade == nil
+	if c == nil {
+		return errors.New("comparable must not be nil")
+	}
+	if c.Candle == nil && c.Indicator == nil && c.Fundamental == nil {
 		return errors.New("missing comparable values")
 	}
 	if !util.Int64SliceContains(AcceptablePeriods, int64(c.TimePeriod)) {
