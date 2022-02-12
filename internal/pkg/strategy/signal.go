@@ -122,12 +122,20 @@ func (s Signal) IsOnetime() bool {
 	return strings.ToLower(s.TrackType) == strings.ToLower(OnetimeTrack)
 }
 
-// TradingSide returns generic string for trading, either BUY or SELL.
-func (s Signal) TradingSide() string {
+// OpenTradingSide returns generic string for trading, either BUY or SELL.
+func (s Signal) OpenTradingSide() string {
 	if s.IsBullish() {
 		return "BUY"
 	}
 	return "SELL"
+}
+
+// CloseTradingSide returns generic string for trading, either BUY or SELL.
+func (s Signal) CloseTradingSide() string {
+	if s.IsBullish() {
+		return "SELL"
+	}
+	return "BUY"
 }
 
 // IsBullish return true if the signal is bullish, false otherwise.
