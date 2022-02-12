@@ -26,7 +26,7 @@ type notifier struct {
 	communicator *communicator
 }
 
-type nmember struct {
+type notification struct {
 	id       string
 	lastSent time.Time
 	//runnerName   string
@@ -109,7 +109,7 @@ func (n *notifier) addChatIDs(cids []int64) {
 func (n *notifier) getNotifications() map[string]time.Time {
 	out := make(map[string]time.Time)
 	n.notis.Range(func(k, v interface{}) bool {
-		out[k.(string)] = v.(nmember).lastSent
+		out[k.(string)] = v.(notification).lastSent
 		return true
 	})
 	return out
@@ -127,15 +127,15 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	if val, ok := n.notis.Load(id); !ok {
 		n.notify(mess)
 		n.notis.Store(id,
-			nmember{
+			notification{
 				id:       id,
 				lastSent: time.Now().Add(-time.Minute),
 			})
 	} else {
-		if s.ShouldSend(val.(nmember).lastSent) {
+		if s.ShouldSend(val.(notification).lastSent) {
 			n.notify(mess)
 			n.notis.Store(id,
-				nmember{
+				notification{
 					id:       id,
 					lastSent: time.Now().Add(-time.Minute),
 				})
