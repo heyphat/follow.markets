@@ -76,6 +76,7 @@ type Configs struct {
 			MinLeverage     float64  `json:"min_leverage"`
 			MaxLeverage     float64  `json:"max_leverage"`
 			MaxPositions    float64  `json:"max_concurrent_positions"`
+			MaxWaitToFill   float64  `json:"max_wait_to_fill"`
 			LossTolerance   float64  `json:"loss_tolerance"`
 			ProfitMargin    float64  `json:"profit_margin"`
 		} `json:"trader"`
