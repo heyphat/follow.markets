@@ -8,7 +8,6 @@ import (
 
 	bn "github.com/adshao/go-binance/v2"
 	bnf "github.com/adshao/go-binance/v2/futures"
-	ta "github.com/itsphat/techan"
 	"github.com/sdcoffey/big"
 
 	"follow.markets/internal/pkg/runner"
@@ -120,7 +119,7 @@ func (s *streamer) processingWatcherRequest(msg *message) {
 		s.unsubscribe(r.GetUniqueName(WATCHER))
 		cs.close()
 	} else {
-		bStopC, tStopC, dStopC := s.subscribe(r.GetName(), r.GetMarketType(), cs.bar, cs.trade, cs.depth)
+		bStopC, tStopC, dStopC := s.subscribe(r, cs)
 		s.controllers.Store(r.GetUniqueName(WATCHER),
 			controller{
 				name: r.GetUniqueName(WATCHER),
@@ -143,7 +142,7 @@ func (s *streamer) processingTraderRequest(msg *message) {
 		s.unsubscribe(r.GetUniqueName(TRADER))
 		cs.close()
 	} else {
-		bStopC, tStopC, dStopC := s.subscribe(r.GetName(), r.GetMarketType(), cs.bar, cs.trade, cs.depth)
+		bStopC, tStopC, dStopC := s.subscribe(r, cs)
 		s.controllers.Store(r.GetUniqueName(TRADER),
 			controller{
 				name: r.GetUniqueName(WATCHER),
@@ -182,17 +181,14 @@ func (s *streamer) processingEvaluatorRequest(msg *message) {
 	}
 }
 
-func (s *streamer) subscribe(
-	name string,
-	market runner.MarketType,
-	bChann chan *ta.Candle,
-	tChann chan *tax.Trade,
-	dChann chan interface{}) (chan struct{}, chan struct{}, chan struct{}) {
+func (s *streamer) subscribe(r *runner.Runner, cs *streamingChannels) (chan struct{}, chan struct{}, chan struct{}) {
 	s.Lock()
 	defer s.Unlock()
 	// cash handlers
 	tradeHandler := func(event *bn.WsAggTradeEvent) {
-		tChann <- tax.ConvertBinanceStreamingAggTrade(event)
+		if cs.trade != nil {
+			cs.trade <- tax.ConvertBinanceStreamingAggTrade(event)
+		}
 	}
 	klineHandler := func(event *bn.WsKlineEvent) {
 		if !event.Kline.IsFinal {
@@ -201,14 +197,20 @@ func (s *streamer) subscribe(
 		if event.Kline.TradeNum == 0 || big.NewFromString(event.Kline.Volume).EQ(big.ZERO) {
 			return
 		}
-		bChann <- tax.ConvertBinanceStreamingKline(event, nil)
+		if cs.bar != nil {
+			cs.bar <- tax.ConvertBinanceStreamingKline(event, nil)
+		}
 	}
 	depthHandler := func(event *bn.WsPartialDepthEvent) {
-		dChann <- event
+		if cs.depth != nil {
+			cs.depth <- event
+		}
 	}
 	// futures handlers
 	futuTradeHandler := func(event *bnf.WsAggTradeEvent) {
-		tChann <- tax.ConvertBinanceFuturesStreamingAggTrade(event)
+		if cs.trade != nil {
+			cs.trade <- tax.ConvertBinanceFuturesStreamingAggTrade(event)
+		}
 	}
 	futuKlineHandler := func(event *bnf.WsKlineEvent) {
 		if !event.Kline.IsFinal {
@@ -217,32 +219,36 @@ func (s *streamer) subscribe(
 		if event.Kline.TradeNum == 0 || big.NewFromString(event.Kline.Volume).EQ(big.ZERO) {
 			return
 		}
-		bChann <- tax.ConvertBinanceFuturesStreamingKline(event, nil)
+		if cs.bar != nil {
+			cs.bar <- tax.ConvertBinanceFuturesStreamingKline(event, nil)
+		}
 	}
 	futuDepthHandler := func(event *bnf.WsDepthEvent) {
-		dChann <- event
+		if cs.depth != nil {
+			cs.depth <- event
+		}
 	}
 	var bStopC, tStopC, dStopC chan struct{}
-	switch market {
+	switch r.GetMarketType() {
 	case runner.Cash:
-		if bChann != nil {
-			bStopC = s.streamingBinanceKline(name, bStopC, klineHandler)
+		if cs.bar != nil {
+			bStopC = s.streamingBinanceKline(r.GetName(), bStopC, klineHandler)
 		}
-		if tChann != nil {
-			tStopC = s.streamingBinanceTrade(name, tStopC, tradeHandler)
+		if cs.trade != nil {
+			tStopC = s.streamingBinanceTrade(r.GetName(), tStopC, tradeHandler)
 		}
-		if dChann != nil {
-			dStopC = s.streamingBinancePartitialDepth(name, tStopC, depthHandler)
+		if cs.depth != nil {
+			dStopC = s.streamingBinancePartitialDepth(r.GetName(), tStopC, depthHandler)
 		}
 	case runner.Futures:
-		if bChann != nil {
-			bStopC = s.streamingBinanceFuturesKline(name, bStopC, futuKlineHandler)
+		if cs.bar != nil {
+			bStopC = s.streamingBinanceFuturesKline(r.GetName(), bStopC, futuKlineHandler)
 		}
-		if tChann != nil {
-			tStopC = s.streamingBinanceFuturesTrade(name, tStopC, futuTradeHandler)
+		if cs.trade != nil {
+			tStopC = s.streamingBinanceFuturesTrade(r.GetName(), tStopC, futuTradeHandler)
 		}
-		if dChann != nil {
-			dStopC = s.streamingBinanceFuturesPartitialDepth(name, tStopC, futuDepthHandler)
+		if cs.depth != nil {
+			dStopC = s.streamingBinanceFuturesPartitialDepth(r.GetName(), tStopC, futuDepthHandler)
 		}
 	}
 	return bStopC, tStopC, dStopC
