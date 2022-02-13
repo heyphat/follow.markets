@@ -344,3 +344,12 @@ func (m *MarketStruct) Balances(market string) (map[string]string, error) {
 	}
 	return out, nil
 }
+
+func (m *MarketStruct) UpdateConfigs(c *config.Configs) error {
+	m.configs = c
+	return m.trader.updateConfigs(c)
+}
+
+func (m *MarketStruct) GetConfigs() *config.Configs {
+	return m.configs
+}
