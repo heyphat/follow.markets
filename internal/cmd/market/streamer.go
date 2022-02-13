@@ -26,6 +26,7 @@ type streamer struct {
 	communicator *communicator
 }
 
+// newStreamer returns a streamer, meant to be called by the MarketStruct only once.
 func newStreamer(participants *sharedParticipants) (*streamer, error) {
 	if participants == nil || participants.communicator == nil || participants.logger == nil {
 		return nil, errors.New("missing shared participants")
@@ -76,8 +77,8 @@ func (s *streamer) connect() {
 // isConnected returns true if the streamer is connected to the system, false otherwise.
 func (s *streamer) isConnected() bool { return s.connected }
 
-// isStreamingOn returns true if the given ticker is actually being streamed for the market
-// participant given by the from parameter.
+// isStreamingOn returns true if the given ticker is actually being streamed for a market
+// participant given by the `from` parameter.
 func (s *streamer) isStreamingOn(ticker, from string) bool {
 	s.Lock()
 	defer s.Unlock()
@@ -89,7 +90,7 @@ func (s *streamer) isStreamingOn(ticker, from string) bool {
 	return valid
 }
 
-// streamList returns a list of streamed tickers for a market participant given by the from parameter.
+// streamList returns a list of streamed tickers for a market participant given by the `from` parameter.
 func (s *streamer) streamList(from string) []string {
 	s.Lock()
 	defer s.Unlock()
@@ -103,7 +104,7 @@ func (s *streamer) streamList(from string) []string {
 	return tickers
 }
 
-// get returns a controller that streamer holds for a runner.
+// get returns a controller that the streamer holds for a runner.
 func (s *streamer) get(name string) *controller {
 	if val, ok := s.controllers.Load(name); ok {
 		c := val.(controller)
@@ -112,6 +113,7 @@ func (s *streamer) get(name string) *controller {
 	return nil
 }
 
+// this method processes requests from the watcher.
 func (s *streamer) processingWatcherRequest(msg *message) {
 	r := msg.request.what.runner
 	cs := msg.request.what.channels
@@ -134,6 +136,7 @@ func (s *streamer) processingWatcherRequest(msg *message) {
 	}
 }
 
+// this method processes requests from the trader.
 func (s *streamer) processingTraderRequest(msg *message) {
 	r := msg.request.what.runner
 	cs := msg.request.what.channels
@@ -156,6 +159,7 @@ func (s *streamer) processingTraderRequest(msg *message) {
 	}
 }
 
+// this method processes requests from the evaluator.
 func (s *streamer) processingEvaluatorRequest(msg *message) {
 	//m := msg.request.what.(emember)
 	//	if s.isStreamingOn(EVALUATOR+m.name, EVALUATOR) {
@@ -179,6 +183,7 @@ func (s *streamer) processingEvaluatorRequest(msg *message) {
 	}
 }
 
+// subscribe handles subscribing to the market data for a runner.
 func (s *streamer) subscribe(r *runner.Runner, cs *streamingChannels) (chan struct{}, chan struct{}, chan struct{}) {
 	s.Lock()
 	defer s.Unlock()
@@ -252,11 +257,12 @@ func (s *streamer) subscribe(r *runner.Runner, cs *streamingChannels) (chan stru
 	return bStopC, tStopC, dStopC
 }
 
-func (s *streamer) unsubscribe(uName string) {
+// unsubscribe handles unsubscribing to the market data for a runner.
+func (s *streamer) unsubscribe(name string) {
 	s.Lock()
 	defer s.Unlock()
 	s.controllers.Range(func(key, value interface{}) bool {
-		if uName == key.(string) {
+		if name == key.(string) {
 			for _, c := range value.(controller).stops {
 				if c != nil {
 					c <- struct{}{}
@@ -266,7 +272,7 @@ func (s *streamer) unsubscribe(uName string) {
 		}
 		return true
 	})
-	s.controllers.Delete(uName)
+	s.controllers.Delete(name)
 }
 
 func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
@@ -387,7 +393,7 @@ func (s *streamer) streamingBinanceFuturesPartitialDepth(name string,
 	return stop
 }
 
-// returns a log for the streamer
+// returns a log for the streamer.
 func (s *streamer) newLog(name, message string) string {
 	return fmt.Sprintf("[streamer] %s: %s", name, message)
 }

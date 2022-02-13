@@ -58,6 +58,7 @@ type setup struct {
 	orderStatus string
 }
 
+// newTrader returns a trader, meant to be called by the MarketStruct only once.
 func newTrader(participants *sharedParticipants, configs *config.Configs) (*trader, error) {
 	if configs == nil || participants == nil || participants.communicator == nil || participants.logger == nil {
 		return nil, errors.New("missing shared participants or configs")
@@ -154,7 +155,7 @@ func (t *trader) connect() {
 	t.connected = true
 }
 
-// getBinSpotBalances returns assets holding on Binance spot account.
+// getBinSpotBalances returns assets which are currently available on Binance spot account.
 func (t *trader) getBinSpotBalances() []bn.Balance {
 	out := []bn.Balance{}
 	t.binSpotBalances.Range(func(key, value interface{}) bool {
@@ -165,7 +166,7 @@ func (t *trader) getBinSpotBalances() []bn.Balance {
 }
 
 // updatebinSpotBalances removes or adds assset to holdings on trader binSpotBalances.
-// It is called once on initialization and upon receving data from websocket for UserData event.
+// It is called on initialization and upon receving data from websocket for UserData event.
 func (t *trader) updatebinSpotBalances(bl bn.Balance) {
 	t.Lock()
 	defer t.Unlock()
@@ -176,7 +177,8 @@ func (t *trader) updatebinSpotBalances(bl bn.Balance) {
 	t.binSpotBalances.Store(bl.Asset+t.quoteCurrency, bl)
 }
 
-// isAllowedMarkets checks if the runner is allowed to trade based on its targered markets, which are SPOT or FUTURES.
+// isAllowedMarkets checks if the given runner is allowed to trade based on its targered markets,
+// which are SPOT or FUTURES.
 func (t *trader) isAllowedMarkets(r *runner.Runner) bool {
 	for _, m := range t.allowedMarkets {
 		if m == r.GetMarketType() {
@@ -186,7 +188,7 @@ func (t *trader) isAllowedMarkets(r *runner.Runner) bool {
 	return false
 }
 
-// isAllowedPatterns checks if the runner is allowed to trade based on its ticker name.
+// isAllowedPatterns checks if the given runner is allowed to trade based on its ticker name.
 func (t *trader) isAllowedPatterns(r *runner.Runner) bool {
 	for _, p := range t.allowedPatterns {
 		isMatched, err := p.MatchString(r.GetName())
@@ -201,7 +203,7 @@ func (t *trader) isAllowedPatterns(r *runner.Runner) bool {
 	return false
 }
 
-// isHolding checks if the intended trading ticker is currently beign held.
+// isHolding checks if the given runner which is intended to be traded is currently being held.
 func (t *trader) isHolding(r *runner.Runner) bool {
 	valid := false
 	if r.GetMarketType() == runner.Cash {
@@ -213,6 +215,7 @@ func (t *trader) isHolding(r *runner.Runner) bool {
 	return valid
 }
 
+// isOrdering checks if there are outstanding orders on the runner.
 func (t *trader) isOrdering(r *runner.Runner) bool {
 	// this request costs 3WI as it hits a binance API
 	if r.GetMarketType() == runner.Cash {
@@ -226,6 +229,8 @@ func (t *trader) isOrdering(r *runner.Runner) bool {
 }
 
 // initialCheck validates if a runner is currently allowed to be traded before placing an order to the markets.
+// the checks include isAllowedMarkets, isAllowedPatterns, not isHolding, not isOrdering and the account has
+// enough balance to open a trade.
 func (t *trader) initialChecks(r *runner.Runner) bool {
 	//t.Lock()
 	//defer t.Unlock()
@@ -277,9 +282,9 @@ func (t *trader) placeMarketOrder(r *runner.Runner, side, quantity string) error
 	return nil
 }
 
-// cancleOpenOrder cancels an outstanding order, given its orderID.
-// the bot has to manage all the order it's initialized. In some case,
-// it needs to cancel all the outstanding orders before completing trades.
+// cancleOpenOrder cancels an outstanding order, given the orderID.
+// the bot has to manage all orders it's initialized. In some case,
+// it needs to cancel outstanding orders before completing trades.
 func (t *trader) cancleOpenOrder(r *runner.Runner, oid int64) error {
 	if r.GetMarketType() == runner.Cash {
 		_, err := t.provider.binSpot.NewCancelOrderService().
@@ -291,8 +296,9 @@ func (t *trader) cancleOpenOrder(r *runner.Runner, oid int64) error {
 	return nil
 }
 
-// processEvaluatorRequest take care of the request from the evaluator,
-// which will place trades on successfully evaluated signals.
+// processEvaluatorRequest take care of requests from the evaluator,
+// which places trades if the given runner passed the initialChecks method and
+// the given signal gives a valid limit price.
 func (t *trader) processEvaluatorRequest(msg *message) error {
 	if msg.request.what.runner == nil || msg.request.what.signal == nil {
 		return errors.New("missing runner or signal")
@@ -362,7 +368,7 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 	return nil
 }
 
-// monitorBinSpotTrade monitors the trade after an order is placed.
+// monitorBinSpotTrade monitors the trade after an order is placed successfully.
 func (t *trader) monitorBinSpotTrade(m *setup, o *bn.CreateOrderResponse) {
 	nw := time.Now()
 	// Waiting for the order to be (partially) filled
@@ -468,8 +474,8 @@ func (t *trader) binFutuUserDataStreaming() {
 	}
 }
 
-// registerStreamingChannel registers the runners with the streamer in order to
-// recevie and consume candles broadcasted by data providor.
+// registerStreamingChannel registers or deregisters a runner to the streamer in order to
+// receive candle or depth broadcasted by data providor.
 func (t *trader) registerStreamingChannel(m setup) bool {
 	doneStreamingRegister := false
 	var maxTries int
