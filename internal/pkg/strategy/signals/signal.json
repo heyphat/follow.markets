@@ -1,5 +1,13 @@
 {
   "name": "sample",
+  "trade_price": {
+      "time_period": 60,
+      "time_frame": 0,
+      "candle": {
+        "name": "CLOSE",
+        "multiplier": 1 
+    }
+  },
   "conditions":
   [
     {

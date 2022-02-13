@@ -31,6 +31,11 @@ type Configs struct {
 		Version string `json:"version"`
 	} `json:"datadog"`
 	Market struct {
+		Base struct {
+			Crypto struct {
+				QuoteCurrency string `json:"crypto_quote"`
+			} `json:"crypto"`
+		} `json:"base"`
 		Provider struct {
 			Binance struct {
 				APIKey    string `json:"api_key"`
@@ -47,9 +52,8 @@ type Configs struct {
 			} `json:"telegram"`
 		} `json:"notifier"`
 		Watcher struct {
-			BaseMarket string   `json:"base_market"`
-			Watchlist  []string `json:"watchlist"`
-			Runner     struct {
+			Watchlist []string `json:"watchlist"`
+			Runner    struct {
 				Frames     []int            `json:"frames"`
 				Indicators map[string][]int `json:"indicators"`
 			} `json:"runner"`
@@ -65,6 +69,17 @@ type Configs struct {
 			ProfitMargin  float64 `json:"profit_margin"`
 			LossTolerance float64 `json:"loss_tolerance"`
 		} `json:"tester"`
+		Trader struct {
+			AllowedPatterns []string `json:"allowed_patterns"`
+			AllowedMarkets  []string `json:"allowed_markets"`
+			MinBalance      float64  `json:"min_balance_to_trade"`
+			MinLeverage     float64  `json:"min_leverage"`
+			MaxLeverage     float64  `json:"max_leverage"`
+			MaxPositions    float64  `json:"max_concurrent_positions"`
+			MaxWaitToFill   float64  `json:"max_wait_to_fill"`
+			LossTolerance   float64  `json:"loss_tolerance"`
+			ProfitMargin    float64  `json:"profit_margin"`
+		} `json:"trader"`
 	} `json:"market"`
 }
 
@@ -101,8 +116,8 @@ func NewConfigs(filePath *string) (*Configs, error) {
 	if len(configs.Datadog.Host) > 0 {
 		os.Setenv("DD_AGENT_HOST", configs.Datadog.Host)
 	}
-	if len(configs.Market.Watcher.BaseMarket) == 0 {
-		configs.Market.Watcher.BaseMarket = "USDT"
+	if len(configs.Market.Base.Crypto.QuoteCurrency) == 0 {
+		configs.Market.Base.Crypto.QuoteCurrency = "USDT"
 	}
 	if len(configs.Market.Provider.Binance.APIKey) == 0 {
 		return &configs, errors.New("missing binance api key and secret")
