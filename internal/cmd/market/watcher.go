@@ -143,7 +143,7 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs, fd *runner.Fund
 	defer w.Unlock()
 	w.runners.Store(m.runner.GetUniqueName(), m)
 	go w.await(m)
-	w.logger.Info.Println(w.newLog(m.runner.GetUniqueName(), "started to watch"))
+	w.logger.Info.Println(w.newLog(m.runner.GetUniqueName(), "started watching"))
 	return nil
 }
 
