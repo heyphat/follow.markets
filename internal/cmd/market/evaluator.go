@@ -8,7 +8,6 @@ import (
 	"github.com/dlclark/regexp2"
 
 	"follow.markets/internal/pkg/strategy"
-	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/log"
 	"follow.markets/pkg/util"
 )
@@ -25,10 +24,11 @@ type evaluator struct {
 }
 
 type emember struct {
-	name    string
-	regex   []*regexp2.Regexp
-	tChann  chan *tax.Trade
-	signals strategy.Signals
+	name     string
+	regex    []*regexp2.Regexp
+	channels *streamingChannels
+	signals  strategy.Signals
+	patterns []string
 }
 
 func newEvaluator(participants *sharedParticipants) (*evaluator, error) {
@@ -83,11 +83,10 @@ func (e *evaluator) add(patterns []string, s *strategy.Signal) error {
 			reges = append(reges, reg)
 		}
 		mem = emember{
-			name:    s.Name,
-			regex:   reges,
-			tChann:  nil,
-			signals: strategy.Signals{s},
-			//tChann:  make(chan *tax.Trade),
+			name:     s.Name,
+			regex:    reges,
+			signals:  strategy.Signals{s},
+			patterns: patterns,
 		}
 		e.signals.Store(s.Name, mem)
 	} else {
@@ -159,19 +158,21 @@ func (e *evaluator) registerStreamingChannel(mem emember) bool {
 	var maxTries int
 	for !doneStreamingRegister && maxTries <= 3 {
 		resC := make(chan *payload)
-		e.communicator.evaluator2Streamer <- e.communicator.newMessage(mem, resC)
-		doneStreamingRegister = (<-resC).what.(bool)
+		e.communicator.evaluator2Streamer <- e.communicator.newMessage(nil, nil, nil, nil, resC)
+		doneStreamingRegister = (<-resC).what.dynamic.(bool)
 		maxTries++
 	}
 	return doneStreamingRegister
 }
 
 func (e *evaluator) processingWatcherRequest(msg *message) {
-	r := msg.request.what.(wmember).runner
+	r := msg.request.what.runner
 	signals := e.getByTicker(r.GetName())
 	for _, s := range signals {
 		if s.Evaluate(r, nil) {
-			e.communicator.evaluator2Notifier <- e.communicator.newMessageWithPayloadID(r.GetUniqueName()+"-"+s.Name, s, nil)
+			msg := e.communicator.newMessage(r, s, nil, nil, nil)
+			e.communicator.evaluator2Notifier <- msg
+			e.communicator.evaluator2Trader <- msg
 			if s.IsOnetime() {
 				_ = e.drop(s.Name)
 			}
@@ -180,10 +181,10 @@ func (e *evaluator) processingWatcherRequest(msg *message) {
 }
 
 func (e *evaluator) processStreamerRequest(msg *message) {
-	if mem, ok := e.signals.Load(msg.request.what.(string)); ok && msg.response != nil {
-		msg.response <- e.communicator.newPayload(mem)
-		close(msg.response)
-	}
+	//	if mem, ok := e.signals.Load(msg.request.what.unknown.(string)); ok && msg.response != nil {
+	//		msg.response <- e.communicator.newPayload(nil, mem.signal, mem.channels, nil).addRequestID(&msg.request.requestID).addResponseID()
+	//		close(msg.response)
+	//	}
 }
 
 func (e *evaluator) newLog(ticker, message string) string {

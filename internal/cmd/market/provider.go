@@ -3,6 +3,7 @@ package market
 import (
 	"context"
 	"regexp"
+	"sync"
 	"time"
 
 	"follow.markets/pkg/config"
@@ -10,6 +11,7 @@ import (
 	bnf "github.com/adshao/go-binance/v2/futures"
 	ta "github.com/itsphat/techan"
 	cc "github.com/miguelmota/go-coinmarketcap/pro/v1"
+	"github.com/sdcoffey/big"
 
 	"follow.markets/internal/pkg/runner"
 	tax "follow.markets/internal/pkg/techanex"
@@ -34,35 +36,6 @@ func newProvider(configs *config.Configs) *provider {
 		}),
 	}
 }
-
-//func (p *provider) fetchBinanceKlinesV2(ticker string, d time.Duration, start, end time.Time) ([]*ta.Candle, error) {
-//	startUnix := start.Truncate(d).Unix() * 1000
-//	endUnix := end.Truncate(d).Unix() * 1000
-//	re, _ := regexp.Compile(timeFramePattern)
-//	interval := re.FindString(d.String())
-//	if d >= time.Hour*24 {
-//		interval = "1d"
-//	}
-//	var service *bn.KlinesService
-//	var klines []*bn.Kline
-//	for len(klines) == 0 || (startUnix < endUnix) {
-//		service = p.binSpot.NewKlinesService().Symbol(ticker).Interval(interval).StartTime(startUnix).EndTime(endUnix).Limit(1000)
-//		kls, err := service.Do(context.Background())
-//		if err != nil {
-//			return nil, err
-//		}
-//		if len(kls) == 0 && endUnix != startUnix {
-//			return nil, errors.New("no candles on frame " + interval)
-//		}
-//		klines = append(klines, kls...)
-//		startUnix = klines[len(klines)-1].CloseTime
-//	}
-//	var candles []*ta.Candle
-//	for _, kline := range klines {
-//		candles = append(candles, tax.ConvertBinanceKline(kline, &d))
-//	}
-//	return candles, nil
-//}
 
 type fetchOptions struct {
 	limit int
@@ -156,4 +129,39 @@ func (p *provider) fetchCoinFundamentals(base string, limit int) (map[string]run
 		}
 	}
 	return out, nil
+}
+
+func (p *provider) fetchBinSpotBalances() (*sync.Map, error) {
+	acc, err := p.binSpot.NewGetAccountService().Do(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	out := sync.Map{}
+	for _, b := range acc.Balances {
+		if big.NewFromString(b.Free).GT(big.ZERO) {
+			out.Store(b.Asset, b)
+		}
+	}
+	return &out, nil
+}
+
+func (p *provider) fetchBinUserDataListenKey() (string, string, error) {
+	binSpotListenKey, err := p.binSpot.NewStartUserStreamService().Do(context.Background())
+	if err != nil {
+		return "", "", err
+	}
+	binFutuListenKey, err := p.binFutu.NewStartUserStreamService().Do(context.Background())
+	if err != nil {
+		return "", "", err
+	}
+	go func() {
+		defer p.binSpot.NewCloseUserStreamService().ListenKey(binSpotListenKey).Do(context.Background())
+		defer p.binFutu.NewCloseUserStreamService().ListenKey(binFutuListenKey).Do(context.Background())
+		for {
+			p.binSpot.NewKeepaliveUserStreamService().ListenKey(binSpotListenKey).Do(context.Background())
+			p.binFutu.NewKeepaliveUserStreamService().ListenKey(binFutuListenKey).Do(context.Background())
+			time.Sleep(time.Duration(30) * time.Minute)
+		}
+	}()
+	return binSpotListenKey, binFutuListenKey, nil
 }

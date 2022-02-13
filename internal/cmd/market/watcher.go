@@ -25,9 +25,8 @@ type watcher struct {
 }
 
 type wmember struct {
-	runner *runner.Runner
-	bChann chan *ta.Candle
-	tChann chan *tax.Trade
+	runner   *runner.Runner
+	channels *streamingChannels
 }
 
 func newWatcher(participants *sharedParticipants) (*watcher, error) {
@@ -109,8 +108,9 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs, fd *runner.Fund
 	}
 	m := wmember{
 		runner: runner.NewRunner(ticker, rc),
-		bChann: make(chan *ta.Candle, 3),
-		tChann: make(chan *tax.Trade, 10),
+		channels: &streamingChannels{
+			bar: make(chan *ta.Candle, 2),
+		},
 	}
 	if w.isWatchingOn(m.runner.GetUniqueName()) {
 		return nil
@@ -143,7 +143,7 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs, fd *runner.Fund
 	defer w.Unlock()
 	w.runners.Store(m.runner.GetUniqueName(), m)
 	go w.await(m)
-	w.logger.Info.Println(w.newLog(m.runner.GetUniqueName(), "started to watch"))
+	w.logger.Info.Println(w.newLog(m.runner.GetUniqueName(), "started watching"))
 	return nil
 }
 
@@ -151,23 +151,29 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs, fd *runner.Fund
 // to run in a separate go routine. The watcher can close listening channels to stop watching when
 // it receives drop signals from the market.
 func (w *watcher) await(mem wmember) {
-	for !w.registerStreamingChannel(mem) {
-		w.logger.Error.Println(w.newLog(mem.runner.GetName(), "failed to register streaming data"))
-	}
 	go func() {
-		for msg := range mem.bChann {
+		if mem.channels.bar == nil {
+			return
+		}
+		for msg := range mem.channels.bar {
 			if !mem.runner.SyncCandle(msg) {
 				w.logger.Error.Println(w.newLog(mem.runner.GetName(), "failed to sync new candle on watching"))
 				continue
 			}
-			w.communicator.watcher2Evaluator <- w.communicator.newMessage(mem, nil)
+			w.communicator.watcher2Evaluator <- w.communicator.newMessage(mem.runner, nil, nil, nil, nil)
 		}
 	}()
 	go func() {
-		for _ = range mem.tChann {
-			//w.logger.Info.Println(msg)
+		if mem.channels.trade == nil {
+			return
+		}
+		for msg := range mem.channels.trade {
+			w.logger.Info.Println(msg)
 		}
 	}()
+	for !w.registerStreamingChannel(mem) {
+		w.logger.Error.Println(w.newLog(mem.runner.GetName(), "failed to register streaming data"))
+	}
 }
 
 // drop removes the given ticker from the watchlist. It closes all the streaming channels.
@@ -245,35 +251,20 @@ func (w *watcher) registerStreamingChannel(mem wmember) bool {
 	var maxTries int
 	for !doneStreamingRegister && maxTries <= 3 {
 		resC := make(chan *payload)
-		w.communicator.watcher2Streamer <- w.communicator.newMessage(mem, resC)
-		doneStreamingRegister = (<-resC).what.(bool)
+		w.communicator.watcher2Streamer <- w.communicator.newMessage(mem.runner, nil, mem.channels, nil, resC)
+		doneStreamingRegister = (<-resC).what.dynamic.(bool)
 		maxTries++
 	}
 	return doneStreamingRegister
 }
 
-// deregisterStreamingChannel deregisters the runners with the streamer in order to
-// cancle streaming channels broadcasted by data providor. Every time the drop
-// method is called and the ticker is vallid, it will invoke this method.
-//func (w *watcher) deregisterStreamingChannel(mem wmember) bool {
-//	doneStreamingDeregister := false
-//	var maxTries int
-//	for !doneStreamingDeregister && maxTries <= 3 {
-//		resC := make(chan *payload)
-//		w.communicator.watcher2Streamer <- w.communicator.newMessage(mem, resC)
-//		doneStreamingDeregister = (<-resC).what.(bool)
-//		maxTries++
-//	}
-//	return doneStreamingDeregister
-//}
-
 // This processes the request from the streamer, currently the streamer only requests
 // for the `mem` channels in order to reinitialize the streaming data if necessary.
 func (w *watcher) processStreamerRequest(msg *message) {
-	if mem, ok := w.runners.Load(msg.request.what.(string)); ok && msg.response != nil {
-		msg.response <- w.communicator.newPayload(mem)
-		close(msg.response)
-	}
+	//if mem, ok := w.runners.Load(msg.request.what.(string)); ok && msg.response != nil {
+	//	msg.response <- w.communicator.newPayload(mem.runner, nil, mem.channels, nil).addRequestID(&msg.request.requestID).addResponseID()
+	//	close(msg.response)
+	//}
 }
 
 // generates a new log with the format for the watcher
