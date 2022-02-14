@@ -17,6 +17,7 @@ import (
 type Signal struct {
 	Name       string        `json:"name"`
 	Groups     Groups        `json:"groups"`
+	OwnerID    *int64        `json:"owner_id"`
 	TradePrice *Comparable   `json:"trade_price"`
 	TimePeriod time.Duration `json:"primary_period"`
 
@@ -70,6 +71,7 @@ func (s *Signal) copy() *Signal {
 	var ns Signal
 	ns.Name = s.Name
 	ns.Groups = s.Groups.copy()
+	ns.OwnerID = s.OwnerID
 	ns.SignalType = s.SignalType
 	ns.TrackType = s.TrackType
 	ns.NotifyType = s.NotifyType

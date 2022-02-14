@@ -29,8 +29,6 @@ type notifier struct {
 type notification struct {
 	id       string
 	lastSent time.Time
-	//runnerName   string
-	//strategyName string
 }
 
 func newNotifier(participants *sharedParticipants, configs *config.Configs) (*notifier, error) {
@@ -115,17 +113,19 @@ func (n *notifier) getNotifications() map[string]time.Time {
 	return out
 }
 
+// this method processes requests from evaluator, it sends notifications to user
+// based on the set of rules specified on the signal.
 func (n *notifier) processEvaluatorRequest(msg *message) {
 	s := msg.request.what.signal
 	r := msg.request.what.runner
 	id := r.GetUniqueName() + "-" + s.Name
 	mess := id + "\n" + s.Description()
 	if s.IsOnetime() {
-		n.notify(mess)
+		n.notify(mess, s.OwnerID)
 		return
 	}
 	if val, ok := n.notis.Load(id); !ok {
-		n.notify(mess)
+		n.notify(mess, s.OwnerID)
 		n.notis.Store(id,
 			notification{
 				id:       id,
@@ -133,7 +133,7 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 			})
 	} else {
 		if s.ShouldSend(val.(notification).lastSent) {
-			n.notify(mess)
+			n.notify(mess, s.OwnerID)
 			n.notis.Store(id,
 				notification{
 					id:       id,
@@ -143,14 +143,21 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	}
 }
 
-// notify sends tele message to all chatIDs for a given content.
-func (n *notifier) notify(content string) {
+// notify sends tele message to all chatIDs for a given content if the given `cid`
+// is missing, otherwise only send to `cid`.
+func (n *notifier) notify(content string, cid *int64) {
+	if cid != nil {
+		message := tele.NewMessage(*cid, content)
+		n.bot.Send(message)
+		return
+	}
 	for _, cid := range n.chatIDs {
 		message := tele.NewMessage(cid, content)
 		n.bot.Send(message)
 	}
 }
 
+// generates a new log with the format for the notifier
 func (n *notifier) newLog(name, message string) string {
 	return fmt.Sprintf("[notifier] %s: %s", name, message)
 }
