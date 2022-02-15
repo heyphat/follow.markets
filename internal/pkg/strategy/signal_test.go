@@ -78,5 +78,5 @@ func Test_TradeExecutionPrice(t *testing.T) {
 
 	price, ok := signal.TradeExecutionPrice(r)
 	assert.EqualValues(t, true, ok)
-	assert.EqualValues(t, "0.2", price.FormattedString(1))
+	assert.EqualValues(t, "30000.0", price.FormattedString(1))
 }
