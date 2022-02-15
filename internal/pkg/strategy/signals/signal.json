@@ -1,92 +1,59 @@
 {
   "name": "sample",
-  "trade_price": {
-      "time_period": 60,
-      "time_frame": 0,
-      "candle": {
-        "name": "CLOSE",
-        "multiplier": 1 
-    }
-  },
-  "conditions":
-  [
-    {
-    "this":
-      {
-        "time_period": 60,
-        "time_frame": 0,
-        "candle": {
-          "name": "CLOSE",
-          "multiplier": 1 
-        }
-      },
-    "that":
-      {
-        "time_period": 60,
-        "time_frame": 0,
-        "candle": {
-          "name": "CLOSE",
-          "multiplier": 1 
-        }
-      },
-    "opt": "EQUAL"
-    }
-  ],
+  "notify_type": "ALL",
+  "signal_type": "BULLISH",
+  "track_type": "ONETIME",
   "groups": [
     {
       "opt": "OR",
       "condition_groups": [
         {
+          "opt": "AND",
           "conditions": [
             {
-              "this":
-                {
-                  "time_period": 60,
-                  "time_frame": 0,
-                  "candle": {
-                    "multiplier": 1,
-                    "name": "CLOSE"
-                  }
-                },
-              "that":
-                {
-                  "time_period": 60,
-                  "time_frame": 0,
-                  "candle": {
-                    "name": "CLOSE",
-                    "multiplier": 1
-                  }
-                },
-              "opt": "EQUAL"
+              "opt": "EQUAL",
+              "this": {
+                "time_period": 60,
+                "time_frame": 0,
+                "candle": {
+                  "name": "CLOSE",
+                  "multiplier": 1
+                }
+              },
+              "that": {
+                "time_period": 60,
+                "time_frame": 0,
+                "candle": {
+                  "name": "CLOSE",
+                  "multiplier": 1
+                }
+              }
             }
-          ],
-          "opt": "AND"
+          ]
         },
         {
+          "opt": "AND",
           "conditions": [
             {
-              "this":
-                {
-                  "time_period": 60,
-                  "time_frame": 0,
-                  "candle": {
-                    "multiplier": 1,
-                    "name": "CLOSE"
-                  }
-                },
-              "that":
-                {
-                  "time_period": 60,
-                  "time_frame": 0,
-                  "candle": {
-                    "name": "CLOSE",
-                    "multiplier": 1
-                  }
-                },
-              "opt": "MORE"
+              "opt": "MORE",
+              "this": {
+                "time_period": 60,
+                "time_frame": 0,
+                "candle": {
+                  "name": "CLOSE",
+                  "multiplier": 1
+                }
+              },
+              "that": {
+                "time_period": 60,
+                "time_frame": 0,
+                "candle": {
+                  "name": "CLOSE",
+                  "multiplier": 1
+                }
+              }
             }
-          ],
-          "opt": "AND"
+          ]
         }
       ]
     },
@@ -94,32 +61,41 @@
       "opt": "AND",
       "condition_groups": [
         {
+          "opt": "AND",
           "conditions": [
             {
-              "this":
-                {
-                  "time_period": 60,
-                  "time_frame": 0,
-                  "candle": {
-                    "multiplier": 1,
-                    "name": "CLOSE"
-                  }
-                },
-              "that":
-                {
-                  "time_period": 60,
-                  "time_frame": 0,
-                  "candle": {
-                    "name": "CLOSE",
-                    "multiplier": 1
-                  }
-                },
-              "opt": "EQUAL"
+              "opt": "EQUAL",
+              "this": {
+                "time_period": 60,
+                "time_frame": 0,
+                "candle": {
+                  "name": "CLOSE",
+                  "multiplier": 1
+                }
+              },
+              "that": {
+                "time_period": 60,
+                "time_frame": 0,
+                "candle": {
+                  "name": "CLOSE",
+                  "multiplier": 1
+                }
+              }
             }
-          ],
-          "opt": "AND"
+          ]
         }
       ]
     }
-  ]
+  ],
+  "trade_price": {
+    "time_period": 60,
+    "time_frame": 0,
+    "candle": {
+      "name": "FIXED",
+      "multiplier": 1,
+      "config": {
+        "level": 30000
+      }
+    }
+  }
 }

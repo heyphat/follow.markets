@@ -147,7 +147,7 @@ func (s *streamer) processingTraderRequest(msg *message) {
 		bStopC, tStopC, dStopC := s.subscribe(r, cs)
 		s.controllers.Store(r.GetUniqueName(TRADER),
 			controller{
-				name:  r.GetUniqueName(WATCHER),
+				name:  r.GetUniqueName(TRADER),
 				from:  TRADER,
 				stops: []chan struct{}{bStopC, tStopC, dStopC},
 			},
@@ -241,7 +241,7 @@ func (s *streamer) subscribe(r *runner.Runner, cs *streamingChannels) (chan stru
 			tStopC = s.streamingBinanceTrade(r.GetName(), tStopC, tradeHandler)
 		}
 		if cs.depth != nil {
-			dStopC = s.streamingBinancePartitialDepth(r.GetName(), tStopC, depthHandler)
+			dStopC = s.streamingBinancePartitialDepth(r.GetName(), dStopC, depthHandler)
 		}
 	case runner.Futures:
 		if cs.bar != nil {
@@ -251,7 +251,7 @@ func (s *streamer) subscribe(r *runner.Runner, cs *streamingChannels) (chan stru
 			tStopC = s.streamingBinanceFuturesTrade(r.GetName(), tStopC, futuTradeHandler)
 		}
 		if cs.depth != nil {
-			dStopC = s.streamingBinanceFuturesPartitialDepth(r.GetName(), tStopC, futuDepthHandler)
+			dStopC = s.streamingBinanceFuturesPartitialDepth(r.GetName(), dStopC, futuDepthHandler)
 		}
 	}
 	return bStopC, tStopC, dStopC
@@ -279,7 +279,7 @@ func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 	klineHandler func(e *bn.WsKlineEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stopC chan struct{}) {
+	go func(stop chan struct{}) {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -299,7 +299,7 @@ func (s *streamer) streamingBinanceFuturesKline(name string, stop chan struct{},
 	klineHandler func(e *bnf.WsKlineEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stopC chan struct{}) {
+	go func(stop chan struct{}) {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -319,7 +319,7 @@ func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
 	tradeHandler func(e *bn.WsAggTradeEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stopC chan struct{}) {
+	go func(stop chan struct{}) {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -339,7 +339,7 @@ func (s *streamer) streamingBinanceFuturesTrade(name string, stop chan struct{},
 	tradeHandler func(e *bnf.WsAggTradeEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stopC chan struct{}) {
+	go func(stop chan struct{}) {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -359,18 +359,19 @@ func (s *streamer) streamingBinancePartitialDepth(name string,
 	stop chan struct{}, depthHandler func(e *bn.WsPartialDepthEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stopC chan struct{}) {
+	go func() {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
-			done, stop, err = bn.WsPartialDepthServe100Ms(name, "5", depthHandler, errorHandler)
+			done, stop, err = bn.WsPartialDepthServe(name, "5", depthHandler, errorHandler)
 			if err != nil {
 				s.logger.Error.Println(s.newLog(name, err.Error()))
 			}
 			isInit, isError = false, false
 			<-done
 		}
-	}(stop)
+	}()
+	time.Sleep(time.Second)
 	return stop
 }
 
@@ -378,7 +379,7 @@ func (s *streamer) streamingBinanceFuturesPartitialDepth(name string,
 	stop chan struct{}, depthHandler func(e *bnf.WsDepthEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stopC chan struct{}) {
+	go func() {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -389,7 +390,9 @@ func (s *streamer) streamingBinanceFuturesPartitialDepth(name string,
 			isInit, isError = false, false
 			<-done
 		}
-	}(stop)
+	}()
+	// DO NOT remove the sleep, otherwise the channel won't be initialized
+	time.Sleep(time.Second)
 	return stop
 }
 

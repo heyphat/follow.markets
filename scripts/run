@@ -5,9 +5,15 @@ if [ -z "$1" ]; then
     STAGE=dev
 fi
 
-docker kill follow.markets
-docker run -d --rm --name follow.markets \
+LOGGER_URL=
+
+docker kill ${STAGE}.follow.markets
+docker run -d --rm --name ${STAGE}.follow.markets \
   -p 6868:6868 \
   -v $(pwd)/configs/deploy.configs.json:/configs/configs.json \
   -v $(pwd)/configs/test_results:/configs/test_results \
+  --log-driver fluentd \
+  --log-opt mode=non-blocking --log-opt max-buffer-size=10m \
+  --log-opt fluentd-address=${LOGGER_URL} \
+  --log-opt tag=${STAGE} \
   phat/follow.markets:${STAGE}
