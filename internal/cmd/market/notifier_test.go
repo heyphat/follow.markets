@@ -16,5 +16,5 @@ func Test_Notifier(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, false, notifier.connected)
 
-	notifier.notify("test")
+	notifier.notify("test", nil)
 }
