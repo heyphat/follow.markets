@@ -131,7 +131,7 @@ func (p *provider) fetchCoinFundamentals(base string, limit int) (map[string]run
 	return out, nil
 }
 
-func (p *provider) fetchBinSpotBalances() (*sync.Map, error) {
+func (p *provider) fetchBinSpotBalances(quoteCurrency string) (*sync.Map, error) {
 	acc, err := p.binSpot.NewGetAccountService().Do(context.Background())
 	if err != nil {
 		return nil, err
@@ -139,7 +139,7 @@ func (p *provider) fetchBinSpotBalances() (*sync.Map, error) {
 	out := sync.Map{}
 	for _, b := range acc.Balances {
 		if big.NewFromString(b.Free).GT(big.ZERO) {
-			out.Store(b.Asset, b)
+			out.Store(b.Asset+quoteCurrency, b)
 		}
 	}
 	return &out, nil
