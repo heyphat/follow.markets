@@ -7,7 +7,9 @@ import (
 
 	"follow.markets/internal/pkg/runner"
 	"follow.markets/internal/pkg/strategy"
+	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/config"
+	bn "github.com/adshao/go-binance/v2"
 	"github.com/sdcoffey/big"
 	"github.com/stretchr/testify/assert"
 )
@@ -46,8 +48,34 @@ func Test_Trader_Evaluator(t *testing.T) {
 	trader.connect()
 	assert.EqualValues(t, true, trader.isConnected())
 
+	notifier, err := newNotifier(common, configs)
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, false, notifier.isConnected())
+
+	notifier.connect()
+	assert.EqualValues(t, true, notifier.isConnected())
+
+	streamer, err := newStreamer(common)
+	assert.EqualValues(t, nil, err)
+
+	streamer.connect()
+	assert.EqualValues(t, true, notifier.isConnected())
+
 	r := runner.NewRunner("BTCUSDT", runner.NewRunnerDefaultConfigs())
 	assert.EqualValues(t, "BTCUSDT", r.GetName())
+	kline := &bn.Kline{
+		OpenTime: 1499040000000,
+		Open:     "0.0",
+		High:     "0.8",
+		Low:      "0.01",
+		Close:    "0.2",
+		Volume:   "148976.1",
+		TradeNum: 308,
+	}
+
+	candle := tax.ConvertBinanceKline(kline, nil)
+	ok := r.SyncCandle(candle)
+	assert.EqualValues(t, true, ok)
 
 	signalPath := "./../../../configs/signals/signal.json"
 	raw, err := ioutil.ReadFile(signalPath)
@@ -57,7 +85,7 @@ func Test_Trader_Evaluator(t *testing.T) {
 
 	common.communicator.evaluator2Trader <- common.communicator.newMessage(r, s, nil, nil, nil)
 
-	time.Sleep(time.Minute)
+	time.Sleep(time.Minute * 1)
 }
 
 func Test_Trader_StopLoss(t *testing.T) {
