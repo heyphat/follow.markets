@@ -71,6 +71,11 @@ func (n *notifier) connect() {
 			go n.processEvaluatorRequest(msg)
 		}
 	}()
+	go func() {
+		for msg := range n.communicator.trader2Notifier {
+			go n.processTraderRequest(msg)
+		}
+	}()
 	go n.await()
 	n.connected = true
 }
@@ -116,6 +121,9 @@ func (n *notifier) getNotifications() map[string]time.Time {
 // this method processes requests from evaluator, it sends notifications to user
 // based on the set of rules specified on the signal.
 func (n *notifier) processEvaluatorRequest(msg *message) {
+	if msg.request.what.runner == nil || msg.request.what.signal == nil {
+		return
+	}
 	s := msg.request.what.signal
 	r := msg.request.what.runner
 	id := r.GetUniqueName() + "-" + s.Name
@@ -141,6 +149,20 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 				})
 		}
 	}
+}
+
+// this method processes requests from trader, it sends notifications to user
+// about trade activities.
+func (n *notifier) processTraderRequest(msg *message) {
+	if msg.request.what.dynamic == nil {
+		return
+	}
+	mess := msg.request.what.dynamic.(string)
+	if msg.request.what.signal == nil {
+		n.notify(mess, nil)
+		return
+	}
+	n.notify(mess, msg.request.what.signal.OwnerID)
 }
 
 // notify sends tele message to all chatIDs for a given content if the given `cid`

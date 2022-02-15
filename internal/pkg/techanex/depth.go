@@ -7,7 +7,7 @@ import (
 	"github.com/sdcoffey/big"
 )
 
-func BinanceSpotBestBidAskFromDepth(d bn.WsPartialDepthEvent) *L1 {
+func BinanceSpotBestBidAskFromDepth(d *bn.WsPartialDepthEvent) *L1 {
 	l1 := NewL1()
 	if len(d.Bids) > 0 {
 		l1.BestBid.Price = big.NewFromString(d.Bids[0].Price)
