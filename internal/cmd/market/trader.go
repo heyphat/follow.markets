@@ -344,7 +344,7 @@ func (t *trader) monitorBinSpotTrade(st *setup) {
 
 	// Waiting for the order to be (partially) filled
 	nw := time.Now()
-	for st.orderStatus != "TRADE" && st.orderStatus != "PARTIALLY_FILLED" {
+	for st.orderStatus != "FILLED" && st.orderStatus != "PARTIALLY_FILLED" {
 		time.Sleep(time.Millisecond * 100)
 		if st.orderStatus == "CANCELED" ||
 			st.orderStatus == "REJECTED" ||
