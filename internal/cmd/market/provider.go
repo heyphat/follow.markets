@@ -168,24 +168,39 @@ func (p *provider) fetchBinUserDataListenKey() (string, string, error) {
 	return binSpotListenKey, binFutuListenKey, nil
 }
 
-func (p *provider) fetchBinSpotExchangeInfo(ticker string) (int, error) {
+func (p *provider) fetchBinSpotExchangeInfo(ticker string) (int, int, error) {
 	i, err := p.binSpot.NewExchangeInfoService().Symbol(ticker).Do(context.Background())
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
+	precision := 0
+	lotSize := 0
 	for _, s := range i.Symbols {
 		if strings.ToUpper(s.Symbol) != strings.ToUpper(ticker) {
 			continue
 		}
-		precision := 1
 		for _, m := range s.Filters {
-			if val, ok := m["tickSize"]; ok {
+			switch m["filterType"] {
+			case "PRICE_FILTER":
+				val, ok := m["tickSize"]
+				if !ok {
+					return precision, lotSize, errors.New("couldn't find precision and lotSize from exchange")
+				}
 				for !(big.NewFromString("10").Pow(precision).Mul(big.NewFromString(val.(string))).GTE(big.NewFromString("1"))) {
 					precision += 1
 				}
-				return precision, nil
+			case "LOT_SIZE":
+				val, ok := m["stepSize"]
+				if !ok {
+					return precision, lotSize, errors.New("couldn't find precision and lotSize from exchange")
+				}
+				for !(big.NewFromString("10").Pow(lotSize).Mul(big.NewFromString(val.(string))).GTE(big.NewFromString("1"))) {
+					lotSize += 1
+				}
+			default:
+				continue
 			}
 		}
 	}
-	return 0, errors.New("cannot find infor for the given ticker ")
+	return precision, lotSize, nil
 }

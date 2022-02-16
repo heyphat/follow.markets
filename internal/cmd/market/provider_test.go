@@ -52,15 +52,18 @@ func Test_ExchangeInfo(t *testing.T) {
 	_, provider, err := providerTestSuit()
 	assert.EqualValues(t, nil, err)
 
-	precision, err := provider.fetchBinSpotExchangeInfo("BTCUSDT")
+	precision, lotSize, err := provider.fetchBinSpotExchangeInfo("BTCUSDT")
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, 2, precision)
+	assert.EqualValues(t, 5, lotSize)
 
-	precision, err = provider.fetchBinSpotExchangeInfo("THETAUSDT")
+	precision, lotSize, err = provider.fetchBinSpotExchangeInfo("THETAUSDT")
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, 3, precision)
+	assert.EqualValues(t, 1, lotSize)
 
-	precision, err = provider.fetchBinSpotExchangeInfo("SHIBUSDT")
+	precision, lotSize, err = provider.fetchBinSpotExchangeInfo("SHIBUSDT")
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, 8, precision)
+	assert.EqualValues(t, 0, lotSize)
 }
