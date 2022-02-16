@@ -61,8 +61,9 @@ func newSetup(r *runner.Runner, s *strategy.Signal, o interface{}) *setup {
 	return nil
 }
 
-// binSpotUpdateTrade update the setupt with new trade activities.
-// adds filled quantity, recompute average filled price.
+// binSpotUpdateTrade update the setupt with new trade activities,
+// it adds filled quantity, recomputes average filled price
+// and logs trades.
 func (s *setup) binSpotUpdateTrade(u bn.WsOrderUpdate) {
 	s.orderStatus = u.Status
 	if s.runner.GetMarketType() != runner.Cash || strings.ToUpper(u.ExecutionType) != "TRADE" {
