@@ -317,7 +317,7 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 			// timeInFore is always good-to-cancle
 			TimeInForce(bn.TimeInForceTypeGTC).
 			// set the limit price, quantity deduced from price and minimum trading balance for a position
-			Price(price.FormattedString(8)).Quantity(t.minBalance.Div(price).FormattedString(8)).
+			Price(price.FormattedString(6)).Quantity(t.minBalance.Div(price).FormattedString(6)).
 			// place the order
 			Do(context.Background())
 		if err != nil {
