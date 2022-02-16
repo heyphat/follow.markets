@@ -10,13 +10,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Provider(t *testing.T) {
-	// The test has been done on watcher test, more will be added if more methods to be inplemented.
+func providerTestSuit() (*config.Configs, *provider, error) {
 	path := "./../../../configs/deploy.configs.json"
 	configs, err := config.NewConfigs(&path)
-	assert.EqualValues(t, nil, err)
-
+	if err != nil {
+		return nil, nil, err
+	}
 	provider := newProvider(configs)
+	return configs, provider, nil
+}
+func Test_Provider(t *testing.T) {
+	// The test has been done on watcher test, more will be added if more methods to be inplemented.
+	configs, provider, err := providerTestSuit()
+	assert.EqualValues(t, nil, err)
 
 	listings, err := provider.fetchCoinFundamentals(configs.Market.Base.Crypto.QuoteCurrency, 1)
 	assert.EqualValues(t, nil, err)
@@ -40,4 +46,21 @@ func Test_Provider(t *testing.T) {
 			fmt.Println(fmt.Sprintf("%+v", b))
 		}
 	}
+}
+
+func Test_ExchangeInfo(t *testing.T) {
+	_, provider, err := providerTestSuit()
+	assert.EqualValues(t, nil, err)
+
+	precision, err := provider.fetchBinSpotExchangeInfo("BTCUSDT")
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, 2, precision)
+
+	precision, err = provider.fetchBinSpotExchangeInfo("THETAUSDT")
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, 3, precision)
+
+	precision, err = provider.fetchBinSpotExchangeInfo("SHIBUSDT")
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, 8, precision)
 }

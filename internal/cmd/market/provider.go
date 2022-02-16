@@ -2,7 +2,9 @@ package market
 
 import (
 	"context"
+	"errors"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -164,4 +166,26 @@ func (p *provider) fetchBinUserDataListenKey() (string, string, error) {
 		}
 	}()
 	return binSpotListenKey, binFutuListenKey, nil
+}
+
+func (p *provider) fetchBinSpotExchangeInfo(ticker string) (int, error) {
+	i, err := p.binSpot.NewExchangeInfoService().Symbol(ticker).Do(context.Background())
+	if err != nil {
+		return 0, err
+	}
+	for _, s := range i.Symbols {
+		if strings.ToUpper(s.Symbol) != strings.ToUpper(ticker) {
+			continue
+		}
+		precision := 1
+		for _, m := range s.Filters {
+			if val, ok := m["tickSize"]; ok {
+				for !(big.NewFromString("10").Pow(precision).Mul(big.NewFromString(val.(string))).GTE(big.NewFromString("1"))) {
+					precision += 1
+				}
+				return precision, nil
+			}
+		}
+	}
+	return 0, errors.New("cannot find infor for the given ticker ")
 }

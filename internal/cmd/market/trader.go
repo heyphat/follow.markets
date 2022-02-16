@@ -306,6 +306,10 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 			t.logger.Warning.Println(t.newLog("cannot find a price to place trade"))
 			return nil
 		}
+		precision, err := t.provider.fetchBinSpotExchangeInfo(r.GetName())
+		if err != nil {
+			return err
+		}
 		// place a LIMIT order always.
 		o, err := t.provider.binSpot.NewCreateOrderService().
 			// set the symbol from the runner
@@ -317,7 +321,7 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 			// timeInFore is always good-to-cancle
 			TimeInForce(bn.TimeInForceTypeGTC).
 			// set the limit price, quantity deduced from price and minimum trading balance for a position
-			Price(price.FormattedString(6)).Quantity(t.minBalance.Div(price).FormattedString(6)).
+			Price(price.FormattedString(precision)).Quantity(t.minBalance.Div(price).FormattedString(precision)).
 			// place the order
 			Do(context.Background())
 		if err != nil {
