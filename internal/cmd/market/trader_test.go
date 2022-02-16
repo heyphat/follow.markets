@@ -14,6 +14,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func testSuit() (*trader, *runner.Runner, error) {
+	path := "./../../../configs/deploy.configs.json"
+	configs, err := config.NewConfigs(&path)
+	if err != nil {
+		return nil, nil, err
+	}
+	trader, err := newTrader(initSharedParticipants(configs), configs)
+	if err != nil {
+		return nil, nil, err
+	}
+	r := runner.NewRunner("BTCUSDT", runner.NewRunnerDefaultConfigs())
+	return trader, r, nil
+}
+
 func Test_Trader(t *testing.T) {
 	path := "./../../../configs/deploy.configs.json"
 	configs, err := config.NewConfigs(&path)
@@ -89,12 +103,7 @@ func Test_Trader_Evaluator(t *testing.T) {
 }
 
 func Test_Trader_StopLoss(t *testing.T) {
-	path := "./../../../configs/deploy.configs.json"
-	configs, err := config.NewConfigs(&path)
-	assert.EqualValues(t, nil, err)
-
-	common := initSharedParticipants(configs)
-	trader, err := newTrader(common, configs)
+	trader, _, err := testSuit()
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, false, trader.isConnected())
 
@@ -144,5 +153,43 @@ func Test_Trader_StopLoss(t *testing.T) {
 	shouldStop, pnl = trader.shouldClose(orderPrice, currentPrice, tradingSide)
 	assert.EqualValues(t, false, shouldStop)
 	assert.EqualValues(t, "0.001", pnl.FormattedString(3))
+}
 
+func Test_Trader_IsOrdering(t *testing.T) {
+	trader, runner, err := testSuit()
+	assert.EqualValues(t, nil, err)
+
+	ok := trader.isOrdering(runner)
+	assert.EqualValues(t, false, ok)
+}
+
+func Test_Trader_GetAndUpdateBalances(t *testing.T) {
+	trader, _, err := testSuit()
+	assert.EqualValues(t, nil, err)
+
+	bls := []bn.Balance{bn.Balance{Asset: "BNB", Free: "10", Locked: "0"}}
+	for _, b := range bls {
+		trader.binSpotBalances.Store(b.Asset+trader.quoteCurrency, b)
+	}
+
+	nbls := trader.binSpotGetBalances()
+	assert.EqualValues(t, true, len(nbls) >= 1)
+
+	// test add new balance to BNB
+	bnb := bn.Balance{Asset: "BNB", Free: "30", Locked: "0"}
+	trader.binSpotUpdateBalances(bnb)
+	nbls = trader.binSpotGetBalances()
+	for _, b := range nbls {
+		if b.Asset == "BNB" {
+			assert.EqualValues(t, "30", b.Free)
+		}
+	}
+
+	// test remove balance from the holdings
+	bnb = bn.Balance{Asset: "BNB", Free: "0", Locked: "0"}
+	trader.binSpotUpdateBalances(bnb)
+	nbls = trader.binSpotGetBalances()
+	for _, b := range nbls {
+		assert.EqualValues(t, true, b.Asset != "BNB")
+	}
 }
