@@ -337,7 +337,7 @@ func (m *MarketStruct) Balances(market string) (map[string]string, error) {
 	}
 	out := make(map[string]string)
 	if mk == runner.Cash {
-		balances := m.trader.getBinSpotBalances()
+		balances := m.trader.binSpotGetBalances()
 		for _, bl := range balances {
 			out[bl.Asset] = big.NewFromString(bl.Free).Add(big.NewFromString(bl.Locked)).FormattedString(5)
 		}
