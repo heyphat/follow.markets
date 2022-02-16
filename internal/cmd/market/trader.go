@@ -146,8 +146,8 @@ func (t *trader) connect() {
 	t.connected = true
 }
 
-// getBinSpotBalances returns assets which are currently available on Binance spot account.
-func (t *trader) getBinSpotBalances() []bn.Balance {
+// binSpotGetBalances returns assets which are currently available on Binance spot account.
+func (t *trader) binSpotGetBalances() []bn.Balance {
 	out := []bn.Balance{}
 	t.binSpotBalances.Range(func(key, value interface{}) bool {
 		out = append(out, value.(bn.Balance))
@@ -156,13 +156,13 @@ func (t *trader) getBinSpotBalances() []bn.Balance {
 	return out
 }
 
-// updatebinSpotBalances removes or adds assset to holdings on trader binSpotBalances.
+// binSpotUpdateBalances removes or adds assset to holdings on trader binSpotBalances.
 // It is called on initialization and upon receving data from websocket for UserData event.
-func (t *trader) updateBinSpotBalances(bl bn.Balance) {
+func (t *trader) binSpotUpdateBalances(bl bn.Balance) {
 	t.Lock()
 	defer t.Unlock()
 	if big.NewFromString(bl.Free).EQ(big.ZERO) {
-		t.binSpotBalances.Delete(bl.Asset)
+		t.binSpotBalances.Delete(bl.Asset + t.quoteCurrency)
 		return
 	}
 	t.binSpotBalances.Store(bl.Asset+t.quoteCurrency, bl)
@@ -301,7 +301,6 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 	r, s := msg.request.what.runner, msg.request.what.signal
 	switch r.GetMarketType() {
 	case runner.Cash:
-		// TODO: think of position sizing based
 		price, ok := s.TradeExecutionPrice(r)
 		if !ok {
 			t.logger.Warning.Println(t.newLog("cannot find a price to place trade"))
@@ -369,7 +368,6 @@ func (t *trader) monitorBinSpotTrade(st *setup) {
 	for !t.registerStreamingChannel(*st) {
 		t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to register streaming service", st.runner.GetName())))
 	}
-
 	for msg := range st.channels.depth {
 		bestPrice := tax.BinanceSpotBestBidAskFromDepth(msg.(*bn.WsPartialDepthEvent)).L1ForClosingTrade(st.orderSide)
 		ok, pnl := t.shouldClose(st.avgFilledPrice, bestPrice.Price, st.orderSide)
@@ -387,7 +385,6 @@ func (t *trader) monitorBinSpotTrade(st *setup) {
 			break
 		}
 	}
-
 	for !t.registerStreamingChannel(*st) {
 		t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
 	}
@@ -417,7 +414,7 @@ func (t *trader) binSpotUserDataStreaming() {
 		switch e.Event {
 		case bn.UserDataEventTypeOutboundAccountPosition:
 			for _, a := range e.AccountUpdate {
-				t.updateBinSpotBalances(bn.Balance{
+				t.binSpotUpdateBalances(bn.Balance{
 					Asset:  a.Asset,
 					Free:   a.Free,
 					Locked: a.Locked,
