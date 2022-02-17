@@ -4,10 +4,24 @@ import (
 	"strings"
 
 	bn "github.com/adshao/go-binance/v2"
+	bnf "github.com/adshao/go-binance/v2/futures"
 	"github.com/sdcoffey/big"
 )
 
 func BinanceSpotBestBidAskFromDepth(d *bn.WsPartialDepthEvent) *L1 {
+	l1 := NewL1()
+	if len(d.Bids) > 0 {
+		l1.BestBid.Price = big.NewFromString(d.Bids[0].Price)
+		l1.BestBid.Quantity = big.NewFromString(d.Bids[0].Quantity)
+	}
+	if len(d.Asks) > 0 {
+		l1.BestAsk.Price = big.NewFromString(d.Asks[0].Price)
+		l1.BestAsk.Quantity = big.NewFromString(d.Asks[0].Quantity)
+	}
+	return l1
+}
+
+func BinanceFutuBestBidAskFromDepth(d *bnf.WsDepthEvent) *L1 {
 	l1 := NewL1()
 	if len(d.Bids) > 0 {
 		l1.BestBid.Price = big.NewFromString(d.Bids[0].Price)
