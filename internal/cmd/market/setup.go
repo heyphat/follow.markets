@@ -100,7 +100,6 @@ func (s *setup) binSpotUpdateTrade(u bn.WsOrderUpdate) {
 		cost:     u.FeeCost,
 		costAss:  u.FeeAsset,
 	})
-	//fmt.Println(fmt.Sprintf("new trade: %+v", *(s.trades[len(s.trades)-1])))
 	if s.avgFilledPrice.EQ(big.ZERO) || s.accFilledQtity.EQ(big.ZERO) {
 		s.avgFilledPrice = big.NewFromString(u.LatestPrice)
 		s.accFilledQtity = big.NewFromString(u.LatestVolume)
