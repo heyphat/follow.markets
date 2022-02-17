@@ -44,7 +44,7 @@ func newStreamer(participants *sharedParticipants) (*streamer, error) {
 
 type controller struct {
 	name  string
-	from  string
+	from  Agent
 	stops []chan struct{}
 }
 
@@ -58,17 +58,17 @@ func (s *streamer) connect() {
 	}
 	go func() {
 		for msg := range s.communicator.watcher2Streamer {
-			go s.processingWatcherRequest(msg)
+			go s.processRequest(msg, WATCHER)
 		}
 	}()
 	go func() {
 		for msg := range s.communicator.evaluator2Streamer {
-			go s.processingEvaluatorRequest(msg)
+			go s.processRequest(msg, EVALUATOR)
 		}
 	}()
 	go func() {
 		for msg := range s.communicator.trader2Streamer {
-			go s.processingTraderRequest(msg)
+			go s.processRequest(msg, TRADER)
 		}
 	}()
 	s.connected = true
@@ -79,7 +79,7 @@ func (s *streamer) isConnected() bool { return s.connected }
 
 // isStreamingOn returns true if the given ticker is actually being streamed for a market
 // participant given by the `from` parameter.
-func (s *streamer) isStreamingOn(ticker, from string) bool {
+func (s *streamer) isStreamingOn(ticker string, from Agent) bool {
 	s.Lock()
 	defer s.Unlock()
 	valid := false
@@ -91,7 +91,7 @@ func (s *streamer) isStreamingOn(ticker, from string) bool {
 }
 
 // streamList returns a list of streamed tickers for a market participant given by the `from` parameter.
-func (s *streamer) streamList(from string) []string {
+func (s *streamer) streamList(from Agent) []string {
 	s.Lock()
 	defer s.Unlock()
 	tickers := []string{}
@@ -113,70 +113,24 @@ func (s *streamer) get(name string) *controller {
 	return nil
 }
 
-// this method processes requests from the watcher.
-func (s *streamer) processingWatcherRequest(msg *message) {
+// processRequest processes request from other market participants.
+func (s *streamer) processRequest(msg *message, a Agent) {
+	agent := string(a)
 	r := msg.request.what.runner
 	cs := msg.request.what.channels
-	if s.isStreamingOn(r.GetUniqueName(WATCHER), WATCHER) {
-		s.unsubscribe(r.GetUniqueName(WATCHER))
+	if s.isStreamingOn(r.GetUniqueName(agent), a) {
+		s.unsubscribe(r.GetUniqueName(agent))
 		cs.close()
 	} else {
 		bStopC, tStopC, dStopC := s.subscribe(r, cs)
-		s.controllers.Store(r.GetUniqueName(WATCHER),
+		s.controllers.Store(r.GetUniqueName(agent),
 			controller{
-				name:  r.GetUniqueName(WATCHER),
-				from:  WATCHER,
+				name:  r.GetUniqueName(agent),
+				from:  a,
 				stops: []chan struct{}{bStopC, tStopC, dStopC},
 			},
 		)
 	}
-	if msg.response != nil {
-		msg.response <- s.communicator.newPayload(nil, nil, nil, true).addRequestID(&msg.request.requestID).addResponseID()
-		close(msg.response)
-	}
-}
-
-// this method processes requests from the trader.
-func (s *streamer) processingTraderRequest(msg *message) {
-	r := msg.request.what.runner
-	cs := msg.request.what.channels
-	if s.isStreamingOn(r.GetUniqueName(TRADER), TRADER) {
-		s.unsubscribe(r.GetUniqueName(TRADER))
-		cs.close()
-	} else {
-		bStopC, tStopC, dStopC := s.subscribe(r, cs)
-		s.controllers.Store(r.GetUniqueName(TRADER),
-			controller{
-				name:  r.GetUniqueName(TRADER),
-				from:  TRADER,
-				stops: []chan struct{}{bStopC, tStopC, dStopC},
-			},
-		)
-	}
-	if msg.response != nil {
-		msg.response <- s.communicator.newPayload(nil, nil, nil, true).addRequestID(&msg.request.requestID).addResponseID()
-		close(msg.response)
-	}
-}
-
-// this method processes requests from the evaluator.
-func (s *streamer) processingEvaluatorRequest(msg *message) {
-	//m := msg.request.what.(emember)
-	//	if s.isStreamingOn(EVALUATOR+m.name, EVALUATOR) {
-	//		s.unsubscribe(EVALUATOR + m.name)
-	//		close(m.tChann)
-	//	} else {
-	//		//TODO: it's not always cash market
-	//		bStopC, tStopC := s.subscribe(m.name, runner.Cash, nil, m.tChann)
-	//		s.controllers.Store(EVALUATOR+m.name,
-	//			controller{
-	//				name:  m.name,
-	//				uName: EVALUATOR + m.name,
-	//				from:  EVALUATOR,
-	//				stops: []chan struct{}{bStopC, tStopC},
-	//			},
-	//		)
-	//	}
 	if msg.response != nil {
 		msg.response <- s.communicator.newPayload(nil, nil, nil, true).addRequestID(&msg.request.requestID).addResponseID()
 		close(msg.response)
@@ -279,7 +233,7 @@ func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 	klineHandler func(e *bn.WsKlineEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stop chan struct{}) {
+	go func() {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -290,7 +244,7 @@ func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 			isInit, isError = false, false
 			<-done
 		}
-	}(stop)
+	}()
 	time.Sleep(time.Second)
 	return stop
 }
@@ -299,7 +253,7 @@ func (s *streamer) streamingBinanceFuturesKline(name string, stop chan struct{},
 	klineHandler func(e *bnf.WsKlineEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stop chan struct{}) {
+	go func() {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -310,7 +264,7 @@ func (s *streamer) streamingBinanceFuturesKline(name string, stop chan struct{},
 			isInit, isError = false, false
 			<-done
 		}
-	}(stop)
+	}()
 	time.Sleep(time.Second)
 	return stop
 }
@@ -319,7 +273,7 @@ func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
 	tradeHandler func(e *bn.WsAggTradeEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stop chan struct{}) {
+	go func() {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -330,7 +284,7 @@ func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
 			isInit, isError = false, false
 			<-done
 		}
-	}(stop)
+	}()
 	time.Sleep(time.Second)
 	return stop
 }
@@ -339,7 +293,7 @@ func (s *streamer) streamingBinanceFuturesTrade(name string, stop chan struct{},
 	tradeHandler func(e *bnf.WsAggTradeEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stop chan struct{}) {
+	go func() {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -350,7 +304,7 @@ func (s *streamer) streamingBinanceFuturesTrade(name string, stop chan struct{},
 			isInit, isError = false, false
 			<-done
 		}
-	}(stop)
+	}()
 	time.Sleep(time.Second)
 	return stop
 }

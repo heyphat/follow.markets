@@ -70,15 +70,16 @@ type Configs struct {
 			LossTolerance float64 `json:"loss_tolerance"`
 		} `json:"tester"`
 		Trader struct {
-			AllowedPatterns []string `json:"allowed_patterns"`
-			AllowedMarkets  []string `json:"allowed_markets"`
-			MinBalance      float64  `json:"min_balance_to_trade"`
-			MinLeverage     float64  `json:"min_leverage"`
-			MaxLeverage     float64  `json:"max_leverage"`
-			MaxPositions    float64  `json:"max_concurrent_positions"`
-			MaxWaitToFill   float64  `json:"max_wait_to_fill"`
-			LossTolerance   float64  `json:"loss_tolerance"`
-			ProfitMargin    float64  `json:"profit_margin"`
+			AllowedPatterns   []string `json:"allowed_patterns"`
+			AllowedMarkets    []string `json:"allowed_markets"`
+			MinBalance        float64  `json:"min_balance_to_trade"`
+			MaxLeverage       float64  `json:"max_leverage"`
+			MaxPositions      float64  `json:"max_concurrent_positions"`
+			MaxWaitToFill     float64  `json:"max_wait_to_fill"`
+			LossTolerance     float64  `json:"loss_tolerance"`
+			ProfitMargin      float64  `json:"profit_margin"`
+			MaxLossPerTrade   float64  `json:"max_loss_per_trade"`
+			MinProfitPerTrade float64  `json:"min_profit_per_trade"`
 		} `json:"trader"`
 	} `json:"market"`
 }

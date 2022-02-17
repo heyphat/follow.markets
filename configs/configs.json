@@ -83,13 +83,13 @@
       "allowed_markets": [
         "CASH" 
       ],
-      "min_leverage": 1,
       "max_leverage": 1,
       "min_balance_to_trade": 1,
-      "max_concurrent_positions": 1,
       "max_wait_to_fill": 60,
       "loss_tolerance": 0.03,
-      "profit_margin": 0.05
+      "max_loss_per_trade": 5,
+      "profit_margin": 0.05,
+      "min_profit_per_trade": 10
     }
   }
 }
