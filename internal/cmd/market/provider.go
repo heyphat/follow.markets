@@ -237,7 +237,7 @@ func (p *provider) fetchBinFutuExchangeInfo(ticker string) (int, int, error) {
 				if !ok {
 					return precision, lotSize, errors.New("couldn't find precision and lotSize from exchange")
 				}
-				for !(big.NewFromString("10").Pow(precision).Mul(big.NewFromString(val.(string))).GTE(big.NewFromString("1"))) {
+				for !(big.TEN.Pow(precision).Mul(big.NewFromString(val.(string))).GTE(big.ONE)) {
 					precision += 1
 				}
 			case "LOT_SIZE":
@@ -245,7 +245,7 @@ func (p *provider) fetchBinFutuExchangeInfo(ticker string) (int, int, error) {
 				if !ok {
 					return precision, lotSize, errors.New("couldn't find precision and lotSize from exchange")
 				}
-				for !(big.NewFromString("10").Pow(lotSize).Mul(big.NewFromString(val.(string))).GTE(big.NewFromString("1"))) {
+				for !(big.TEN.Pow(lotSize).Mul(big.NewFromString(val.(string))).GTE(big.ONE)) {
 					lotSize += 1
 				}
 			default:
