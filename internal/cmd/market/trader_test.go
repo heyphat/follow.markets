@@ -107,55 +107,94 @@ func Test_Trader_Evaluator(t *testing.T) {
 }
 
 func Test_Trader_ShouldClose(t *testing.T) {
-	trader, runner, err := testSuit("BTCUSDT")
+	ticker := "BTCUSDT"
+	path := "./../../../configs/deploy.configs.json"
+	configs, err := config.NewConfigs(&path)
+	assert.EqualValues(t, nil, err)
+	configs.Market.Trader.MaxLeverage = 10
+	configs.Market.Trader.MaxLossPerTrade = 5
+	configs.Market.Trader.MinProfitPerTrade = 10
+
+	trader, err := newTrader(initSharedParticipants(configs), configs)
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, false, trader.isConnected())
+
+	rConfigs := runner.NewRunnerDefaultConfigs()
+	rConfigs.Market = runner.Futures
+	isCash := rConfigs.Market == runner.Cash
+	r := runner.NewRunner(ticker, rConfigs)
 
 	trader.connect()
 	assert.EqualValues(t, true, trader.isConnected())
 
-	st := &setup{runner: runner, avgFilledPrice: big.NewFromString("10.0")}
+	st := &setup{runner: r, avgFilledPrice: big.NewFromString("10.0"), accFilledQtity: big.NewFromString("1000")}
 
 	st.orderSide = "BUY"
 	currentPrice := big.NewFromString("10.3")
-	shouldStop, pnl := trader.shouldClose(st, currentPrice)
+	shouldStop, pnl, dl := trader.shouldClose(st, currentPrice)
 	assert.EqualValues(t, true, shouldStop)
 	assert.EqualValues(t, "0.03", pnl.FormattedString(2))
+	if isCash {
+		assert.EqualValues(t, "300.00", dl.FormattedString(2))
+	} else {
+		assert.EqualValues(t, "3000.00", dl.FormattedString(2))
+	}
 
 	currentPrice = big.NewFromString("9.5")
-	shouldStop, pnl = trader.shouldClose(st, currentPrice)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
 	assert.EqualValues(t, true, shouldStop)
 	assert.EqualValues(t, "-0.05", pnl.FormattedString(2))
+	if isCash {
+		assert.EqualValues(t, "-526.32", dl.FormattedString(2))
+	} else {
+		assert.EqualValues(t, "-5263.16", dl.FormattedString(2))
+	}
 
 	currentPrice = big.NewFromString("10.05")
-	shouldStop, pnl = trader.shouldClose(st, currentPrice)
-	assert.EqualValues(t, false, shouldStop)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
+	if isCash {
+		assert.EqualValues(t, false, shouldStop)
+	} else {
+		assert.EqualValues(t, true, shouldStop)
+	}
 	assert.EqualValues(t, "0.005", pnl.FormattedString(3))
 
 	currentPrice = big.NewFromString("9.99")
-	shouldStop, pnl = trader.shouldClose(st, currentPrice)
-	assert.EqualValues(t, false, shouldStop)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
+	if isCash {
+		assert.EqualValues(t, false, shouldStop)
+	} else {
+		assert.EqualValues(t, true, shouldStop)
+	}
 	assert.EqualValues(t, "-0.001", pnl.FormattedString(3))
 
 	st.orderSide = "SELL"
 	currentPrice = big.NewFromString("10.5")
-	shouldStop, pnl = trader.shouldClose(st, currentPrice)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
 	assert.EqualValues(t, true, shouldStop)
 	assert.EqualValues(t, "-0.05", pnl.FormattedString(2))
 
 	currentPrice = big.NewFromString("9.5")
-	shouldStop, pnl = trader.shouldClose(st, currentPrice)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
 	assert.EqualValues(t, true, shouldStop)
 	assert.EqualValues(t, "0.05", pnl.FormattedString(2))
 
 	currentPrice = big.NewFromString("10.01")
-	shouldStop, pnl = trader.shouldClose(st, currentPrice)
-	assert.EqualValues(t, false, shouldStop)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
+	if isCash {
+		assert.EqualValues(t, false, shouldStop)
+	} else {
+		assert.EqualValues(t, true, shouldStop)
+	}
 	assert.EqualValues(t, "-0.001", pnl.FormattedString(3))
 
 	currentPrice = big.NewFromString("9.99")
-	shouldStop, pnl = trader.shouldClose(st, currentPrice)
-	assert.EqualValues(t, false, shouldStop)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
+	if isCash {
+		assert.EqualValues(t, false, shouldStop)
+	} else {
+		assert.EqualValues(t, true, shouldStop)
+	}
 	assert.EqualValues(t, "0.001", pnl.FormattedString(3))
 }
 

@@ -306,26 +306,36 @@ func (t *trader) initialChecks(r *runner.Runner) bool {
 
 // shouldClose checks if the current price exceeds the limit given by the loss tolerance
 // or the current price surpass the profit margin.
-func (t *trader) shouldClose(st *setup, currentPrice big.Decimal) (bool, big.Decimal) {
+func (t *trader) shouldClose(st *setup, currentPrice big.Decimal) (bool, big.Decimal, big.Decimal) {
 	if currentPrice.EQ(big.ZERO) || st.avgFilledPrice.EQ(big.ZERO) {
-		return true, big.ZERO
+		return true, big.ZERO, big.ZERO
 	}
+	isFutures := st.runner.GetMarketType() == runner.Futures
+	isCash := st.runner.GetMarketType() == runner.Cash
 	if currentPrice.LTE(st.avgFilledPrice) {
 		pnl := st.avgFilledPrice.Sub(currentPrice).Div(currentPrice)
+		pnlDollar := pnl.Mul(st.accFilledQtity.Mul(st.avgFilledPrice))
+		if isFutures {
+			pnlDollar = pnlDollar.Mul(t.maxLeverage)
+		}
 		if strings.ToUpper(st.orderSide) == "BUY" {
-			return pnl.GTE(t.lossTolerance), pnl.Mul(big.NewFromString("-1"))
+			return (isCash && pnl.GTE(t.lossTolerance)) || (isFutures && pnlDollar.GTE(t.maxLossPerTrade)), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
 		} else {
-			return pnl.GTE(t.profitMargin), pnl
+			return (isCash && pnl.GTE(t.profitMargin)) || (isFutures && pnlDollar.GTE(t.minProfitPerTrade)), pnl, pnlDollar
 		}
 	} else {
 		pnl := currentPrice.Sub(st.avgFilledPrice).Div(st.avgFilledPrice)
+		pnlDollar := pnl.Mul(st.accFilledQtity.Mul(st.avgFilledPrice))
+		if isFutures {
+			pnlDollar = pnlDollar.Mul(t.maxLeverage)
+		}
 		if strings.ToUpper(st.orderSide) == "SELL" {
-			return pnl.GTE(t.lossTolerance), pnl.Mul(big.NewFromString("-1"))
+			return (isCash && pnl.GTE(t.lossTolerance)) || (isFutures && pnlDollar.GTE(t.maxLossPerTrade)), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
 		} else {
-			return pnl.GTE(t.profitMargin), pnl
+			return (isCash && pnl.GTE(t.profitMargin)) || (isFutures && pnlDollar.GTE(t.maxLossPerTrade)), pnl, pnlDollar
 		}
 	}
-	return false, big.ZERO
+	return false, big.ZERO, big.ZERO
 }
 
 // placeMarketOrder places a market order on a given runner.
@@ -470,7 +480,7 @@ func (t *trader) monitorBinSpotTrade(st *setup) {
 	}
 	for msg := range st.channels.depth {
 		bestPrice := tax.BinanceSpotBestBidAskFromDepth(msg.(*bn.WsPartialDepthEvent)).L1ForClosingTrade(st.orderSide)
-		ok, pnl := t.shouldClose(st, bestPrice.Price)
+		ok, pnl, _ := t.shouldClose(st, bestPrice.Price)
 		if !ok {
 			continue
 		}
@@ -533,7 +543,7 @@ func (t *trader) monitorBinFutuTrade(st *setup) {
 	}
 	for msg := range st.channels.depth {
 		bestPrice := tax.BinanceFutuBestBidAskFromDepth(msg.(*bnf.WsDepthEvent)).L1ForClosingTrade(st.orderSide)
-		ok, pnl := t.shouldClose(st, bestPrice.Price)
+		ok, pnl, _ := t.shouldClose(st, bestPrice.Price)
 		if !ok {
 			continue
 		}
