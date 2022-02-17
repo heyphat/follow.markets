@@ -305,7 +305,7 @@ func (t *trader) initialChecks(r *runner.Runner) bool {
 }
 
 // shouldClose checks if the current price exceeds the limit given by the loss tolerance
-// or the current price surpass the profit margin.
+// or the current price surpasses the profit margin. It also returns current PNL and PNL in dollar.
 func (t *trader) shouldClose(st *setup, currentPrice big.Decimal) (bool, big.Decimal, big.Decimal) {
 	if currentPrice.EQ(big.ZERO) || st.avgFilledPrice.EQ(big.ZERO) {
 		return true, big.ZERO, big.ZERO
