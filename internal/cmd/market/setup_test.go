@@ -7,6 +7,7 @@ import (
 	"follow.markets/internal/pkg/runner"
 	"follow.markets/internal/pkg/strategy"
 	bn "github.com/adshao/go-binance/v2"
+	"github.com/sdcoffey/big"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +22,7 @@ func Test_Setup(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 
 	o := bn.CreateOrderResponse{Price: "10", OrigQuantity: "20"}
-	st := newSetup(r, s, o)
+	st := newSetup(r, s, big.ONE, o)
 
 	u := bn.WsOrderUpdate{
 		Status:       "TRADE",

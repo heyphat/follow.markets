@@ -24,6 +24,7 @@ type setup struct {
 	orderPrice     string
 	orderQtity     string
 	orderStatus    string
+	usedLeverage   big.Decimal
 	tradingFeeAss  string
 	accTradingFee  big.Decimal
 	avgFilledPrice big.Decimal
@@ -43,7 +44,7 @@ type tradeUpdate struct {
 }
 
 // newSetup returns a new setup for trader.
-func newSetup(r *runner.Runner, s *strategy.Signal, o interface{}) *setup {
+func newSetup(r *runner.Runner, s *strategy.Signal, leverage big.Decimal, o interface{}) *setup {
 	switch r.GetMarketType() {
 	case runner.Cash:
 		od := o.(*bn.CreateOrderResponse)
@@ -69,6 +70,7 @@ func newSetup(r *runner.Runner, s *strategy.Signal, o interface{}) *setup {
 			orderTime:      od.UpdateTime,
 			orderStatus:    string(od.Status),
 			orderSide:      string(od.Side),
+			usedLeverage:   leverage,
 			orderPrice:     od.Price,
 			orderQtity:     od.OrigQuantity,
 			accTradingFee:  big.ZERO,
@@ -153,6 +155,7 @@ type setupJSON struct {
 	orderQtity     string         `json:"order_quantity"`
 	orderStatus    string         `json:"order_status"`
 	accTradingFee  string         `json:"commission"`
+	usedLeverage   string         `json:"leverage"`
 	tradingFeeAss  string         `json:"commission_asset"`
 	avgFilledPrice string         `json:"avg_filled_price"`
 	accFilledQtity string         `json:"acc_filled_quantity"`
@@ -170,6 +173,7 @@ func (st *setup) convert2JSON() *setupJSON {
 		orderQtity:     st.orderQtity,
 		orderStatus:    st.orderStatus,
 		tradingFeeAss:  st.tradingFeeAss,
+		usedLeverage:   st.usedLeverage.FormattedString(0),
 		accTradingFee:  st.accTradingFee.FormattedString(10),
 		avgFilledPrice: st.avgFilledPrice.FormattedString(10),
 		accFilledQtity: st.accFilledQtity.FormattedString(10),
@@ -189,6 +193,7 @@ func (st *setup) description() string {
 ticker:         %s, 
 signal:         %s,
 market:         %s, 
+leverage:       %sx,
 order time:     %s,
 order side:     %s,
 order quantity: %s,
@@ -208,6 +213,7 @@ n. of trades:       %d,
 		st.runner.GetName(),
 		st.signal.Name,
 		st.runner.GetMarketType(),
+		st.usedLeverage.FormattedString(0),
 		t.Format(simpleLayout),
 		st.orderSide,
 		st.orderQtity,
