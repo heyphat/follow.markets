@@ -10,11 +10,12 @@ import (
 	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/config"
 	bn "github.com/adshao/go-binance/v2"
+	bnf "github.com/adshao/go-binance/v2/futures"
 	"github.com/sdcoffey/big"
 	"github.com/stretchr/testify/assert"
 )
 
-func testSuit() (*trader, *runner.Runner, error) {
+func testSuit(ticker string) (*trader, *runner.Runner, error) {
 	path := "./../../../configs/deploy.configs.json"
 	configs, err := config.NewConfigs(&path)
 	if err != nil {
@@ -24,7 +25,7 @@ func testSuit() (*trader, *runner.Runner, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	r := runner.NewRunner("BTCUSDT", runner.NewRunnerDefaultConfigs())
+	r := runner.NewRunner(ticker, runner.NewRunnerDefaultConfigs())
 	return trader, r, nil
 }
 
@@ -75,8 +76,11 @@ func Test_Trader_Evaluator(t *testing.T) {
 	streamer.connect()
 	assert.EqualValues(t, true, notifier.isConnected())
 
-	r := runner.NewRunner("BTCUSDT", runner.NewRunnerDefaultConfigs())
-	assert.EqualValues(t, "BTCUSDT", r.GetName())
+	ticker := "ETHUSDT"
+	rConfigs := runner.NewRunnerDefaultConfigs()
+	rConfigs.Market = runner.Futures
+	r := runner.NewRunner(ticker, rConfigs)
+	assert.EqualValues(t, ticker, r.GetName())
 	kline := &bn.Kline{
 		OpenTime: 1499040000000,
 		Open:     "0.0",
@@ -103,7 +107,7 @@ func Test_Trader_Evaluator(t *testing.T) {
 }
 
 func Test_Trader_StopLoss(t *testing.T) {
-	trader, _, err := testSuit()
+	trader, _, err := testSuit("BTCUSDT")
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, false, trader.isConnected())
 
@@ -156,15 +160,30 @@ func Test_Trader_StopLoss(t *testing.T) {
 }
 
 func Test_Trader_IsOrdering(t *testing.T) {
-	trader, runner, err := testSuit()
+	trader, runner, err := testSuit("BTCUSDT")
 	assert.EqualValues(t, nil, err)
 
 	ok := trader.isOrdering(runner)
 	assert.EqualValues(t, false, ok)
 }
 
-func Test_Trader_GetAndUpdateBalances(t *testing.T) {
-	trader, _, err := testSuit()
+func Test_Trader_IsHolding(t *testing.T) {
+	trader, runner, err := testSuit("SHIBUSDT")
+	assert.EqualValues(t, nil, err)
+
+	coin := bn.Balance{Asset: "SHIB", Free: "30", Locked: "0"}
+	trader.binSpotUpdateBalances(coin)
+	ok := trader.isHolding(runner)
+	assert.EqualValues(t, true, ok)
+
+	_, newRunner, err := testSuit("THETAUSDT")
+	assert.EqualValues(t, nil, err)
+	ok = trader.isHolding(newRunner)
+	assert.EqualValues(t, false, ok)
+}
+
+func Test_Trader_GetAndUpdateSpotBalances(t *testing.T) {
+	trader, _, err := testSuit("BTCUSDT")
 	assert.EqualValues(t, nil, err)
 
 	bls := []bn.Balance{bn.Balance{Asset: "BNB", Free: "10", Locked: "0"}}
@@ -189,6 +208,37 @@ func Test_Trader_GetAndUpdateBalances(t *testing.T) {
 	bnb = bn.Balance{Asset: "BNB", Free: "0", Locked: "0"}
 	trader.binSpotUpdateBalances(bnb)
 	nbls = trader.binSpotGetBalances()
+	for _, b := range nbls {
+		assert.EqualValues(t, true, b.Asset != "BNB")
+	}
+}
+
+func Test_Trader_GetAndUpdateFutuBalances(t *testing.T) {
+	trader, _, err := testSuit("BTCUSDT")
+	assert.EqualValues(t, nil, err)
+
+	bls := []bnf.Balance{bnf.Balance{Asset: "BNB", Balance: "10", AvailableBalance: "10"}}
+	for _, b := range bls {
+		trader.binFutuBalances.Store(b.Asset+trader.quoteCurrency, b)
+	}
+
+	nbls := trader.binFutuGetBalances()
+	assert.EqualValues(t, true, len(nbls) >= 1)
+
+	// test add new balance to BNB
+	bnb := bnf.Balance{Asset: "BNB", Balance: "30", AvailableBalance: "30"}
+	trader.binFutuUpdateBalances(bnb)
+	nbls = trader.binFutuGetBalances()
+	for _, b := range nbls {
+		if b.Asset == "BNB" {
+			assert.EqualValues(t, "30", b.Balance)
+		}
+	}
+
+	// test remove balance from the holdings
+	bnb = bnf.Balance{Asset: "BNB", Balance: "0", AvailableBalance: "0"}
+	trader.binFutuUpdateBalances(bnb)
+	nbls = trader.binFutuGetBalances()
 	for _, b := range nbls {
 		assert.EqualValues(t, true, b.Asset != "BNB")
 	}
