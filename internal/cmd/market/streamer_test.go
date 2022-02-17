@@ -14,8 +14,6 @@ import (
 )
 
 func Test_Streamer(t *testing.T) {
-	// comment return to test streamer
-	//return
 	path := "./../../../configs/deploy.configs.json"
 	configs, err := config.NewConfigs(&path)
 	assert.EqualValues(t, nil, err)
@@ -49,12 +47,12 @@ func Test_Streamer(t *testing.T) {
 	}()
 	go func() {
 		for msg := range eth.channels.trade {
-			fmt.Println("eth bar", msg)
+			fmt.Println("eth trade", msg)
 		}
 	}()
 	go func() {
 		for msg := range eth.channels.bar {
-			fmt.Println("eth trade", msg)
+			fmt.Println("eth bar", msg)
 		}
 	}()
 	go func() {
@@ -68,6 +66,7 @@ func Test_Streamer(t *testing.T) {
 	time.Sleep(time.Second * 5)
 	assert.EqualValues(t, 2, len(streamer.streamList(WATCHER)))
 
+	// unsubscribe to BTC channels
 	streamer.communicator.watcher2Streamer <- streamer.communicator.newMessage(btc.runner, nil, btc.channels, nil, nil)
 	time.Sleep(time.Second * 5)
 	assert.EqualValues(t, 1, len(streamer.streamList(WATCHER)))

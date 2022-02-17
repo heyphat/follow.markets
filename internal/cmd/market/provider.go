@@ -2,7 +2,9 @@ package market
 
 import (
 	"context"
+	"errors"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -131,6 +133,20 @@ func (p *provider) fetchCoinFundamentals(base string, limit int) (map[string]run
 	return out, nil
 }
 
+func (p *provider) fetchBinFutuBalances(quoteCurrency string) (*sync.Map, error) {
+	balances, err := p.binFutu.NewGetBalanceService().Do(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	out := sync.Map{}
+	for _, b := range balances {
+		if big.NewFromString(b.Balance).GT(big.ZERO) {
+			out.Store(b.Asset+quoteCurrency, *b)
+		}
+	}
+	return &out, nil
+}
+
 func (p *provider) fetchBinSpotBalances(quoteCurrency string) (*sync.Map, error) {
 	acc, err := p.binSpot.NewGetAccountService().Do(context.Background())
 	if err != nil {
@@ -164,4 +180,78 @@ func (p *provider) fetchBinUserDataListenKey() (string, string, error) {
 		}
 	}()
 	return binSpotListenKey, binFutuListenKey, nil
+}
+
+func (p *provider) fetchBinSpotExchangeInfo(ticker string) (int, int, error) {
+	i, err := p.binSpot.NewExchangeInfoService().Symbol(ticker).Do(context.Background())
+	if err != nil {
+		return 0, 0, err
+	}
+	precision := 0
+	lotSize := 0
+	for _, s := range i.Symbols {
+		if strings.ToUpper(s.Symbol) != strings.ToUpper(ticker) {
+			continue
+		}
+		for _, m := range s.Filters {
+			switch m["filterType"] {
+			case "PRICE_FILTER":
+				val, ok := m["tickSize"]
+				if !ok {
+					return precision, lotSize, errors.New("couldn't find precision and lotSize from exchange")
+				}
+				for !(big.NewFromString("10").Pow(precision).Mul(big.NewFromString(val.(string))).GTE(big.NewFromString("1"))) {
+					precision += 1
+				}
+			case "LOT_SIZE":
+				val, ok := m["stepSize"]
+				if !ok {
+					return precision, lotSize, errors.New("couldn't find precision and lotSize from exchange")
+				}
+				for !(big.NewFromString("10").Pow(lotSize).Mul(big.NewFromString(val.(string))).GTE(big.NewFromString("1"))) {
+					lotSize += 1
+				}
+			default:
+				continue
+			}
+		}
+	}
+	return precision, lotSize, nil
+}
+
+func (p *provider) fetchBinFutuExchangeInfo(ticker string) (int, int, error) {
+	i, err := p.binFutu.NewExchangeInfoService().Do(context.Background())
+	if err != nil {
+		return 0, 0, err
+	}
+	precision := 0
+	lotSize := 0
+	for _, s := range i.Symbols {
+		if strings.ToUpper(s.Symbol) != strings.ToUpper(ticker) {
+			continue
+		}
+		for _, m := range s.Filters {
+			switch m["filterType"] {
+			case "PRICE_FILTER":
+				val, ok := m["tickSize"]
+				if !ok {
+					return precision, lotSize, errors.New("couldn't find precision and lotSize from exchange")
+				}
+				for !(big.TEN.Pow(precision).Mul(big.NewFromString(val.(string))).GTE(big.ONE)) {
+					precision += 1
+				}
+			case "LOT_SIZE":
+				val, ok := m["stepSize"]
+				if !ok {
+					return precision, lotSize, errors.New("couldn't find precision and lotSize from exchange")
+				}
+				for !(big.TEN.Pow(lotSize).Mul(big.NewFromString(val.(string))).GTE(big.ONE)) {
+					lotSize += 1
+				}
+			default:
+				continue
+			}
+		}
+	}
+	return precision, lotSize, nil
 }

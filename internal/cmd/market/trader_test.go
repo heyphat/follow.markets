@@ -10,11 +10,12 @@ import (
 	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/config"
 	bn "github.com/adshao/go-binance/v2"
+	bnf "github.com/adshao/go-binance/v2/futures"
 	"github.com/sdcoffey/big"
 	"github.com/stretchr/testify/assert"
 )
 
-func testSuit() (*trader, *runner.Runner, error) {
+func testSuit(ticker string) (*trader, *runner.Runner, error) {
 	path := "./../../../configs/deploy.configs.json"
 	configs, err := config.NewConfigs(&path)
 	if err != nil {
@@ -24,7 +25,7 @@ func testSuit() (*trader, *runner.Runner, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	r := runner.NewRunner("BTCUSDT", runner.NewRunnerDefaultConfigs())
+	r := runner.NewRunner(ticker, runner.NewRunnerDefaultConfigs())
 	return trader, r, nil
 }
 
@@ -75,8 +76,11 @@ func Test_Trader_Evaluator(t *testing.T) {
 	streamer.connect()
 	assert.EqualValues(t, true, notifier.isConnected())
 
-	r := runner.NewRunner("BTCUSDT", runner.NewRunnerDefaultConfigs())
-	assert.EqualValues(t, "BTCUSDT", r.GetName())
+	ticker := "ETHUSDT"
+	rConfigs := runner.NewRunnerDefaultConfigs()
+	rConfigs.Market = runner.Futures
+	r := runner.NewRunner(ticker, rConfigs)
+	assert.EqualValues(t, ticker, r.GetName())
 	kline := &bn.Kline{
 		OpenTime: 1499040000000,
 		Open:     "0.0",
@@ -102,69 +106,123 @@ func Test_Trader_Evaluator(t *testing.T) {
 	time.Sleep(time.Minute * 1)
 }
 
-func Test_Trader_StopLoss(t *testing.T) {
-	trader, _, err := testSuit()
+func Test_Trader_ShouldClose(t *testing.T) {
+	ticker := "BTCUSDT"
+	path := "./../../../configs/deploy.configs.json"
+	configs, err := config.NewConfigs(&path)
+	assert.EqualValues(t, nil, err)
+	configs.Market.Trader.MaxLeverage = 10
+	configs.Market.Trader.MaxLossPerTrade = 5
+	configs.Market.Trader.MinProfitPerTrade = 10
+
+	trader, err := newTrader(initSharedParticipants(configs), configs)
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, false, trader.isConnected())
+
+	rConfigs := runner.NewRunnerDefaultConfigs()
+	rConfigs.Market = runner.Futures
+	isCash := rConfigs.Market == runner.Cash
+	r := runner.NewRunner(ticker, rConfigs)
 
 	trader.connect()
 	assert.EqualValues(t, true, trader.isConnected())
 
-	orderPrice := big.NewFromString("10.0")
+	st := &setup{runner: r, avgFilledPrice: big.NewFromString("10.0"), accFilledQtity: big.NewFromString("1000")}
 
-	tradingSide := "BUY"
+	st.orderSide = "BUY"
 	currentPrice := big.NewFromString("10.3")
-	shouldStop, pnl := trader.shouldClose(orderPrice, currentPrice, tradingSide)
+	shouldStop, pnl, dl := trader.shouldClose(st, currentPrice)
 	assert.EqualValues(t, true, shouldStop)
 	assert.EqualValues(t, "0.03", pnl.FormattedString(2))
+	if isCash {
+		assert.EqualValues(t, "300.00", dl.FormattedString(2))
+	} else {
+		assert.EqualValues(t, "3000.00", dl.FormattedString(2))
+	}
 
 	currentPrice = big.NewFromString("9.5")
-	shouldStop, pnl = trader.shouldClose(orderPrice, currentPrice, tradingSide)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
 	assert.EqualValues(t, true, shouldStop)
 	assert.EqualValues(t, "-0.05", pnl.FormattedString(2))
+	if isCash {
+		assert.EqualValues(t, "-526.32", dl.FormattedString(2))
+	} else {
+		assert.EqualValues(t, "-5263.16", dl.FormattedString(2))
+	}
 
 	currentPrice = big.NewFromString("10.05")
-	shouldStop, pnl = trader.shouldClose(orderPrice, currentPrice, tradingSide)
-	assert.EqualValues(t, false, shouldStop)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
+	if isCash {
+		assert.EqualValues(t, false, shouldStop)
+	} else {
+		assert.EqualValues(t, true, shouldStop)
+	}
 	assert.EqualValues(t, "0.005", pnl.FormattedString(3))
 
 	currentPrice = big.NewFromString("9.99")
-	shouldStop, pnl = trader.shouldClose(orderPrice, currentPrice, tradingSide)
-	assert.EqualValues(t, false, shouldStop)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
+	if isCash {
+		assert.EqualValues(t, false, shouldStop)
+	} else {
+		assert.EqualValues(t, true, shouldStop)
+	}
 	assert.EqualValues(t, "-0.001", pnl.FormattedString(3))
 
-	tradingSide = "SELL"
+	st.orderSide = "SELL"
 	currentPrice = big.NewFromString("10.5")
-	shouldStop, pnl = trader.shouldClose(orderPrice, currentPrice, tradingSide)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
 	assert.EqualValues(t, true, shouldStop)
 	assert.EqualValues(t, "-0.05", pnl.FormattedString(2))
 
 	currentPrice = big.NewFromString("9.5")
-	shouldStop, pnl = trader.shouldClose(orderPrice, currentPrice, tradingSide)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
 	assert.EqualValues(t, true, shouldStop)
 	assert.EqualValues(t, "0.05", pnl.FormattedString(2))
 
 	currentPrice = big.NewFromString("10.01")
-	shouldStop, pnl = trader.shouldClose(orderPrice, currentPrice, tradingSide)
-	assert.EqualValues(t, false, shouldStop)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
+	if isCash {
+		assert.EqualValues(t, false, shouldStop)
+	} else {
+		assert.EqualValues(t, true, shouldStop)
+	}
 	assert.EqualValues(t, "-0.001", pnl.FormattedString(3))
 
 	currentPrice = big.NewFromString("9.99")
-	shouldStop, pnl = trader.shouldClose(orderPrice, currentPrice, tradingSide)
-	assert.EqualValues(t, false, shouldStop)
+	shouldStop, pnl, dl = trader.shouldClose(st, currentPrice)
+	if isCash {
+		assert.EqualValues(t, false, shouldStop)
+	} else {
+		assert.EqualValues(t, true, shouldStop)
+	}
 	assert.EqualValues(t, "0.001", pnl.FormattedString(3))
 }
 
 func Test_Trader_IsOrdering(t *testing.T) {
-	trader, runner, err := testSuit()
+	trader, runner, err := testSuit("BTCUSDT")
 	assert.EqualValues(t, nil, err)
 
 	ok := trader.isOrdering(runner)
 	assert.EqualValues(t, false, ok)
 }
 
-func Test_Trader_GetAndUpdateBalances(t *testing.T) {
-	trader, _, err := testSuit()
+func Test_Trader_IsHolding(t *testing.T) {
+	trader, runner, err := testSuit("SHIBUSDT")
+	assert.EqualValues(t, nil, err)
+
+	coin := bn.Balance{Asset: "SHIB", Free: "30", Locked: "0"}
+	trader.binSpotUpdateBalances(coin)
+	ok := trader.isHolding(runner)
+	assert.EqualValues(t, true, ok)
+
+	_, newRunner, err := testSuit("THETAUSDT")
+	assert.EqualValues(t, nil, err)
+	ok = trader.isHolding(newRunner)
+	assert.EqualValues(t, false, ok)
+}
+
+func Test_Trader_GetAndUpdateSpotBalances(t *testing.T) {
+	trader, _, err := testSuit("BTCUSDT")
 	assert.EqualValues(t, nil, err)
 
 	bls := []bn.Balance{bn.Balance{Asset: "BNB", Free: "10", Locked: "0"}}
@@ -192,4 +250,55 @@ func Test_Trader_GetAndUpdateBalances(t *testing.T) {
 	for _, b := range nbls {
 		assert.EqualValues(t, true, b.Asset != "BNB")
 	}
+}
+
+func Test_Trader_GetAndUpdateFutuBalances(t *testing.T) {
+	trader, _, err := testSuit("BTCUSDT")
+	assert.EqualValues(t, nil, err)
+
+	bls := []bnf.Balance{bnf.Balance{Asset: "BNB", Balance: "10", AvailableBalance: "10"}}
+	for _, b := range bls {
+		trader.binFutuBalances.Store(b.Asset+trader.quoteCurrency, b)
+	}
+
+	nbls := trader.binFutuGetBalances()
+	assert.EqualValues(t, true, len(nbls) >= 1)
+
+	// test add new balance to BNB
+	bnb := bnf.Balance{Asset: "BNB", Balance: "30", AvailableBalance: "30"}
+	trader.binFutuUpdateBalances(bnb)
+	nbls = trader.binFutuGetBalances()
+	for _, b := range nbls {
+		if b.Asset == "BNB" {
+			assert.EqualValues(t, "30", b.Balance)
+		}
+	}
+
+	// test remove balance from the holdings
+	bnb = bnf.Balance{Asset: "BNB", Balance: "0", AvailableBalance: "0"}
+	trader.binFutuUpdateBalances(bnb)
+	nbls = trader.binFutuGetBalances()
+	for _, b := range nbls {
+		assert.EqualValues(t, true, b.Asset != "BNB")
+	}
+}
+
+func Test_Trader_UpdateConfigs(t *testing.T) {
+	path := "./../../../configs/deploy.configs.json"
+	configs, err := config.NewConfigs(&path)
+	assert.EqualValues(t, nil, err)
+
+	trader, err := newTrader(initSharedParticipants(configs), configs)
+	assert.EqualValues(t, nil, err)
+
+	assert.EqualValues(t, "5.0", trader.maxLossPerTrade.FormattedString(1))
+	assert.EqualValues(t, "10.0", trader.minProfitPerTrade.FormattedString(1))
+
+	configs.Market.Trader.MaxLossPerTrade = 10
+	configs.Market.Trader.MinProfitPerTrade = 20
+
+	trader.updateConfigs(configs)
+
+	assert.EqualValues(t, "10.0", trader.maxLossPerTrade.FormattedString(1))
+	assert.EqualValues(t, "20.0", trader.minProfitPerTrade.FormattedString(1))
 }
