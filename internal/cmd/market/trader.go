@@ -35,11 +35,12 @@ type trader struct {
 	allowedPatterns []*regexp2.Regexp
 	allowedMarkets  []runner.MarketType
 
-	minLeverage   big.Decimal
-	maxLeverage   big.Decimal
-	minBalance    big.Decimal
-	maxPositions  big.Decimal
-	maxWaitToFill time.Duration
+	maxLeverage       big.Decimal
+	minBalance        big.Decimal
+	maxPositions      big.Decimal
+	maxWaitToFill     time.Duration
+	maxLossPerTrade   big.Decimal
+	minProfitPerTrade big.Decimal
 
 	// risk controlling factors
 	profitMargin  big.Decimal
@@ -63,13 +64,14 @@ func newTrader(participants *sharedParticipants, configs *config.Configs) (*trad
 		binFutuBalances: &sync.Map{},
 		binFutuOrders:   &sync.Map{},
 
-		minBalance:    big.ZERO,
-		maxPositions:  big.ZERO,
-		minLeverage:   big.NewDecimal(1.0),
-		maxLeverage:   big.NewDecimal(1.0),
-		maxWaitToFill: time.Second * 60,
-		lossTolerance: big.NewDecimal(0.01),
-		profitMargin:  big.NewDecimal(0.02),
+		minBalance:        big.ZERO,
+		maxPositions:      big.ZERO,
+		maxLossPerTrade:   big.NewFromString("Inf"),
+		minProfitPerTrade: big.NewFromString("Inf"),
+		maxLeverage:       big.NewDecimal(1.0),
+		maxWaitToFill:     time.Second * 60,
+		lossTolerance:     big.NewDecimal(0.01),
+		profitMargin:      big.NewDecimal(0.02),
 
 		logger:       participants.logger,
 		provider:     participants.provider,
@@ -112,11 +114,8 @@ func (t *trader) updateConfigs(configs *config.Configs) error {
 	t.maxPositions = big.NewDecimal(configs.Market.Trader.MaxPositions)
 	t.minBalance = big.NewDecimal(configs.Market.Trader.MinBalance)
 	t.lossTolerance, t.profitMargin = big.NewDecimal(0.01), big.NewDecimal(0.02)
-	if configs.Market.Trader.MinLeverage > 0 {
-		t.minLeverage = big.NewDecimal(configs.Market.Trader.MinLeverage)
-	}
 	if configs.Market.Trader.MaxLeverage > 0 {
-		t.minLeverage = big.NewDecimal(configs.Market.Trader.MaxLeverage)
+		t.maxLeverage = big.NewDecimal(configs.Market.Trader.MaxLeverage)
 	}
 	if configs.Market.Trader.LossTolerance > 0 {
 		t.lossTolerance = big.NewDecimal(configs.Market.Trader.LossTolerance)
@@ -126,6 +125,12 @@ func (t *trader) updateConfigs(configs *config.Configs) error {
 	}
 	if configs.Market.Trader.MaxWaitToFill > 0 {
 		t.maxWaitToFill = time.Duration(configs.Market.Trader.MaxWaitToFill) * time.Second
+	}
+	if configs.Market.Trader.MaxLossPerTrade > 0 {
+		t.maxLossPerTrade = big.NewDecimal(configs.Market.Trader.MaxLossPerTrade)
+	}
+	if configs.Market.Trader.MinProfitPerTrade > 0 {
+		t.minProfitPerTrade = big.NewDecimal(configs.Market.Trader.MinProfitPerTrade)
 	}
 	t.quoteCurrency = configs.Market.Base.Crypto.QuoteCurrency
 	return nil
@@ -301,20 +306,20 @@ func (t *trader) initialChecks(r *runner.Runner) bool {
 
 // shouldClose checks if the current price exceeds the limit given by the loss tolerance
 // or the current price surpass the profit margin.
-func (t *trader) shouldClose(orderPrice, currentPrice big.Decimal, tradingSide string) (bool, big.Decimal) {
-	if currentPrice.EQ(big.ZERO) || orderPrice.EQ(big.ZERO) {
+func (t *trader) shouldClose(st *setup, currentPrice big.Decimal) (bool, big.Decimal) {
+	if currentPrice.EQ(big.ZERO) || st.avgFilledPrice.EQ(big.ZERO) {
 		return true, big.ZERO
 	}
-	if currentPrice.LTE(orderPrice) {
-		pnl := orderPrice.Sub(currentPrice).Div(currentPrice)
-		if strings.ToUpper(tradingSide) == "BUY" {
+	if currentPrice.LTE(st.avgFilledPrice) {
+		pnl := st.avgFilledPrice.Sub(currentPrice).Div(currentPrice)
+		if strings.ToUpper(st.orderSide) == "BUY" {
 			return pnl.GTE(t.lossTolerance), pnl.Mul(big.NewFromString("-1"))
 		} else {
 			return pnl.GTE(t.profitMargin), pnl
 		}
 	} else {
-		pnl := currentPrice.Sub(orderPrice).Div(orderPrice)
-		if strings.ToUpper(tradingSide) == "SELL" {
+		pnl := currentPrice.Sub(st.avgFilledPrice).Div(st.avgFilledPrice)
+		if strings.ToUpper(st.orderSide) == "SELL" {
 			return pnl.GTE(t.lossTolerance), pnl.Mul(big.NewFromString("-1"))
 		} else {
 			return pnl.GTE(t.profitMargin), pnl
@@ -404,7 +409,7 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 		if err != nil {
 			return err
 		}
-		st := newSetup(r, s, o)
+		st := newSetup(r, s, big.ONE, o)
 		t.binSpotOrders.Store(r.GetName(), st)
 		go t.monitorBinSpotTrade(st)
 	case runner.Futures:
@@ -423,7 +428,7 @@ func (t *trader) processEvaluatorRequest(msg *message) error {
 		if err != nil {
 			return err
 		}
-		st := newSetup(r, s, o)
+		st := newSetup(r, s, t.maxLeverage, o)
 		t.binFutuOrders.Store(r.GetName(), st)
 		go t.monitorBinFutuTrade(st)
 	default:
@@ -465,7 +470,7 @@ func (t *trader) monitorBinSpotTrade(st *setup) {
 	}
 	for msg := range st.channels.depth {
 		bestPrice := tax.BinanceSpotBestBidAskFromDepth(msg.(*bn.WsPartialDepthEvent)).L1ForClosingTrade(st.orderSide)
-		ok, pnl := t.shouldClose(st.avgFilledPrice, bestPrice.Price, st.orderSide)
+		ok, pnl := t.shouldClose(st, bestPrice.Price)
 		if !ok {
 			continue
 		}
@@ -528,7 +533,7 @@ func (t *trader) monitorBinFutuTrade(st *setup) {
 	}
 	for msg := range st.channels.depth {
 		bestPrice := tax.BinanceFutuBestBidAskFromDepth(msg.(*bnf.WsDepthEvent)).L1ForClosingTrade(st.orderSide)
-		ok, pnl := t.shouldClose(st.avgFilledPrice, bestPrice.Price, st.orderSide)
+		ok, pnl := t.shouldClose(st, bestPrice.Price)
 		if !ok {
 			continue
 		}
