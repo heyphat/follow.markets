@@ -2,7 +2,6 @@ package market
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -30,25 +29,14 @@ func Test_Provider(t *testing.T) {
 
 	_, err = provider.binFutu.NewListPriceChangeStatsService().Do(context.Background())
 	assert.EqualValues(t, nil, err)
-	//for _, s := range stats {
-	//	fmt.Println(fmt.Sprintf("%v", s.Symbol))
-	//}
 
 	klines, err := provider.fetchBinanceFuturesKlinesV3("BTCUSDT", time.Minute, &fetchOptions{limit: 60})
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, 60, len(klines))
 
-	acc, err := provider.binSpot.NewGetAccountService().Do(context.Background())
-	assert.EqualValues(t, nil, err)
-	fmt.Println(fmt.Sprintf("%+v", *acc))
-	for _, b := range acc.Balances {
-		if b.Asset == "BNB" {
-			fmt.Println(fmt.Sprintf("%+v", b))
-		}
-	}
 }
 
-func Test_ExchangeInfo(t *testing.T) {
+func Test_Provider_BinSpotExchangeInfo(t *testing.T) {
 	_, provider, err := providerTestSuit()
 	assert.EqualValues(t, nil, err)
 
@@ -66,4 +54,36 @@ func Test_ExchangeInfo(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, 8, precision)
 	assert.EqualValues(t, 0, lotSize)
+}
+
+func Test_Provider_BinFutuExchangeInfo(t *testing.T) {
+	_, provider, err := providerTestSuit()
+	assert.EqualValues(t, nil, err)
+
+	pricePrecision, quantityPrecision, err := provider.fetchBinFutuExchangeInfo("BTCUSDT")
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, 1, pricePrecision)
+	assert.EqualValues(t, 3, quantityPrecision)
+
+	pricePrecision, quantityPrecision, err = provider.fetchBinFutuExchangeInfo("THETAUSDT")
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, 3, pricePrecision)
+	assert.EqualValues(t, 1, quantityPrecision)
+
+	pricePrecision, quantityPrecision, err = provider.fetchBinFutuExchangeInfo("SHIBUSDT")
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, 0, pricePrecision)
+	assert.EqualValues(t, 0, quantityPrecision)
+}
+
+func Test_Balances(t *testing.T) {
+	_, provider, err := providerTestSuit()
+	assert.EqualValues(t, nil, err)
+
+	acc, err := provider.binSpot.NewGetAccountService().Do(context.Background())
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, true, len(acc.Balances) > 0)
+
+	bls, err := provider.binFutu.NewGetBalanceService().Do(context.Background())
+	assert.EqualValues(t, true, len(bls) > 0)
 }
