@@ -341,6 +341,11 @@ func (m *MarketStruct) Balances(market string) (map[string]string, error) {
 		for _, bl := range balances {
 			out[bl.Asset] = big.NewFromString(bl.Free).Add(big.NewFromString(bl.Locked)).FormattedString(5)
 		}
+	} else if mk == runner.Futures {
+		balances := m.trader.binFutuGetBalances()
+		for _, bl := range balances {
+			out[bl.Asset] = big.NewFromString(bl.Balance).FormattedString(5)
+		}
 	}
 	return out, nil
 }
