@@ -54,6 +54,7 @@ func newSetup(r *runner.Runner, s *strategy.Signal, leverage big.Decimal, o inte
 			orderTime:      od.TransactTime,
 			orderStatus:    string(od.Status),
 			orderSide:      string(od.Side),
+			usedLeverage:   leverage,
 			orderPrice:     od.Price,
 			orderQtity:     od.OrigQuantity,
 			accTradingFee:  big.ZERO,
