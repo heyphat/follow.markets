@@ -44,7 +44,7 @@ func newStreamer(participants *sharedParticipants) (*streamer, error) {
 
 type controller struct {
 	name  string
-	from  string
+	from  Agent
 	stops []chan struct{}
 }
 
@@ -79,7 +79,7 @@ func (s *streamer) isConnected() bool { return s.connected }
 
 // isStreamingOn returns true if the given ticker is actually being streamed for a market
 // participant given by the `from` parameter.
-func (s *streamer) isStreamingOn(ticker, from string) bool {
+func (s *streamer) isStreamingOn(ticker string, from Agent) bool {
 	s.Lock()
 	defer s.Unlock()
 	valid := false
@@ -91,7 +91,7 @@ func (s *streamer) isStreamingOn(ticker, from string) bool {
 }
 
 // streamList returns a list of streamed tickers for a market participant given by the `from` parameter.
-func (s *streamer) streamList(from string) []string {
+func (s *streamer) streamList(from Agent) []string {
 	s.Lock()
 	defer s.Unlock()
 	tickers := []string{}
@@ -118,7 +118,7 @@ func (s *streamer) processRequest(msg *message, a Agent) {
 	agent := string(a)
 	r := msg.request.what.runner
 	cs := msg.request.what.channels
-	if s.isStreamingOn(r.GetUniqueName(agent), agent) {
+	if s.isStreamingOn(r.GetUniqueName(agent), a) {
 		s.unsubscribe(r.GetUniqueName(agent))
 		cs.close()
 	} else {
@@ -126,7 +126,7 @@ func (s *streamer) processRequest(msg *message, a Agent) {
 		s.controllers.Store(r.GetUniqueName(agent),
 			controller{
 				name:  r.GetUniqueName(agent),
-				from:  agent,
+				from:  a,
 				stops: []chan struct{}{bStopC, tStopC, dStopC},
 			},
 		)
@@ -233,7 +233,7 @@ func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 	klineHandler func(e *bn.WsKlineEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stop chan struct{}) {
+	go func() {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -244,7 +244,7 @@ func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 			isInit, isError = false, false
 			<-done
 		}
-	}(stop)
+	}()
 	time.Sleep(time.Second)
 	return stop
 }
@@ -253,7 +253,7 @@ func (s *streamer) streamingBinanceFuturesKline(name string, stop chan struct{},
 	klineHandler func(e *bnf.WsKlineEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stop chan struct{}) {
+	go func() {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -264,7 +264,7 @@ func (s *streamer) streamingBinanceFuturesKline(name string, stop chan struct{},
 			isInit, isError = false, false
 			<-done
 		}
-	}(stop)
+	}()
 	time.Sleep(time.Second)
 	return stop
 }
@@ -273,7 +273,7 @@ func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
 	tradeHandler func(e *bn.WsAggTradeEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stop chan struct{}) {
+	go func() {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -284,7 +284,7 @@ func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
 			isInit, isError = false, false
 			<-done
 		}
-	}(stop)
+	}()
 	time.Sleep(time.Second)
 	return stop
 }
@@ -293,7 +293,7 @@ func (s *streamer) streamingBinanceFuturesTrade(name string, stop chan struct{},
 	tradeHandler func(e *bnf.WsAggTradeEvent)) chan struct{} {
 	isError, isInit := false, true
 	errorHandler := func(err error) { s.logger.Error.Println(s.newLog(name, err.Error())); isError = true }
-	go func(stop chan struct{}) {
+	go func() {
 		var err error
 		var done chan struct{}
 		for isInit || isError {
@@ -304,7 +304,7 @@ func (s *streamer) streamingBinanceFuturesTrade(name string, stop chan struct{},
 			isInit, isError = false, false
 			<-done
 		}
-	}(stop)
+	}()
 	time.Sleep(time.Second)
 	return stop
 }
