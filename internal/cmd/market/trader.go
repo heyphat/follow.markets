@@ -182,9 +182,8 @@ func (t *trader) processNotifierRequest(msg *message) {
 	case TRADER_MESSAGE_IS_TRADE_ENABLED:
 		if !t.isTradeDisabled {
 			rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  YES."
-		} else {
-			rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  NO."
 		}
+		rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  NO."
 	case TRADER_MESSAGE_ENABLE_TRADE:
 		t.isTradeDisabled = false
 		rs = TRADER_MESSAGE_ENABLE_TRADE + TRADER_MESSAGE_ENABLE_TRADE_COMPLETED
@@ -193,15 +192,13 @@ func (t *trader) processNotifierRequest(msg *message) {
 		rs = TRADER_MESSAGE_DISABLE_TRADE + TRADER_MESSAGE_DISABLE_TRADE_COMPLETED
 	case TRADER_MESSAGE_SPOT_BALANCES:
 		t.binSpotBalances.Range(func(key, val interface{}) bool {
-			bl := val.(bn.Balance)
-			balances[bl.Asset] = bl.Free
+			balances[val.(bn.Balance).Asset] = val.(bn.Balance).Free
 			return true
 		})
 		rs = TRADER_MESSAGE_SPOT_BALANCES + fmt.Sprintf(" ➡️  %+v.", balances)
 	case TRADER_MESSAGE_FUTU_BALANCES:
 		t.binFutuBalances.Range(func(key, val interface{}) bool {
-			bl := val.(bnf.Balance)
-			balances[bl.Asset] = bl.Balance
+			balances[val.(bnf.Balance).Asset] = val.(bnf.Balance).Balance
 			return true
 		})
 		rs = TRADER_MESSAGE_FUTU_BALANCES + fmt.Sprintf(" ➡️  %+v.", balances)
