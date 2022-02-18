@@ -128,6 +128,11 @@ func Test_Trader_ShouldClose(t *testing.T) {
 	assert.EqualValues(t, true, trader.isConnected())
 
 	st := &setup{runner: r, avgFilledPrice: big.NewFromString("10.0"), accFilledQtity: big.NewFromString("1000")}
+	if r.GetMarketType() == runner.Cash {
+		st.usedLeverage = big.ONE
+	} else {
+		st.usedLeverage = big.NewFromString("10")
+	}
 
 	st.orderSide = "BUY"
 	currentPrice := big.NewFromString("10.3")
