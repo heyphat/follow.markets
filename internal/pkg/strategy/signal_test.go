@@ -50,3 +50,33 @@ func Test_Signal(t *testing.T) {
 	//newSignal := signal.copy()
 	//fmt.Println(signal, newSignal)
 }
+
+func Test_TradeExecutionPrice(t *testing.T) {
+	path := "./signals/signal.json"
+	raw, err := ioutil.ReadFile(path)
+	assert.EqualValues(t, nil, err)
+
+	signal, err := NewSignalFromBytes(raw)
+	assert.EqualValues(t, nil, err)
+
+	ok := signal.Evaluate(nil, nil)
+	assert.EqualValues(t, false, ok)
+
+	r := runner.NewRunner("BTCUSDT", nil)
+	kline := &bn.Kline{
+		OpenTime: 1499040000000,
+		Open:     "0.0",
+		High:     "0.8",
+		Low:      "0.01",
+		Close:    "0.2",
+		Volume:   "148976.1",
+		TradeNum: 308,
+	}
+	candle := tax.ConvertBinanceKline(kline, nil)
+	ok = r.SyncCandle(candle)
+	assert.EqualValues(t, true, ok)
+
+	price, ok := signal.TradeExecutionPrice(r)
+	assert.EqualValues(t, true, ok)
+	assert.EqualValues(t, "30000.0", price.FormattedString(1))
+}

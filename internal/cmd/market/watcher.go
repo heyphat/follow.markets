@@ -25,11 +25,11 @@ type watcher struct {
 }
 
 type wmember struct {
-	runner *runner.Runner
-	bChann chan *ta.Candle
-	tChann chan *tax.Trade
+	runner   *runner.Runner
+	channels *streamingChannels
 }
 
+// newWatcher returns a watcher, meant to be called by the MarketStruct only once.
 func newWatcher(participants *sharedParticipants) (*watcher, error) {
 	if participants == nil || participants.communicator == nil || participants.logger == nil {
 		return nil, errors.New("missing shared participants")
@@ -55,7 +55,7 @@ func (w *watcher) get(name string) *runner.Runner {
 	return nil
 }
 
-// watchlist returns a watchlist where tickers are being closely monitored and reported.
+// watchlist returns a watchlist where tickers are being monitored and reported.
 func (w *watcher) watchlist() []string {
 	tickers := []string{}
 	w.runners.Range(func(key, value interface{}) bool {
@@ -76,7 +76,7 @@ func (w *watcher) isWatchingOn(ticker string) bool {
 }
 
 // isSynced returns whether the ticker is correctly synced with the market data on the given time frame.
-// It only checks if the last candle held timestamp is the latest one compared to the current time.
+// It checks if the last candle holds the starting timestamp matched to the current time.
 func (w *watcher) isSynced(ticker string, duration time.Duration) bool {
 	if time.Now().Sub(time.Now().Truncate(duration)) <= time.Minute {
 		return true
@@ -109,8 +109,9 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs, fd *runner.Fund
 	}
 	m := wmember{
 		runner: runner.NewRunner(ticker, rc),
-		bChann: make(chan *ta.Candle, 3),
-		tChann: make(chan *tax.Trade, 10),
+		channels: &streamingChannels{
+			bar: make(chan *ta.Candle, 2),
+		},
 	}
 	if w.isWatchingOn(m.runner.GetUniqueName()) {
 		return nil
@@ -143,31 +144,37 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs, fd *runner.Fund
 	defer w.Unlock()
 	w.runners.Store(m.runner.GetUniqueName(), m)
 	go w.await(m)
-	w.logger.Info.Println(w.newLog(m.runner.GetUniqueName(), "started to watch"))
+	w.logger.Info.Println(w.newLog(m.runner.GetUniqueName(), "started watching"))
 	return nil
 }
 
-// await will loop forever to receive streaming data from the streamer. This function is meant
+// await loops forever to receive streaming data from the streamer. This function is meant
 // to run in a separate go routine. The watcher can close listening channels to stop watching when
 // it receives drop signals from the market.
 func (w *watcher) await(mem wmember) {
-	for !w.registerStreamingChannel(mem) {
-		w.logger.Error.Println(w.newLog(mem.runner.GetName(), "failed to register streaming data"))
-	}
 	go func() {
-		for msg := range mem.bChann {
+		if mem.channels.bar == nil {
+			return
+		}
+		for msg := range mem.channels.bar {
 			if !mem.runner.SyncCandle(msg) {
 				w.logger.Error.Println(w.newLog(mem.runner.GetName(), "failed to sync new candle on watching"))
 				continue
 			}
-			w.communicator.watcher2Evaluator <- w.communicator.newMessage(mem, nil)
+			w.communicator.watcher2Evaluator <- w.communicator.newMessage(mem.runner, nil, nil, nil, nil)
 		}
 	}()
 	go func() {
-		for _ = range mem.tChann {
-			//w.logger.Info.Println(msg)
+		if mem.channels.trade == nil {
+			return
+		}
+		for msg := range mem.channels.trade {
+			w.logger.Info.Println(msg)
 		}
 	}()
+	for !w.registerStreamingChannel(mem) {
+		w.logger.Error.Println(w.newLog(mem.runner.GetName(), "failed to register streaming data"))
+	}
 }
 
 // drop removes the given ticker from the watchlist. It closes all the streaming channels.
@@ -189,7 +196,7 @@ func (w *watcher) drop(ticker string, rc *runner.RunnerConfigs) error {
 	return nil
 }
 
-// lastCandles returns all last candles from all time frames of a member in the watchlist
+// lastCandles returns all last candles from all frames of a runner in the watchlist
 func (w *watcher) lastCandles(ticker string) []*ta.Candle {
 	candles := make([]*ta.Candle, 0)
 	r := w.get(ticker)
@@ -205,7 +212,7 @@ func (w *watcher) lastCandles(ticker string) []*ta.Candle {
 	return candles
 }
 
-// lastIndicators return all last indicators from all time frames a member in the watchlist
+// lastIndicators return all last indicators from all frames of a runner in the watchlist
 func (w *watcher) lastIndicators(ticker string) []*tax.Indicator {
 	inds := make([]*tax.Indicator, 0)
 	r := w.get(ticker)
@@ -221,7 +228,7 @@ func (w *watcher) lastIndicators(ticker string) []*tax.Indicator {
 	return inds
 }
 
-// connect connects the watcher to other market participants py listening to
+// connect connects the watcher to other market participants by listening to
 // decicated channels for communication.
 func (w *watcher) connect() {
 	w.Lock()
@@ -237,46 +244,28 @@ func (w *watcher) connect() {
 	w.connected = true
 }
 
-// registerStreamingChannel registers the runners with the streamer in order to
-// recevie and consume candles broadcasted by data providor. Every time the drop
-// method is called and the ticker is vallid, it will invoke this method.
+// registerStreamingChannel registers or deregisters a runner to the streamer in order to
+// receive candles broadcasted by data providor.
 func (w *watcher) registerStreamingChannel(mem wmember) bool {
 	doneStreamingRegister := false
 	var maxTries int
 	for !doneStreamingRegister && maxTries <= 3 {
 		resC := make(chan *payload)
-		w.communicator.watcher2Streamer <- w.communicator.newMessage(mem, resC)
-		doneStreamingRegister = (<-resC).what.(bool)
+		w.communicator.watcher2Streamer <- w.communicator.newMessage(mem.runner, nil, mem.channels, nil, resC)
+		doneStreamingRegister = (<-resC).what.dynamic.(bool)
 		maxTries++
 	}
 	return doneStreamingRegister
 }
 
-// deregisterStreamingChannel deregisters the runners with the streamer in order to
-// cancle streaming channels broadcasted by data providor. Every time the drop
-// method is called and the ticker is vallid, it will invoke this method.
-//func (w *watcher) deregisterStreamingChannel(mem wmember) bool {
-//	doneStreamingDeregister := false
-//	var maxTries int
-//	for !doneStreamingDeregister && maxTries <= 3 {
-//		resC := make(chan *payload)
-//		w.communicator.watcher2Streamer <- w.communicator.newMessage(mem, resC)
-//		doneStreamingDeregister = (<-resC).what.(bool)
-//		maxTries++
-//	}
-//	return doneStreamingDeregister
-//}
-
-// This processes the request from the streamer, currently the streamer only requests
-// for the `mem` channels in order to reinitialize the streaming data if necessary.
+// this method processes requests from the streamer.
 func (w *watcher) processStreamerRequest(msg *message) {
-	if mem, ok := w.runners.Load(msg.request.what.(string)); ok && msg.response != nil {
-		msg.response <- w.communicator.newPayload(mem)
-		close(msg.response)
-	}
+	//if mem, ok := w.runners.Load(msg.request.what.(string)); ok && msg.response != nil {
+	//	msg.response <- w.communicator.newPayload(mem.runner, nil, mem.channels, nil).addRequestID(&msg.request.requestID).addResponseID()
+	//	close(msg.response)
 }
 
-// generates a new log with the format for the watcher
+// newLog generates a new log with the format for the watcher
 func (w *watcher) newLog(ticker, message string) string {
 	return fmt.Sprintf("[watcher] %s: %s", ticker, message)
 }

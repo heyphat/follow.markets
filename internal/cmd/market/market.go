@@ -48,6 +48,7 @@ type MarketStruct struct {
 	evaluator *evaluator
 	notifier  *notifier
 	tester    *tester
+	trader    *trader
 }
 
 func NewMarket(configFilePath *string) (*MarketStruct, error) {
@@ -80,6 +81,10 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	if err != nil {
 		return nil, err
 	}
+	trader, err := newTrader(common, configs)
+	if err != nil {
+		return nil, err
+	}
 	once.Do(func() {
 		Market = &MarketStruct{}
 		Market.configs = configs
@@ -88,6 +93,7 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 		Market.evaluator = evaluator
 		Market.notifier = notifier
 		Market.tester = tester
+		Market.trader = trader
 
 		Market.connect()
 		if err := Market.initSignals(); err != nil {
@@ -104,7 +110,7 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 				// the duration must be the time period that the watcher is watching on.
 				ticker := "BTCUSDT"
 				if synced := Market.IsSynced(ticker, time.Minute*5); !synced {
-					Market.notifier.notify(fmt.Sprintf("%s is out of sync for %s", ticker, (time.Minute * 5).String()))
+					Market.notifier.notify(fmt.Sprintf("%s is out of sync for %s", ticker, (time.Minute*5).String()), nil)
 				}
 			}
 		}()
@@ -153,7 +159,7 @@ func (m *MarketStruct) initWatchlist() error {
 	if m.configs.IsProduction() {
 		limit = 5000
 	}
-	listings, err := m.watcher.provider.fetchCoinFundamentals(m.configs.Market.Watcher.BaseMarket, limit)
+	listings, err := m.watcher.provider.fetchCoinFundamentals(m.configs.Market.Base.Crypto.QuoteCurrency, limit)
 	if err != nil {
 		m.watcher.logger.Error.Println(m.watcher.newLog("CMC", err.Error()))
 	}
@@ -217,7 +223,7 @@ func (m *MarketStruct) initSignals() error {
 		if err != nil {
 			return err
 		}
-		tickers := strings.Replace("(?=(?<!(SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?={base_market}$)", "{base_market}", m.configs.Market.Watcher.BaseMarket, 1)
+		tickers := strings.Replace("(?=(?<!(SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?={base_market}$)", "{base_market}", m.configs.Market.Base.Crypto.QuoteCurrency, 1)
 		m.evaluator.add([]string{tickers}, signal)
 	}
 	return nil
@@ -228,6 +234,7 @@ func (m *MarketStruct) connect() {
 	m.streamer.connect()
 	m.evaluator.connect()
 	m.notifier.connect()
+	m.trader.connect()
 }
 
 // watcher endpoints
@@ -320,4 +327,34 @@ func (m *MarketStruct) Test(ticker string, balance float64, stg *strategy.Strate
 		return nil, err
 	}
 	return result.record, nil
+}
+
+// trader endpoints
+func (m *MarketStruct) Balances(market string) (map[string]string, error) {
+	mk, ok := runner.ValidateMarket(market)
+	if !ok {
+		return nil, errors.New("unsupported market")
+	}
+	out := make(map[string]string)
+	if mk == runner.Cash {
+		balances := m.trader.binSpotGetBalances()
+		for _, bl := range balances {
+			out[bl.Asset] = big.NewFromString(bl.Free).Add(big.NewFromString(bl.Locked)).FormattedString(5)
+		}
+	} else if mk == runner.Futures {
+		balances := m.trader.binFutuGetBalances()
+		for _, bl := range balances {
+			out[bl.Asset] = big.NewFromString(bl.Balance).FormattedString(5)
+		}
+	}
+	return out, nil
+}
+
+func (m *MarketStruct) UpdateConfigs(c *config.Configs) error {
+	m.configs = c
+	return m.trader.updateConfigs(c)
+}
+
+func (m *MarketStruct) GetConfigs() *config.Configs {
+	return m.configs
 }

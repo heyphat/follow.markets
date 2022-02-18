@@ -9,7 +9,6 @@ import (
 
 	tele "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
-	"follow.markets/internal/pkg/strategy"
 	"follow.markets/pkg/config"
 	"follow.markets/pkg/log"
 	"follow.markets/pkg/util"
@@ -24,20 +23,17 @@ type notifier struct {
 
 	// shared properties with other market participants
 	logger       *log.Logger
-	provider     *provider
 	communicator *communicator
 }
 
-type nmember struct {
+type notification struct {
 	id       string
 	lastSent time.Time
-	//runnerName   string
-	//strategyName string
 }
 
 func newNotifier(participants *sharedParticipants, configs *config.Configs) (*notifier, error) {
-	if participants == nil || participants.communicator == nil || participants.logger == nil {
-		return nil, errors.New("missing shared participants")
+	if configs == nil || participants == nil || participants.communicator == nil || participants.logger == nil {
+		return nil, errors.New("missing shared participants or configs")
 	}
 	var chatIDs []int64
 	for _, id := range configs.Market.Notifier.Telegram.ChatIDs {
@@ -58,7 +54,6 @@ func newNotifier(participants *sharedParticipants, configs *config.Configs) (*no
 		chatIDs:   chatIDs,
 
 		logger:       participants.logger,
-		provider:     participants.provider,
 		communicator: participants.communicator,
 	}, nil
 }
@@ -74,6 +69,11 @@ func (n *notifier) connect() {
 	go func() {
 		for msg := range n.communicator.evaluator2Notifier {
 			go n.processEvaluatorRequest(msg)
+		}
+	}()
+	go func() {
+		for msg := range n.communicator.trader2Notifier {
+			go n.processTraderRequest(msg)
 		}
 	}()
 	go n.await()
@@ -112,54 +112,74 @@ func (n *notifier) addChatIDs(cids []int64) {
 func (n *notifier) getNotifications() map[string]time.Time {
 	out := make(map[string]time.Time)
 	n.notis.Range(func(k, v interface{}) bool {
-		out[k.(string)] = v.(nmember).lastSent
+		out[k.(string)] = v.(notification).lastSent
 		return true
 	})
 	return out
 }
 
+// this method processes requests from evaluator, it sends notifications to user
+// based on the set of rules specified on the signal.
 func (n *notifier) processEvaluatorRequest(msg *message) {
-	s := msg.request.what.(*strategy.Signal)
-	mess := msg.request.id + "\n" + s.Description()
-	//names := strings.Split(msg.request.id, "-")
-	if s.IsOnetime() {
-		n.notify(mess)
+	if msg.request.what.runner == nil || msg.request.what.signal == nil {
 		return
 	}
-	if val, ok := n.notis.Load(msg.request.id); !ok {
-		n.notify(mess)
-		n.notis.Store(msg.request.id,
-			nmember{
-				id:       msg.request.id,
+	s := msg.request.what.signal
+	r := msg.request.what.runner
+	id := r.GetUniqueName() + "-" + s.Name
+	mess := id + "\n" + s.Description()
+	if s.IsOnetime() {
+		n.notify(mess, s.OwnerID)
+		return
+	}
+	if val, ok := n.notis.Load(id); !ok {
+		n.notify(mess, s.OwnerID)
+		n.notis.Store(id,
+			notification{
+				id:       id,
 				lastSent: time.Now().Add(-time.Minute),
-				//runnerName:   names[0],
-				//strategyName: names[1],
 			})
 	} else {
-		if s.ShouldSend(val.(nmember).lastSent) {
-			n.notify(mess)
-			n.notis.Store(msg.request.id,
-				nmember{
-					id:       msg.request.id,
+		if s.ShouldSend(val.(notification).lastSent) {
+			n.notify(mess, s.OwnerID)
+			n.notis.Store(id,
+				notification{
+					id:       id,
 					lastSent: time.Now().Add(-time.Minute),
-					//runnerName:   names[0],
-					//strategyName: names[1],
 				})
 		}
 	}
 }
 
-//func (n *notifier) processTesterRequest(msg *message) {
-//}
+// this method processes requests from trader, it sends notifications to user
+// about trade activities.
+func (n *notifier) processTraderRequest(msg *message) {
+	if msg.request.what.dynamic == nil {
+		return
+	}
+	mess := msg.request.what.dynamic.(string)
+	if msg.request.what.signal == nil {
+		n.notify(mess, nil)
+		return
+	}
+	n.notify(mess, msg.request.what.signal.OwnerID)
+}
 
-// notify sends tele message to all chatIDs for a given content.
-func (n *notifier) notify(content string) {
+// notify sends tele message to all chatIDs for a given content if the given `cid`
+// is missing, otherwise only send to `cid`.
+func (n *notifier) notify(content string, cid *int64) {
+	if cid != nil {
+		message := tele.NewMessage(*cid, content)
+		n.bot.Send(message)
+		return
+	}
 	for _, cid := range n.chatIDs {
 		message := tele.NewMessage(cid, content)
 		n.bot.Send(message)
 	}
 }
 
+// generates a new log with the format for the notifier
 func (n *notifier) newLog(name, message string) string {
 	return fmt.Sprintf("[notifier] %s: %s", name, message)
 }
