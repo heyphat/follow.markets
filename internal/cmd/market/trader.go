@@ -22,6 +22,7 @@ import (
 type trader struct {
 	sync.Mutex
 	connected        bool
+	isTradeDisabled  bool
 	binFutuListenKey string
 	binSpotListenKey string
 
@@ -59,6 +60,8 @@ func newTrader(participants *sharedParticipants, configs *config.Configs) (*trad
 	}
 	t := &trader{
 		connected:       false,
+		isTradeDisabled: true,
+
 		binSpotBalances: &sync.Map{},
 		binSpotOrders:   &sync.Map{},
 		binFutuBalances: &sync.Map{},
@@ -96,6 +99,9 @@ func newTrader(participants *sharedParticipants, configs *config.Configs) (*trad
 
 // updateConfigs updates basic trading configuration for the trader. It overrides the current configuration.
 func (t *trader) updateConfigs(configs *config.Configs) error {
+	t.Lock()
+	defer t.Unlock()
+
 	var err error
 	reges := make([]*regexp2.Regexp, len(configs.Market.Trader.AllowedPatterns))
 	for i, p := range configs.Market.Trader.AllowedPatterns {
@@ -114,6 +120,7 @@ func (t *trader) updateConfigs(configs *config.Configs) error {
 	t.maxPositions = big.NewDecimal(configs.Market.Trader.MaxPositions)
 	t.minBalance = big.NewDecimal(configs.Market.Trader.MinBalance)
 	t.lossTolerance, t.profitMargin = big.NewDecimal(0.01), big.NewDecimal(0.02)
+	t.isTradeDisabled = !configs.Market.Trader.Allowed
 	if configs.Market.Trader.MaxLeverage > 0 {
 		t.maxLeverage = big.NewDecimal(configs.Market.Trader.MaxLeverage)
 	}
@@ -148,6 +155,11 @@ func (t *trader) connect() {
 		return
 	}
 	go func() {
+		for msg := range t.communicator.notifier2Trader {
+			go t.processNotifierRequest(msg)
+		}
+	}()
+	go func() {
 		for msg := range t.communicator.evaluator2Trader {
 			err := t.processEvaluatorRequest(msg)
 			if err != nil {
@@ -156,6 +168,47 @@ func (t *trader) connect() {
 		}
 	}()
 	t.connected = true
+}
+
+// this method processes request from notifier. it mainly handles
+// request from user via the notifier.
+func (t *trader) processNotifierRequest(msg *message) {
+	if msg.request.what.dynamic != nil {
+		return
+	}
+	var rs string
+	balances := make(map[string]string)
+	switch msg.request.what.dynamic.(tring) {
+	case TRADER_MESSAGE_IS_TRADE_ENABLED:
+		if !t.isTradeDisabled {
+			rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  YES."
+		}
+		rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  NO."
+	case TRADER_MESSAGE_ENABLE_TRADE:
+		t.isTradeDisabled = false
+		rs = TRADER_MESSAGE_ENABLE_TRADE + TRADER_MESSAGE_ENABLE_TRADE_COMPLETED
+	case TRADER_MESSAGE_DISABLE_TRADE:
+		t.isTradeDisabled = true
+		rs = TRADER_MESSAGE_DISABLE_TRADE + TRADER_MESSAGE_DISABLE_TRADE_COMPLETED
+	case TRADER_MESSAGE_SPOT_BALANCES:
+		t.binSpotBalances.Range(func(key, val interface{}) bool {
+			balances[val.(bn.Balance).Asset] = val.(bn.Balance).Free
+			return true
+		})
+		rs = TRADER_MESSAGE_SPOT_BALANCES + fmt.Sprintf(" ➡️  %+v.", balances)
+	case TRADER_MESSAGE_FUTU_BALANCES:
+		t.binFutuBalances.Range(func(key, val interface{}) bool {
+			balances[val.(bnf.Balance).Asset] = val.(bnf.Balance).Balance
+			return true
+		})
+		rs = TRADER_MESSAGE_FUTU_BALANCES + fmt.Sprintf(" ➡️  %+v.", balances)
+	default:
+		rs = "UNKNOWN REQUEST"
+	}
+	if msg.response != nil {
+		msg.response <- t.communicator.newPayload(nil, nil, nil, rs).addRequestID(&msg.request.requestID).addResponseID()
+		close(msg.response)
+	}
 }
 
 // binSpotGetBalances returns assets which are currently available on Binance spot account.
@@ -292,6 +345,9 @@ func (t *trader) isEnoughBalance(r *runner.Runner) bool {
 // the checks include isAllowedMarkets, isAllowedPatterns, not isHolding, not isOrdering and the account has
 // enough balance to open a trade.
 func (t *trader) initialChecks(r *runner.Runner) bool {
+	if t.isTradeDisabled {
+		return false
+	}
 	if !t.isAllowedMarkets(r) || !t.isAllowedPatterns(r) {
 		return false
 	}
