@@ -21,6 +21,7 @@ type communicator struct {
 	evaluator2Trader   chan *message
 	trader2Streamer    chan *message
 	trader2Notifier    chan *message
+	notifier2Trader    chan *message
 }
 
 func newCommunicator() *communicator {
@@ -34,6 +35,7 @@ func newCommunicator() *communicator {
 		evaluator2Trader:   make(chan *message, 10),
 		trader2Streamer:    make(chan *message),
 		trader2Notifier:    make(chan *message),
+		notifier2Trader:    make(chan *message),
 	}
 }
 
