@@ -173,40 +173,40 @@ func (t *trader) connect() {
 // this method processes request from notifier. it mainly handles
 // request from user via the notifier.
 func (t *trader) processNotifierRequest(msg *message) {
+	if msg.request.what.dynamic != nil {
+		return
+	}
 	var rs string
 	balances := make(map[string]string)
-	if msg.request.what.dynamic != nil {
-		message := msg.request.what.dynamic.(string)
-		switch message {
-		case TRADER_MESSAGE_IS_TRADE_ENABLED:
-			if !t.isTradeDisabled {
-				rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  YES."
-			} else {
-				rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  NO."
-			}
-		case TRADER_MESSAGE_ENABLE_TRADE:
-			t.isTradeDisabled = false
-			rs = TRADER_MESSAGE_ENABLE_TRADE + TRADER_MESSAGE_ENABLE_TRADE_COMPLETED
-		case TRADER_MESSAGE_DISABLE_TRADE:
-			t.isTradeDisabled = true
-			rs = TRADER_MESSAGE_DISABLE_TRADE + TRADER_MESSAGE_DISABLE_TRADE_COMPLETED
-		case TRADER_MESSAGE_SPOT_BALANCES:
-			t.binSpotBalances.Range(func(key, val interface{}) bool {
-				bl := val.(bn.Balance)
-				balances[bl.Asset] = bl.Free
-				return true
-			})
-			rs = TRADER_MESSAGE_SPOT_BALANCES + fmt.Sprintf(" ➡️  %+v.", balances)
-		case TRADER_MESSAGE_FUTU_BALANCES:
-			t.binFutuBalances.Range(func(key, val interface{}) bool {
-				bl := val.(bnf.Balance)
-				balances[bl.Asset] = bl.Balance
-				return true
-			})
-			rs = TRADER_MESSAGE_FUTU_BALANCES + fmt.Sprintf(" ➡️  %+v.", balances)
-		default:
-			rs = "UNKNOWN REQUEST"
+	switch msg.request.what.dynamic.(tring) {
+	case TRADER_MESSAGE_IS_TRADE_ENABLED:
+		if !t.isTradeDisabled {
+			rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  YES."
+		} else {
+			rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  NO."
 		}
+	case TRADER_MESSAGE_ENABLE_TRADE:
+		t.isTradeDisabled = false
+		rs = TRADER_MESSAGE_ENABLE_TRADE + TRADER_MESSAGE_ENABLE_TRADE_COMPLETED
+	case TRADER_MESSAGE_DISABLE_TRADE:
+		t.isTradeDisabled = true
+		rs = TRADER_MESSAGE_DISABLE_TRADE + TRADER_MESSAGE_DISABLE_TRADE_COMPLETED
+	case TRADER_MESSAGE_SPOT_BALANCES:
+		t.binSpotBalances.Range(func(key, val interface{}) bool {
+			bl := val.(bn.Balance)
+			balances[bl.Asset] = bl.Free
+			return true
+		})
+		rs = TRADER_MESSAGE_SPOT_BALANCES + fmt.Sprintf(" ➡️  %+v.", balances)
+	case TRADER_MESSAGE_FUTU_BALANCES:
+		t.binFutuBalances.Range(func(key, val interface{}) bool {
+			bl := val.(bnf.Balance)
+			balances[bl.Asset] = bl.Balance
+			return true
+		})
+		rs = TRADER_MESSAGE_FUTU_BALANCES + fmt.Sprintf(" ➡️  %+v.", balances)
+	default:
+		rs = "UNKNOWN REQUEST"
 	}
 	if msg.response != nil {
 		msg.response <- t.communicator.newPayload(nil, nil, nil, rs).addRequestID(&msg.request.requestID).addResponseID()
