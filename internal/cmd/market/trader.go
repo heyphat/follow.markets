@@ -162,12 +162,10 @@ func (t *trader) connect() {
 	}()
 	go func() {
 		for msg := range t.communicator.evaluator2Trader {
-			//err := t.processEvaluatorRequest(msg)
-			//if err != nil {
-			//	t.logger.Error.Println(t.newLog(err.Error()))
-			//}
-			go t.processEvaluatorRequest(msg)
-
+			err := t.processEvaluatorRequest(msg)
+			if err != nil {
+				t.logger.Error.Println(t.newLog(err.Error()))
+			}
 		}
 	}()
 	t.connected = true
@@ -180,10 +178,10 @@ func (t *trader) processNotifierRequest(msg *message) {
 	balances := make(map[string]string)
 	switch msg.request.what.dynamic.(string) {
 	case TRADER_MESSAGE_IS_TRADE_ENABLED:
+		rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  NO."
 		if !t.isTradeDisabled {
 			rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  YES."
 		}
-		rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  NO."
 	case TRADER_MESSAGE_ENABLE_TRADE:
 		t.isTradeDisabled = false
 		rs = TRADER_MESSAGE_ENABLE_TRADE + TRADER_MESSAGE_ENABLE_TRADE_COMPLETED
