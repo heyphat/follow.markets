@@ -80,7 +80,7 @@ func (n *notifier) connect() {
 	n.connected = true
 }
 
-// await awaits for message from user to add chatID.
+// await awaits for message from user to add chatID or report trades.
 func (n *notifier) await() {
 	updates := n.bot.GetUpdatesChan(tele.NewUpdate(0))
 	for update := range updates {
