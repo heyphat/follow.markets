@@ -10,3 +10,7 @@ func DurationSliceContains(slice []time.Duration, d time.Duration) bool {
 	}
 	return false
 }
+
+func ConvertUnixMillisecond2Time(t int64) time.Time {
+	return time.Unix(t/1000, 0)
+}
