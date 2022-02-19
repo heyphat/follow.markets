@@ -149,6 +149,7 @@ func (st *setup) convertDB() *db.Setup {
 		OrderID:        st.orderID,
 		OrderTime:      util.ConvertUnixMillisecond2Time(st.orderTime),
 		OrderSide:      st.orderSide,
+		OrderPrice:     st.orderPrice,
 		OrderQtity:     st.orderQtity,
 		OrderStatus:    st.orderStatus,
 		TradingFeeAss:  st.tradingFeeAss,
