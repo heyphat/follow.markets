@@ -13,6 +13,7 @@ import (
 	"github.com/dlclark/regexp2"
 	"github.com/sdcoffey/big"
 
+	db "follow.markets/internal/pkg/database"
 	"follow.markets/internal/pkg/runner"
 	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/config"
@@ -178,7 +179,7 @@ func (t *trader) processNotifierRequest(msg *message) {
 	}
 	var rs string
 	balances := make(map[string]string)
-	switch msg.request.what.dynamic.(tring) {
+	switch msg.request.what.dynamic.(string) {
 	case TRADER_MESSAGE_IS_TRADE_ENABLED:
 		if !t.isTradeDisabled {
 			rs = TRADER_MESSAGE_IS_TRADE_ENABLED + " ➡️  YES."
@@ -648,6 +649,7 @@ func (t *trader) binSpotUserDataStreaming() {
 			t.logger.Info.Println(t.newLog(fmt.Sprintf("cash, status name: %s, %+v", string(bn.UserDataEventTypeExecutionReport), *e)))
 			if val, ok := t.binSpotOrders.Load(e.OrderUpdate.Symbol); ok && e.OrderUpdate.Id == val.(*setup).orderID {
 				val.(*setup).binSpotUpdateTrade(e.OrderUpdate)
+				t.provider.dbClient.InsertOrUpdateSetups([]*db.Setup{val.(*setup).convertDB()})
 			}
 		case bn.UserDataEventTypeListStatus:
 			t.logger.Info.Println(t.newLog(fmt.Sprintf("cash, status name: %s, %+v", string(bn.UserDataEventTypeListStatus), *e)))
@@ -684,6 +686,7 @@ func (t *trader) binFutuUserDataStreaming() {
 			t.logger.Info.Println(t.newLog(fmt.Sprintf("futu, status name: %s, %+v", string(bnf.UserDataEventTypeOrderTradeUpdate), *e)))
 			if val, ok := t.binFutuOrders.Load(e.OrderTradeUpdate.Symbol); ok && e.OrderTradeUpdate.ID == val.(*setup).orderID {
 				val.(*setup).binFutuUpdateTrade(e.OrderTradeUpdate)
+				t.provider.dbClient.InsertOrUpdateSetups([]*db.Setup{val.(*setup).convertDB()})
 			}
 		case bnf.UserDataEventTypeMarginCall:
 			t.logger.Info.Println(t.newLog(fmt.Sprintf("futu, status name: %s, %+v", string(bnf.UserDataEventTypeMarginCall), *e)))
