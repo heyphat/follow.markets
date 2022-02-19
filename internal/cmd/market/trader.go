@@ -162,10 +162,12 @@ func (t *trader) connect() {
 	}()
 	go func() {
 		for msg := range t.communicator.evaluator2Trader {
-			err := t.processEvaluatorRequest(msg)
-			if err != nil {
-				t.logger.Error.Println(t.newLog(err.Error()))
-			}
+			//err := t.processEvaluatorRequest(msg)
+			//if err != nil {
+			//	t.logger.Error.Println(t.newLog(err.Error()))
+			//}
+			go t.processEvaluatorRequest(msg)
+
 		}
 	}()
 	t.connected = true
@@ -174,9 +176,6 @@ func (t *trader) connect() {
 // this method processes request from notifier. it mainly handles
 // request from user via the notifier.
 func (t *trader) processNotifierRequest(msg *message) {
-	if msg.request.what.dynamic != nil {
-		return
-	}
 	var rs string
 	balances := make(map[string]string)
 	switch msg.request.what.dynamic.(string) {
