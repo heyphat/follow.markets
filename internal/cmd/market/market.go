@@ -77,11 +77,11 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	if err != nil {
 		return nil, err
 	}
-	notifier, err := newNotifier(common, configs)
+	trader, err := newTrader(common, configs)
 	if err != nil {
 		return nil, err
 	}
-	trader, err := newTrader(common, configs)
+	notifier, err := newNotifier(common, configs)
 	if err != nil {
 		return nil, err
 	}
@@ -116,6 +116,14 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 		}()
 	})
 	return Market, nil
+}
+
+func (m *MarketStruct) connect() {
+	m.watcher.connect()
+	m.streamer.connect()
+	m.evaluator.connect()
+	m.trader.connect()
+	m.notifier.connect()
 }
 
 func (m *MarketStruct) parseRunnerConfigs(market runner.MarketType) *runner.RunnerConfigs {
@@ -227,14 +235,6 @@ func (m *MarketStruct) initSignals() error {
 		m.evaluator.add([]string{tickers}, signal)
 	}
 	return nil
-}
-
-func (m *MarketStruct) connect() {
-	m.watcher.connect()
-	m.streamer.connect()
-	m.evaluator.connect()
-	m.notifier.connect()
-	m.trader.connect()
 }
 
 // watcher endpoints

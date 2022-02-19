@@ -80,17 +80,38 @@ func (n *notifier) connect() {
 	n.connected = true
 }
 
-// await awaits for message from user to add chatID.
+// await awaits for message from user to add chatID or report trades.
 func (n *notifier) await() {
 	updates := n.bot.GetUpdatesChan(tele.NewUpdate(0))
 	for update := range updates {
-		if update.Message == nil {
+		if update.Message != nil {
+			msg := tele.NewMessage(update.Message.Chat.ID, "Select a query")
+			go n.addChatIDs([]int64{update.Message.Chat.ID})
+			cmd := update.Message.Command()
+			if len(cmd) > 0 {
+				switch cmd {
+				case string(TRADER):
+					msg.ReplyMarkup = traderKeyboad
+				default:
+					msg.Text = fmt.Sprintf("You're all set. Your chatID is %d.", update.Message.Chat.ID)
+					msg.ReplyToMessageID = update.Message.MessageID
+				}
+				n.bot.Send(msg)
+				continue
+			}
+		}
+		if update.CallbackQuery != nil {
+			msg := tele.NewMessage(update.CallbackQuery.Message.Chat.ID, "")
+			if _, err := n.bot.Request(tele.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)); err != nil {
+				n.logger.Error.Println(n.newLog("tele", err.Error()))
+				continue
+			}
+			resC := make(chan *payload)
+			n.communicator.notifier2Trader <- n.communicator.newMessage(nil, nil, nil, update.CallbackQuery.Data, resC)
+			msg.Text = (<-resC).what.dynamic.(string)
+			n.bot.Send(msg)
 			continue
 		}
-		go n.addChatIDs([]int64{update.Message.Chat.ID})
-		msg := tele.NewMessage(update.Message.Chat.ID, fmt.Sprintf("You're all set. Your chatID is %d.", update.Message.Chat.ID))
-		msg.ReplyToMessageID = update.Message.MessageID
-		n.bot.Send(msg)
 	}
 }
 
@@ -178,6 +199,20 @@ func (n *notifier) notify(content string, cid *int64) {
 		n.bot.Send(message)
 	}
 }
+
+var traderKeyboad = tele.NewInlineKeyboardMarkup(
+	tele.NewInlineKeyboardRow(
+		tele.NewInlineKeyboardButtonData(TRADER_MESSAGE_IS_TRADE_ENABLED, TRADER_MESSAGE_IS_TRADE_ENABLED),
+	),
+	tele.NewInlineKeyboardRow(
+		tele.NewInlineKeyboardButtonData(TRADER_MESSAGE_DISABLE_TRADE, TRADER_MESSAGE_DISABLE_TRADE),
+		tele.NewInlineKeyboardButtonData(TRADER_MESSAGE_ENABLE_TRADE, TRADER_MESSAGE_ENABLE_TRADE),
+	),
+	tele.NewInlineKeyboardRow(
+		tele.NewInlineKeyboardButtonData(TRADER_MESSAGE_SPOT_BALANCES, TRADER_MESSAGE_SPOT_BALANCES),
+		tele.NewInlineKeyboardButtonData(TRADER_MESSAGE_FUTU_BALANCES, TRADER_MESSAGE_FUTU_BALANCES),
+	),
+)
 
 // generates a new log with the format for the notifier
 func (n *notifier) newLog(name, message string) string {

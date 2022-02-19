@@ -3,13 +3,15 @@ package market
 import (
 	"fmt"
 	"strings"
-	"time"
 
-	"follow.markets/internal/pkg/runner"
-	"follow.markets/internal/pkg/strategy"
 	bn "github.com/adshao/go-binance/v2"
 	bnf "github.com/adshao/go-binance/v2/futures"
 	"github.com/sdcoffey/big"
+
+	db "follow.markets/internal/pkg/database"
+	"follow.markets/internal/pkg/runner"
+	"follow.markets/internal/pkg/strategy"
+	"follow.markets/pkg/util"
 )
 
 // trader trades on a setup.
@@ -31,16 +33,7 @@ type setup struct {
 	accFilledQtity big.Decimal
 	pnl            big.Decimal
 
-	trades []*tradeUpdate
-}
-
-type tradeUpdate struct {
-	id       int64  `json:"trade_id"`
-	time     int64  `json:"trade_time"`
-	cost     string `json:"commission"`
-	costAss  string `json:"commission_asset"`
-	price    string `json:"price"`
-	quantity string `json:"quantity"`
+	trades []*db.Trade
 }
 
 // newSetup returns a new setup for trader.
@@ -61,7 +54,7 @@ func newSetup(r *runner.Runner, s *strategy.Signal, leverage big.Decimal, o inte
 			avgFilledPrice: big.ZERO,
 			accFilledQtity: big.ZERO,
 			pnl:            big.ZERO,
-			trades:         make([]*tradeUpdate, 0),
+			trades:         make([]*db.Trade, 0),
 		}
 	case runner.Futures:
 		od := o.(*bnf.CreateOrderResponse)
@@ -78,7 +71,7 @@ func newSetup(r *runner.Runner, s *strategy.Signal, leverage big.Decimal, o inte
 			avgFilledPrice: big.ZERO,
 			accFilledQtity: big.ZERO,
 			pnl:            big.ZERO,
-			trades:         make([]*tradeUpdate, 0),
+			trades:         make([]*db.Trade, 0),
 		}
 	default:
 		return nil
@@ -93,13 +86,14 @@ func (s *setup) binSpotUpdateTrade(u bn.WsOrderUpdate) {
 	if s.runner.GetMarketType() != runner.Cash || strings.ToUpper(u.ExecutionType) != "TRADE" {
 		return
 	}
-	s.trades = append(s.trades, &tradeUpdate{
-		id:       u.TradeId,
-		time:     u.TransactionTime,
-		price:    u.LatestPrice,
-		quantity: u.LatestVolume,
-		cost:     u.FeeCost,
-		costAss:  u.FeeAsset,
+	s.trades = append(s.trades, &db.Trade{
+		ID:       u.TradeId,
+		Time:     util.ConvertUnixMillisecond2Time(u.TransactionTime),
+		Price:    u.LatestPrice,
+		Quantity: u.LatestVolume,
+		Cost:     u.FeeCost,
+		Status:   u.Status,
+		CostAss:  u.FeeAsset,
 	})
 	if s.avgFilledPrice.EQ(big.ZERO) || s.accFilledQtity.EQ(big.ZERO) {
 		s.avgFilledPrice = big.NewFromString(u.LatestPrice)
@@ -123,13 +117,14 @@ func (s *setup) binFutuUpdateTrade(u bnf.WsOrderTradeUpdate) {
 	if s.runner.GetMarketType() != runner.Futures || strings.ToUpper(string(u.ExecutionType)) != "TRADE" {
 		return
 	}
-	s.trades = append(s.trades, &tradeUpdate{
-		id:       u.TradeID,
-		time:     u.TradeTime,
-		price:    u.LastFilledPrice,
-		quantity: u.LastFilledQty,
-		cost:     u.Commission,
-		costAss:  u.CommissionAsset,
+	s.trades = append(s.trades, &db.Trade{
+		ID:       u.TradeID,
+		Time:     util.ConvertUnixMillisecond2Time(u.TradeTime),
+		Price:    u.LastFilledPrice,
+		Quantity: u.LastFilledQty,
+		Cost:     u.Commission,
+		Status:   string(u.Status),
+		CostAss:  u.CommissionAsset,
 	})
 	if s.avgFilledPrice.EQ(big.ZERO) || s.accFilledQtity.EQ(big.ZERO) {
 		s.avgFilledPrice = big.NewFromString(u.LastFilledPrice)
@@ -145,45 +140,29 @@ func (s *setup) binFutuUpdateTrade(u bnf.WsOrderTradeUpdate) {
 	s.accTradingFee = s.accTradingFee.Add(big.NewFromString(u.Commission))
 }
 
-type setupJSON struct {
-	ticker         string         `json:"ticker"`
-	signal         string         `json:"signal"`
-	orderID        int64          `json:"order_id"`
-	orderTime      int64          `json:"order_time"`
-	orderSide      string         `json:"order_side"`
-	orderPrice     string         `json:"order_price"`
-	orderQtity     string         `json:"order_quantity"`
-	orderStatus    string         `json:"order_status"`
-	accTradingFee  string         `json:"commission"`
-	usedLeverage   string         `json:"leverage"`
-	tradingFeeAss  string         `json:"commission_asset"`
-	avgFilledPrice string         `json:"avg_filled_price"`
-	accFilledQtity string         `json:"acc_filled_quantity"`
-	pnl            string         `json:"pnl"`
-	trades         []*tradeUpdate `json:"trades"`
-}
-
-func (st *setup) convert2JSON() *setupJSON {
-	return &setupJSON{
-		ticker:         st.runner.GetName(),
-		signal:         st.signal.Name,
-		orderID:        st.orderID,
-		orderTime:      st.orderTime,
-		orderSide:      st.orderSide,
-		orderQtity:     st.orderQtity,
-		orderStatus:    st.orderStatus,
-		tradingFeeAss:  st.tradingFeeAss,
-		usedLeverage:   st.usedLeverage.FormattedString(0),
-		accTradingFee:  st.accTradingFee.FormattedString(10),
-		avgFilledPrice: st.avgFilledPrice.FormattedString(10),
-		accFilledQtity: st.accFilledQtity.FormattedString(10),
-		pnl:            st.pnl.FormattedString(10),
-		trades:         st.trades,
+func (st *setup) convertDB() *db.Setup {
+	return &db.Setup{
+		Ticker:         st.runner.GetUniqueName(),
+		Market:         string(st.runner.GetMarketType()),
+		Broker:         "Binance",
+		Signal:         st.signal.Name,
+		OrderID:        st.orderID,
+		OrderTime:      util.ConvertUnixMillisecond2Time(st.orderTime),
+		OrderSide:      st.orderSide,
+		OrderPrice:     st.orderPrice,
+		OrderQtity:     st.orderQtity,
+		OrderStatus:    st.orderStatus,
+		TradingFeeAss:  st.tradingFeeAss,
+		UsedLeverage:   st.usedLeverage.FormattedString(0),
+		AccTradingFee:  st.accTradingFee.FormattedString(10),
+		AvgFilledPrice: st.avgFilledPrice.FormattedString(10),
+		AccFilledQtity: st.accFilledQtity.FormattedString(10),
+		PNL:            st.pnl.FormattedString(10),
+		Trades:         st.trades,
 	}
 }
 
 func (st *setup) description() string {
-	t := time.Unix(st.orderTime/1000, 0)
 	s := `
 =================================
 |         TRADE REPORT          |
@@ -215,7 +194,7 @@ n. of trades:       %d,
 		st.signal.Name,
 		st.runner.GetMarketType(),
 		st.usedLeverage.FormattedString(0),
-		t.Format(simpleLayout),
+		util.ConvertUnixMillisecond2Time(st.orderTime).Format(simpleLayout),
 		st.orderSide,
 		st.orderQtity,
 		st.orderPrice,

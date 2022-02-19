@@ -70,6 +70,7 @@ type Configs struct {
 			LossTolerance float64 `json:"loss_tolerance"`
 		} `json:"tester"`
 		Trader struct {
+			Allowed           bool     `json:"allowed"`
 			AllowedPatterns   []string `json:"allowed_patterns"`
 			AllowedMarkets    []string `json:"allowed_markets"`
 			MinBalance        float64  `json:"min_balance_to_trade"`
@@ -82,6 +83,9 @@ type Configs struct {
 			MinProfitPerTrade float64  `json:"min_profit_per_trade"`
 		} `json:"trader"`
 	} `json:"market"`
+	Database struct {
+		MongoDB *MongoDB `json:"mongodb"`
+	} `json:"database"`
 }
 
 func (c Configs) IsProduction() bool {

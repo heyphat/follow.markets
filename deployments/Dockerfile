@@ -7,6 +7,7 @@ COPY go.mod ./
 RUN go mod download
 
 COPY . .
+RUN rm -r configs
 RUN CGO_ENABLED=0 GOOS=linux go build ./cmd/app
 
 # This image is to deploy the binary

@@ -77,6 +77,7 @@
       "loss_tolerance": 0.05
     },
     "trader": {
+      "allowed": false,
       "allowed_patterns": [
         "BTCUSDT"
       ],
@@ -90,6 +91,13 @@
       "max_loss_per_trade": 5,
       "profit_margin": 0.05,
       "min_profit_per_trade": 10
+    }
+  },
+  "database": {
+    "mongodb": {
+      "uri": "mongodb+srv://{USER}:{PASSWORD}@{HOST}:{PORT}/?authSource=admin",
+      "db_name": "your_database_name",
+      "setup_col_name": "your_collection_name"
     }
   }
 }
