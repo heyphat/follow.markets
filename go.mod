@@ -6,11 +6,14 @@ require (
 	github.com/adshao/go-binance/v2 v2.3.3
 	github.com/dlclark/regexp2 v1.4.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/itsphat/techan v0.12.2-0.20211105102610-8a483a2fe288
+	github.com/miguelmota/go-coinmarketcap v0.1.8
 	github.com/sdcoffey/big v0.7.0
 	github.com/stretchr/testify v1.7.0
+	go.mongodb.org/mongo-driver v1.8.3
 	gopkg.in/DataDog/dd-trace-go.v1 v1.34.0
 )
 
@@ -25,9 +28,7 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/pprof v0.0.0-20210423192551-a2663126120b // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/miguelmota/go-coinmarketcap v0.1.8 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -37,7 +38,6 @@ require (
 	github.com/xdg-go/scram v1.0.2 // indirect
 	github.com/xdg-go/stringprep v1.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
-	go.mongodb.org/mongo-driver v1.8.3 // indirect
 	golang.org/x/crypto v0.0.0-20201216223049-8b5274cf687f // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
