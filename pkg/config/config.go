@@ -83,6 +83,9 @@ type Configs struct {
 			MinProfitPerTrade float64  `json:"min_profit_per_trade"`
 		} `json:"trader"`
 	} `json:"market"`
+	Database struct {
+		MongoDB *MongoDB `json:"mongodb"`
+	} `json:"database"`
 }
 
 func (c Configs) IsProduction() bool {

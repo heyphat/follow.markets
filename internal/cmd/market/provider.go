@@ -15,6 +15,7 @@ import (
 	cc "github.com/miguelmota/go-coinmarketcap/pro/v1"
 	"github.com/sdcoffey/big"
 
+	db "follow.markets/internal/pkg/database"
 	"follow.markets/internal/pkg/runner"
 	tax "follow.markets/internal/pkg/techanex"
 )
@@ -24,9 +25,10 @@ const (
 )
 
 type provider struct {
-	binSpot *bn.Client
-	binFutu *bnf.Client
-	coinCap *cc.Client
+	binSpot  *bn.Client
+	binFutu  *bnf.Client
+	coinCap  *cc.Client
+	dbClient db.Client
 }
 
 func newProvider(configs *config.Configs) *provider {
@@ -36,6 +38,7 @@ func newProvider(configs *config.Configs) *provider {
 		coinCap: cc.NewClient(&cc.Config{
 			ProAPIKey: configs.Market.Provider.CoinMarketCap.APIKey,
 		}),
+		dbClient: db.NewClient(configs),
 	}
 }
 
