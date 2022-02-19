@@ -85,14 +85,12 @@ func (n *notifier) await() {
 	updates := n.bot.GetUpdatesChan(tele.NewUpdate(0))
 	for update := range updates {
 		if update.Message != nil {
-			msg := tele.NewMessage(update.Message.Chat.ID, "")
+			msg := tele.NewMessage(update.Message.Chat.ID, "Select a query")
 			go n.addChatIDs([]int64{update.Message.Chat.ID})
-			fmt.Println(fmt.Sprintf("%+v", *update.Message))
 			cmd := update.Message.Command()
 			if len(cmd) > 0 {
 				switch cmd {
 				case string(TRADER):
-					msg.Text = "Select a query"
 					msg.ReplyMarkup = traderKeyboad
 				default:
 					msg.Text = fmt.Sprintf("You're all set. Your chatID is %d.", update.Message.Chat.ID)
