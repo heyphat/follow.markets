@@ -152,7 +152,7 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	r := msg.request.what.runner
 	id := r.GetUniqueName() + "-" + s.Name
 	mess := id + "\n" + s.Description()
-	if _, err := n.provider.dbClient.InsertNotifications([]*db.Notification{
+	go n.provider.dbClient.InsertNotifications([]*db.Notification{
 		&db.Notification{
 			Ticker:    r.GetName(),
 			Market:    string(r.GetMarketType()),
@@ -160,9 +160,7 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 			Signal:    s.Name,
 			CreatedAt: time.Now(),
 		},
-	}); err != nil {
-		n.logger.Error.Println(n.newLog(r.GetName(), err.Error()))
-	}
+	})
 	if s.IsOnetime() {
 		n.notify(mess, s.OwnerID)
 		return
