@@ -29,6 +29,7 @@ type Setup struct {
 	AccFilledQtity string    `bson:"acc_filled_quantity" json:"acc_filled_quantity"`
 	PNL            string    `bson:"pnl" json:"pnl"`
 	DollarPNL      string    `bson:"dollar_pnl" json:"dollar_pnl"`
+	LastUpdatedAt  time.Time `bson:"last_updated_at" json:"last_updated_at"`
 	Trades         []*Trade  `bson:"trades" json:"trades"`
 }
 
@@ -45,6 +46,7 @@ type Trade struct {
 func (s *Setup) convertNotion(ps map[string]notion.PropertyConfig) map[string]notion.Property {
 	out := make(map[string]notion.Property, len(ps))
 	orderT := notion.Date(s.OrderTime)
+	lastT := notion.Date(s.LastUpdatedAt)
 	for k, _ := range ps {
 		switch k {
 		case "Ticker":
@@ -83,6 +85,8 @@ func (s *Setup) convertNotion(ps map[string]notion.PropertyConfig) map[string]no
 			out[k] = notion.RichTextProperty{RichText: []notion.RichText{notion.RichText{Text: notion.Text{Content: s.DollarPNL}}}}
 		case "NTrades":
 			out[k] = notion.NumberProperty{Number: float64(len(s.Trades))}
+		case "LastUpdatedAt":
+			out[k] = notion.DateProperty{Date: notion.DateObject{Start: &lastT}}
 		}
 	}
 	return out
