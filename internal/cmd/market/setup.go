@@ -181,7 +181,7 @@ order status:   %s,
 |-------------------------------|
 |           RESULT              | 
 ---------------------------------
-pnl:                %s,
+pnl:                %s%,
 pnl dollar:         %s, 
 avg. filled price:  %s,
 acc. filled volume: %s,
@@ -199,7 +199,7 @@ n. of trades:       %d,
 		st.orderQtity,
 		st.orderPrice,
 		st.orderStatus,
-		st.pnl.FormattedString(8),
+		st.pnl.Mul(big.NewDecimal(100.0)).FormattedString(2),
 		st.pnl.Mul(st.usedLeverage).Mul(st.avgFilledPrice.Mul(st.accFilledQtity)).FormattedString(2),
 		st.avgFilledPrice.FormattedString(8),
 		st.accFilledQtity.FormattedString(2),
