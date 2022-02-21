@@ -50,6 +50,7 @@ func newSetup(r *runner.Runner, s *strategy.Signal, leverage big.Decimal, o inte
 			usedLeverage:   leverage,
 			orderPrice:     od.Price,
 			orderQtity:     od.OrigQuantity,
+			tradingFeeAss:  "BNB",
 			accTradingFee:  big.ZERO,
 			avgFilledPrice: big.ZERO,
 			accFilledQtity: big.ZERO,
@@ -67,6 +68,7 @@ func newSetup(r *runner.Runner, s *strategy.Signal, leverage big.Decimal, o inte
 			usedLeverage:   leverage,
 			orderPrice:     od.Price,
 			orderQtity:     od.OrigQuantity,
+			tradingFeeAss:  "USDT",
 			accTradingFee:  big.ZERO,
 			avgFilledPrice: big.ZERO,
 			accFilledQtity: big.ZERO,
@@ -86,6 +88,7 @@ func (s *setup) binSpotUpdateTrade(u bn.WsOrderUpdate) {
 	if s.runner.GetMarketType() != runner.Cash || strings.ToUpper(u.ExecutionType) != "TRADE" {
 		return
 	}
+	s.tradingFeeAss = u.FeeAsset
 	s.trades = append(s.trades, &db.Trade{
 		ID:       u.TradeId,
 		Time:     util.ConvertUnixMillisecond2Time(u.TransactionTime),
@@ -117,6 +120,7 @@ func (s *setup) binFutuUpdateTrade(u bnf.WsOrderTradeUpdate) {
 	if s.runner.GetMarketType() != runner.Futures || strings.ToUpper(string(u.ExecutionType)) != "TRADE" {
 		return
 	}
+	s.tradingFeeAss = u.CommissionAsset
 	s.trades = append(s.trades, &db.Trade{
 		ID:       u.TradeID,
 		Time:     util.ConvertUnixMillisecond2Time(u.TradeTime),
@@ -158,6 +162,7 @@ func (st *setup) convertDB() *db.Setup {
 		AvgFilledPrice: st.avgFilledPrice.FormattedString(10),
 		AccFilledQtity: st.accFilledQtity.FormattedString(10),
 		PNL:            st.pnl.FormattedString(10),
+		DollarPNL:      st.pnl.Mul(st.usedLeverage).Mul(st.avgFilledPrice.Mul(st.accFilledQtity)).FormattedString(2),
 		Trades:         st.trades,
 	}
 }
@@ -181,7 +186,7 @@ order status:   %s,
 |-------------------------------|
 |           RESULT              | 
 ---------------------------------
-pnl:                %s%,
+pnl:                %s,
 pnl dollar:         %s, 
 avg. filled price:  %s,
 acc. filled volume: %s,
@@ -199,7 +204,7 @@ n. of trades:       %d,
 		st.orderQtity,
 		st.orderPrice,
 		st.orderStatus,
-		st.pnl.Mul(big.NewDecimal(100.0)).FormattedString(2),
+		st.pnl.Mul(big.NewDecimal(100.0)).FormattedString(2)+"%",
 		st.pnl.Mul(st.usedLeverage).Mul(st.avgFilledPrice.Mul(st.accFilledQtity)).FormattedString(2),
 		st.avgFilledPrice.FormattedString(8),
 		st.accFilledQtity.FormattedString(2),
