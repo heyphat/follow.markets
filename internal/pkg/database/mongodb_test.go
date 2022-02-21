@@ -18,7 +18,6 @@ func mongoDBTestSuit() (MongoDB, *Setup, error) {
 	db := newMongDBClient(configs)
 
 	st := &Setup{
-		//ID:             primitive.NewObjectID(),
 		Ticker:         "BTCUSDT",
 		Market:         "FUTURES",
 		Broker:         "Binance",
@@ -97,7 +96,6 @@ func Test_MongoDB_InsertNotifications(t *testing.T) {
 		Market:    "CASH",
 		Broker:    "Binance",
 		Signal:    "sample",
-		ClientID:  "1",
 		CreatedAt: time.Now(),
 	}
 	ok, err := db.InsertNotifications([]*Notification{noti})
