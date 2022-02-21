@@ -704,7 +704,7 @@ func (t *trader) binFutuUserDataStreaming() {
 }
 
 // registerStreamingChannel registers or deregisters a runner to the streamer in order to
-// receive candle or depth broadcasted by data providor.
+// receive candle or depth broadcasted by data provider.
 func (t *trader) registerStreamingChannel(m setup) bool {
 	doneStreamingRegister := false
 	var maxTries int
