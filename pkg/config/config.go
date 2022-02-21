@@ -32,7 +32,8 @@ type Configs struct {
 	} `json:"datadog"`
 	Market struct {
 		Base struct {
-			Crypto struct {
+			LocalTime string `json:"local_timezone"`
+			Crypto    struct {
 				QuoteCurrency string `json:"crypto_quote"`
 			} `json:"crypto"`
 		} `json:"base"`
