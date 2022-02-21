@@ -599,17 +599,18 @@ func (t *trader) monitorBinFutuTrade(st *setup) {
 		val, ok := t.binFutuBalances.Load(st.runner.GetName())
 		if !ok {
 			t.logger.Error.Println(t.newLog("there is no asset to trade"))
-			break
+			for !t.registerStreamingChannel(*st) {
+				t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
+			}
+			continue
 		}
 		if err := t.placeMarketOrder(st.runner, st.signal.CloseTradingSide(), val.(bnf.Balance).Balance); err != nil {
 			t.logger.Error.Println(t.newLog(err.Error()))
-			break
+		}
+		for !t.registerStreamingChannel(*st) {
+			t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
 		}
 	}
-	for !t.registerStreamingChannel(*st) {
-		t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
-	}
-
 	//// Upto this point, the trade should be close, and converted back to
 	//// the quote currency, which should be in USDT, and report PNLs.
 	//// The outstanding portion or the order should be canceled.
