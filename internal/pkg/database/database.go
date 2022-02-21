@@ -11,6 +11,8 @@ type Client interface {
 	InsertSetups(ss []*Setup) (bool, error)
 	InsertOrUpdateSetups(ss []*Setup) (bool, error)
 	GetSetups(r *runner.Runner, opts *QueryOptions) ([]*Setup, error)
+
+	InsertNotifications(ns []*Notification) (bool, error)
 }
 
 func NewClient(configs *config.Configs) Client {
