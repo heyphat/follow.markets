@@ -32,7 +32,8 @@ type Configs struct {
 	} `json:"datadog"`
 	Market struct {
 		Base struct {
-			Crypto struct {
+			LocalTime string `json:"local_timezone"`
+			Crypto    struct {
 				QuoteCurrency string `json:"crypto_quote"`
 			} `json:"crypto"`
 		} `json:"base"`
@@ -84,7 +85,9 @@ type Configs struct {
 		} `json:"trader"`
 	} `json:"market"`
 	Database struct {
+		Use     string   `json:"use"`
 		MongoDB *MongoDB `json:"mongodb"`
+		Notion  *Notion  `json:"notion"`
 	} `json:"database"`
 }
 

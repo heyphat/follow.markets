@@ -4,18 +4,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"follow.markets/pkg/config"
+	"github.com/stretchr/testify/assert"
 )
 
-func mongoDBTestSuit() (MongoDB, *Setup, error) {
+func notionTestSuit() (Notion, *Setup, error) {
 	path := "./../../../configs/deploy.configs.json"
 	configs, err := config.NewConfigs(&path)
 	if err != nil {
-		return MongoDB{}, nil, err
+		return Notion{}, nil, err
 	}
-	db := newMongDBClient(configs)
+	db := newNotionClient(configs)
 
 	st := &Setup{
 		Ticker:         "BTCUSDT",
@@ -34,6 +33,7 @@ func mongoDBTestSuit() (MongoDB, *Setup, error) {
 		AvgFilledPrice: "10",
 		AccFilledQtity: "20",
 		PNL:            "0",
+		DollarPNL:      "0",
 		Trades: []*Trade{
 			&Trade{
 				ID:       1,
@@ -50,15 +50,15 @@ func mongoDBTestSuit() (MongoDB, *Setup, error) {
 	return db, st, nil
 }
 
-func Test_MongoDB(t *testing.T) {
-	db, _, err := mongoDBTestSuit()
+func Test_Notion(t *testing.T) {
+	db, _, err := notionTestSuit()
 	defer db.Disconnect()
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, db.isInitialized)
 }
 
-func Test_MongoDB_InsertSetups(t *testing.T) {
-	db, st, err := mongoDBTestSuit()
+func Test_Notion_InsertSetups(t *testing.T) {
+	db, st, err := notionTestSuit()
 	defer db.Disconnect()
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, db.isInitialized)
@@ -68,29 +68,11 @@ func Test_MongoDB_InsertSetups(t *testing.T) {
 	assert.EqualValues(t, true, ok)
 }
 
-func Test_MongoDB_FindSetup(t *testing.T) {
-	db, st, err := mongoDBTestSuit()
+func Test_Notion_InsertNotifications(t *testing.T) {
+	db, _, err := notionTestSuit()
+	defer db.Disconnect()
 	assert.EqualValues(t, nil, err)
-
-	nst, err := db.findSetup(st)
-	assert.EqualValues(t, nil, err)
-	assert.EqualValues(t, 1645241564, nst.OrderTime.Unix())
-}
-
-func Test_MongoDB_InsertOrUpdateSetup(t *testing.T) {
-	db, st, err := mongoDBTestSuit()
-	assert.EqualValues(t, nil, err)
-
-	st.AvgFilledPrice = "60"
-	ok, err := db.InsertOrUpdateSetups([]*Setup{st})
-	assert.EqualValues(t, nil, err)
-	assert.EqualValues(t, true, ok)
-}
-
-func Test_MongoDB_InsertNotifications(t *testing.T) {
-	db, _, err := mongoDBTestSuit()
-	assert.EqualValues(t, nil, err)
-
+	assert.EqualValues(t, true, db.isInitialized)
 	noti := &Notification{
 		Ticker:    "BTCUSDT",
 		Market:    "CASH",
@@ -99,6 +81,18 @@ func Test_MongoDB_InsertNotifications(t *testing.T) {
 		CreatedAt: time.Now(),
 	}
 	ok, err := db.InsertNotifications([]*Notification{noti})
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, true, ok)
+}
+
+func Test_Notion_InsertOrUpdateSetups(t *testing.T) {
+	db, st, err := notionTestSuit()
+	defer db.Disconnect()
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, true, db.isInitialized)
+
+	st.OrderQtity = "100"
+	ok, err := db.InsertOrUpdateSetups([]*Setup{st})
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, ok)
 }

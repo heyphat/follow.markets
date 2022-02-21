@@ -9,6 +9,7 @@ import (
 
 	tele "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
+	db "follow.markets/internal/pkg/database"
 	"follow.markets/pkg/config"
 	"follow.markets/pkg/log"
 	"follow.markets/pkg/util"
@@ -24,6 +25,7 @@ type notifier struct {
 	// shared properties with other market participants
 	logger       *log.Logger
 	communicator *communicator
+	provider     *provider
 }
 
 type notification struct {
@@ -32,7 +34,7 @@ type notification struct {
 }
 
 func newNotifier(participants *sharedParticipants, configs *config.Configs) (*notifier, error) {
-	if configs == nil || participants == nil || participants.communicator == nil || participants.logger == nil {
+	if configs == nil || participants == nil || participants.communicator == nil || participants.logger == nil || participants.provider == nil {
 		return nil, errors.New("missing shared participants or configs")
 	}
 	var chatIDs []int64
@@ -55,6 +57,7 @@ func newNotifier(participants *sharedParticipants, configs *config.Configs) (*no
 
 		logger:       participants.logger,
 		communicator: participants.communicator,
+		provider:     participants.provider,
 	}, nil
 }
 
@@ -149,6 +152,15 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	r := msg.request.what.runner
 	id := r.GetUniqueName() + "-" + s.Name
 	mess := id + "\n" + s.Description()
+	go n.provider.dbClient.InsertNotifications([]*db.Notification{
+		&db.Notification{
+			Ticker:    r.GetName(),
+			Market:    string(r.GetMarketType()),
+			Broker:    "Binance",
+			Signal:    s.Name,
+			CreatedAt: time.Now(),
+		},
+	})
 	if s.IsOnetime() {
 		n.notify(mess, s.OwnerID)
 		return

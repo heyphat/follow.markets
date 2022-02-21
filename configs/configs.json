@@ -19,6 +19,7 @@
   },
   "market": {
     "base": {
+      "local_timezone": "Asia/Seoul",
       "crypto": {
         "quote_currency": "USDT"
       }
@@ -94,10 +95,17 @@
     }
   },
   "database": {
+    "use": "mongodb|notion",
     "mongodb": {
       "uri": "mongodb+srv://{USER}:{PASSWORD}@{HOST}:{PORT}/?authSource=admin",
       "db_name": "your_database_name",
-      "setup_col_name": "your_collection_name"
+      "setup_col_name": "your_collection_name",
+      "notification_col_name": "your_collection_name"
+    },
+    "notion": {
+      "integration_token": "your_integration_token",
+      "setup_db_id": "your_setup_db_id",
+      "notification_db_id": "your_notification_db_id"
     }
   }
 }

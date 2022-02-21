@@ -543,6 +543,7 @@ func (t *trader) monitorBinSpotTrade(st *setup) {
 		if err := t.placeMarketOrder(st.runner, st.signal.CloseTradingSide(), val.(bn.Balance).Free); err != nil {
 			t.logger.Error.Println(t.newLog(err.Error()))
 		}
+		st.lastUpdatedAt = time.Now().Unix() * 1000
 		for !t.registerStreamingChannel(*st) {
 			t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
 		}
@@ -599,17 +600,19 @@ func (t *trader) monitorBinFutuTrade(st *setup) {
 		val, ok := t.binFutuBalances.Load(st.runner.GetName())
 		if !ok {
 			t.logger.Error.Println(t.newLog("there is no asset to trade"))
-			break
+			for !t.registerStreamingChannel(*st) {
+				t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
+			}
+			continue
 		}
 		if err := t.placeMarketOrder(st.runner, st.signal.CloseTradingSide(), val.(bnf.Balance).Balance); err != nil {
 			t.logger.Error.Println(t.newLog(err.Error()))
-			break
+		}
+		st.lastUpdatedAt = time.Now().Unix() * 1000
+		for !t.registerStreamingChannel(*st) {
+			t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
 		}
 	}
-	for !t.registerStreamingChannel(*st) {
-		t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
-	}
-
 	//// Upto this point, the trade should be close, and converted back to
 	//// the quote currency, which should be in USDT, and report PNLs.
 	//// The outstanding portion or the order should be canceled.
@@ -704,7 +707,7 @@ func (t *trader) binFutuUserDataStreaming() {
 }
 
 // registerStreamingChannel registers or deregisters a runner to the streamer in order to
-// receive candle or depth broadcasted by data providor.
+// receive candle or depth broadcasted by data provider.
 func (t *trader) registerStreamingChannel(m setup) bool {
 	doneStreamingRegister := false
 	var maxTries int
