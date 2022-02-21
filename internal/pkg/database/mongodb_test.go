@@ -87,3 +87,20 @@ func Test_MongoDB_InsertOrUpdateSetup(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, ok)
 }
+
+func Test_MongoDB_InsertNotifications(t *testing.T) {
+	db, _, err := mongoDBTestSuit()
+	assert.EqualValues(t, nil, err)
+
+	noti := &Notification{
+		Ticker:    "BTCUSDT",
+		Market:    "CASH",
+		Broker:    "Binance",
+		Signal:    "sample",
+		ClientID:  "1",
+		CreatedAt: time.Now(),
+	}
+	ok, err := db.InsertNotifications([]*Notification{noti})
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, true, ok)
+}

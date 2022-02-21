@@ -108,3 +108,17 @@ func (db MongoDB) findSetup(s *Setup) (*Setup, error) {
 	}
 	return &st, nil
 }
+
+func (db MongoDB) InsertNotifications(ns []*Notification) (bool, error) {
+	if !db.isInitialized {
+		return false, nil
+	}
+	ins := make([]interface{}, len(ns))
+	for i, n := range ns {
+		ins[i] = n
+	}
+	_, err := db.client.Database(db.configs.DBName).
+		Collection(db.configs.NotiCol).
+		InsertMany(context.Background(), ins)
+	return true, err
+}
