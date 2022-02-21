@@ -152,21 +152,30 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	r := msg.request.what.runner
 	id := r.GetUniqueName() + "-" + s.Name
 	mess := id + "\n" + s.Description()
-	go n.provider.dbClient.InsertNotifications([]*db.Notification{
-		&db.Notification{
-			Ticker:    r.GetName(),
-			Market:    string(r.GetMarketType()),
-			Broker:    "Binance",
-			Signal:    s.Name,
-			CreatedAt: time.Now(),
-		},
-	})
 	if s.IsOnetime() {
 		n.notify(mess, s.OwnerID)
+		go n.provider.dbClient.InsertNotifications([]*db.Notification{
+			&db.Notification{
+				Ticker:    r.GetName(),
+				Market:    string(r.GetMarketType()),
+				Broker:    "Binance",
+				Signal:    s.Name,
+				CreatedAt: time.Now(),
+			},
+		})
 		return
 	}
 	if val, ok := n.notis.Load(id); !ok {
 		n.notify(mess, s.OwnerID)
+		go n.provider.dbClient.InsertNotifications([]*db.Notification{
+			&db.Notification{
+				Ticker:    r.GetName(),
+				Market:    string(r.GetMarketType()),
+				Broker:    "Binance",
+				Signal:    s.Name,
+				CreatedAt: time.Now(),
+			},
+		})
 		n.notis.Store(id,
 			notification{
 				id:       id,
@@ -175,6 +184,15 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	} else {
 		if s.ShouldSend(val.(notification).lastSent) {
 			n.notify(mess, s.OwnerID)
+			go n.provider.dbClient.InsertNotifications([]*db.Notification{
+				&db.Notification{
+					Ticker:    r.GetName(),
+					Market:    string(r.GetMarketType()),
+					Broker:    "Binance",
+					Signal:    s.Name,
+					CreatedAt: time.Now(),
+				},
+			})
 			n.notis.Store(id,
 				notification{
 					id:       id,
