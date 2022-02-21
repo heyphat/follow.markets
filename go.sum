@@ -89,6 +89,8 @@ github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/itsphat/techan v0.12.2-0.20211105102610-8a483a2fe288 h1:zzRmDEuSA9VGkNWMk8sg6YadKurzViDILoYY8KAqFr4=
 github.com/itsphat/techan v0.12.2-0.20211105102610-8a483a2fe288/go.mod h1:1d7DBkAYQWnSgk+A4JkACpiCGSDxuhlo5wJd+qXUAT8=
+github.com/jomei/notionapi v1.7.3 h1:0mr0hZATm3Es8STszjpt5YgDx3mSyZDHu1r5W2FKD5w=
+github.com/jomei/notionapi v1.7.3/go.mod h1:wgxFlmxL+oIfxclWkt8jta0PkcBepajish2uCxzBxTo=
 github.com/json-iterator/go v1.1.9 h1:9yzud/Ht36ygwatGx56VwCZtlI/2AD15T1X2sjSuGns=
 github.com/json-iterator/go v1.1.9/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
 github.com/klauspost/compress v1.10.3/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
