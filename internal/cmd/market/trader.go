@@ -543,6 +543,7 @@ func (t *trader) monitorBinSpotTrade(st *setup) {
 		if err := t.placeMarketOrder(st.runner, st.signal.CloseTradingSide(), val.(bn.Balance).Free); err != nil {
 			t.logger.Error.Println(t.newLog(err.Error()))
 		}
+		st.lastUpdatedAt = time.Now().Unix() * 1000
 		for !t.registerStreamingChannel(*st) {
 			t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
 		}
@@ -607,6 +608,7 @@ func (t *trader) monitorBinFutuTrade(st *setup) {
 		if err := t.placeMarketOrder(st.runner, st.signal.CloseTradingSide(), val.(bnf.Balance).Balance); err != nil {
 			t.logger.Error.Println(t.newLog(err.Error()))
 		}
+		st.lastUpdatedAt = time.Now().Unix() * 1000
 		for !t.registerStreamingChannel(*st) {
 			t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
 		}
