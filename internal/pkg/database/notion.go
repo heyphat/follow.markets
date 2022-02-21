@@ -26,9 +26,11 @@ func newNotionClient(configs *config.Configs) Notion {
 	n.client = notion.NewClient(notion.Token(configs.Database.Notion.Token))
 	var err error
 	if n.setupDB, err = n.client.Database.Get(context.Background(), notion.DatabaseID(configs.Database.Notion.SetDBID)); err != nil {
+		n.logger.Error.Println(n.newLog(err.Error()))
 		return Notion{}
 	}
 	if n.notisDB, err = n.client.Database.Get(context.Background(), notion.DatabaseID(configs.Database.Notion.NotiDBID)); err != nil {
+		n.logger.Error.Println(n.newLog(err.Error()))
 		return Notion{}
 	}
 	n.isInitialized = true

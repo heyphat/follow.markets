@@ -24,22 +24,20 @@ type MongoDB struct {
 }
 
 func newMongDBClient(configs *config.Configs) MongoDB {
+	db := &MongoDB{logger: log.NewLogger(), configs: configs.Database.MongoDB}
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().
 		ApplyURI(configs.Database.MongoDB.URI).
 		SetServerAPIOptions(serverAPIOptions)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, clientOptions)
-	if err != nil {
+	var err error
+	if db.client, err = mongo.Connect(ctx, clientOptions); err != nil {
+		db.logger.Error.Println(db.newLog(err.Error()))
 		return MongoDB{}
 	}
-	return MongoDB{
-		isInitialized: true,
-		logger:        log.NewLogger(),
-		configs:       configs.Database.MongoDB,
-		client:        client,
-	}
+	db.isInitialized = true
+	return *db
 }
 
 func (db MongoDB) Disconnect() {}
