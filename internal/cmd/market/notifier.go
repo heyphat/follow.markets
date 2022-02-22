@@ -220,6 +220,9 @@ var traderKeyboad = tele.NewInlineKeyboardMarkup(
 		tele.NewInlineKeyboardButtonData(TRADER_MESSAGE_IS_TRADE_ENABLED, TRADER_MESSAGE_IS_TRADE_ENABLED),
 	),
 	tele.NewInlineKeyboardRow(
+		tele.NewInlineKeyboardButtonData(TRADER_MESSAGE_UPDATE_BALANCES, TRADER_MESSAGE_UPDATE_BALANCES),
+	),
+	tele.NewInlineKeyboardRow(
 		tele.NewInlineKeyboardButtonData(TRADER_MESSAGE_DISABLE_TRADE, TRADER_MESSAGE_DISABLE_TRADE),
 		tele.NewInlineKeyboardButtonData(TRADER_MESSAGE_ENABLE_TRADE, TRADER_MESSAGE_ENABLE_TRADE),
 	),
