@@ -16,6 +16,7 @@ import (
 
 // trader trades on a setup.
 type setup struct {
+	isClose  bool
 	runner   *runner.Runner
 	signal   *strategy.Signal
 	channels *streamingChannels

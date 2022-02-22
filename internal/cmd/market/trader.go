@@ -522,9 +522,7 @@ func (t *trader) monitorBinSpotTrade(st *setup) {
 		time.Sleep(time.Second)
 	}
 	st.channels = &streamingChannels{depth: make(chan interface{}, 20)}
-	for !t.registerStreamingChannel(*st) {
-		t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to register streaming service", st.runner.GetName())))
-	}
+	t.registerStreamingChannel(st)
 	for msg := range st.channels.depth {
 		bestPrice := tax.BinanceSpotBestBidAskFromDepth(msg.(*bn.WsPartialDepthEvent)).L1ForClosingTrade(st.orderSide)
 		ok, pnl, _ := t.shouldClose(st, bestPrice.Price)
@@ -534,19 +532,14 @@ func (t *trader) monitorBinSpotTrade(st *setup) {
 		st.pnl = pnl
 		val, ok := t.binSpotBalances.Load(st.runner.GetName())
 		if !ok {
-			t.logger.Error.Println(t.newLog("there is no asset to trade"))
-			for !t.registerStreamingChannel(*st) {
-				t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
-			}
+			st.isClose = t.registerStreamingChannel(st)
 			continue
 		}
 		if err := t.placeMarketOrder(st.runner, st.signal.CloseTradingSide(), val.(bn.Balance).Free); err != nil {
 			t.logger.Error.Println(t.newLog(err.Error()))
 		}
 		st.lastUpdatedAt = time.Now().Unix() * 1000
-		for !t.registerStreamingChannel(*st) {
-			t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
-		}
+		st.isClose = t.registerStreamingChannel(st)
 	}
 	// Upto this point, the trade should be close, and converted back to
 	// the quote currency, which should be in USDT, and report PNLs.
@@ -566,7 +559,7 @@ func (t *trader) monitorBinFutuTrade(st *setup) {
 	// Waiting for the order to be (partially) filled
 	nw := time.Now()
 	for st.orderStatus != "FILLED" && st.orderStatus != "PARTIALLY_FILLED" {
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 500)
 		if st.orderStatus == "CANCELED" ||
 			st.orderStatus == "REJECTED" ||
 			st.orderStatus == "EXPIRED" ||
@@ -587,9 +580,7 @@ func (t *trader) monitorBinFutuTrade(st *setup) {
 		time.Sleep(time.Second)
 	}
 	st.channels = &streamingChannels{depth: make(chan interface{}, 20)}
-	for !t.registerStreamingChannel(*st) {
-		t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to register streaming service", st.runner.GetName())))
-	}
+	t.registerStreamingChannel(st)
 	for msg := range st.channels.depth {
 		bestPrice := tax.BinanceFutuBestBidAskFromDepth(msg.(*bnf.WsDepthEvent)).L1ForClosingTrade(st.orderSide)
 		ok, pnl, _ := t.shouldClose(st, bestPrice.Price)
@@ -599,19 +590,14 @@ func (t *trader) monitorBinFutuTrade(st *setup) {
 		st.pnl = pnl
 		val, ok := t.binFutuBalances.Load(st.runner.GetName())
 		if !ok {
-			t.logger.Error.Println(t.newLog("there is no asset to trade"))
-			for !t.registerStreamingChannel(*st) {
-				t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
-			}
+			st.isClose = t.registerStreamingChannel(st)
 			continue
 		}
 		if err := t.placeMarketOrder(st.runner, st.signal.CloseTradingSide(), val.(bnf.Balance).Balance); err != nil {
 			t.logger.Error.Println(t.newLog(err.Error()))
 		}
+		st.isClose = t.registerStreamingChannel(st)
 		st.lastUpdatedAt = time.Now().Unix() * 1000
-		for !t.registerStreamingChannel(*st) {
-			t.logger.Error.Println(t.newLog(fmt.Sprintf("%+s, failed to deregister streaming service", st.runner.GetName())))
-		}
 	}
 	//// Upto this point, the trade should be close, and converted back to
 	//// the quote currency, which should be in USDT, and report PNLs.
@@ -624,9 +610,10 @@ func (t *trader) monitorBinFutuTrade(st *setup) {
 	}
 }
 
-// report reports a trade to user after closing it. It could also store the trade
-// to some persistent storage for later evaluation.
+// report reports a trade to user after closing it. It also store the trade
+// to some persistent storage for performance evaluation later.
 func (t *trader) report(st *setup) {
+	t.provider.dbClient.InsertOrUpdateSetups([]*db.Setup{st.convertDB()})
 	t.logger.Info.Println(t.newLog(st.description()))
 	t.communicator.trader2Notifier <- t.communicator.newMessage(st.runner, st.signal, nil, st.description(), nil)
 }
@@ -708,16 +695,20 @@ func (t *trader) binFutuUserDataStreaming() {
 
 // registerStreamingChannel registers or deregisters a runner to the streamer in order to
 // receive candle or depth broadcasted by data provider.
-func (t *trader) registerStreamingChannel(m setup) bool {
-	doneStreamingRegister := false
+func (t *trader) registerStreamingChannel(st *setup) bool {
+	if st.isClose {
+		return st.isClose
+	}
+	done := false
 	var maxTries int
-	for !doneStreamingRegister && maxTries <= 3 {
+	for !done && maxTries <= 3 {
 		resC := make(chan *payload)
-		t.communicator.trader2Streamer <- t.communicator.newMessage(m.runner, nil, m.channels, nil, resC)
-		doneStreamingRegister = (<-resC).what.dynamic.(bool)
+		t.communicator.trader2Streamer <- t.communicator.newMessage(st.runner, nil, st.channels, nil, resC)
+		done = (<-resC).what.dynamic.(bool)
 		maxTries++
 	}
-	return doneStreamingRegister
+	time.Sleep(time.Second)
+	return done
 }
 
 // generates a new log with the format for the watcher
