@@ -22,14 +22,14 @@ import (
 
 type trader struct {
 	sync.Mutex
-	connected        bool
-	isTradeDisabled  bool
+	connected       bool
+	isTradeDisabled bool
+
 	binFutuListenKey string
 	binSpotListenKey string
-
-	binTrades       *sync.Map
-	binSpotBalances *sync.Map
-	binFutuBalances *sync.Map
+	binTrades        *sync.Map
+	binSpotBalances  *sync.Map
+	binFutuBalances  *sync.Map
 
 	// trader configurations
 	quoteCurrency   string
