@@ -238,23 +238,24 @@ func Test_Trader_GetAndUpdateSpotBalances(t *testing.T) {
 	nbls := trader.binSpotGetBalances()
 	assert.EqualValues(t, true, len(nbls) >= 1)
 
+	// balances are queried directly from broker.
 	// test add new balance to BNB
-	bnb := bn.Balance{Asset: "BNB", Free: "30", Locked: "0"}
-	trader.binSpotUpdateBalances(bnb)
-	nbls = trader.binSpotGetBalances()
-	for _, b := range nbls {
-		if b.Asset == "BNB" {
-			assert.EqualValues(t, "30", b.Free)
-		}
-	}
+	//bnb := bn.Balance{Asset: "BNB", Free: "30", Locked: "0"}
+	//trader.binSpotUpdateBalances(bnb)
+	//nbls = trader.binSpotGetBalances()
+	//for _, b := range nbls {
+	//	if b.Asset == "BNB" {
+	//		assert.EqualValues(t, "30", b.Free)
+	//	}
+	//}
 
-	// test remove balance from the holdings
-	bnb = bn.Balance{Asset: "BNB", Free: "0", Locked: "0"}
-	trader.binSpotUpdateBalances(bnb)
-	nbls = trader.binSpotGetBalances()
-	for _, b := range nbls {
-		assert.EqualValues(t, true, b.Asset != "BNB")
-	}
+	//// test remove balance from the holdings
+	//bnb = bn.Balance{Asset: "BNB", Free: "0", Locked: "0"}
+	//trader.binSpotUpdateBalances(bnb)
+	//nbls = trader.binSpotGetBalances()
+	//for _, b := range nbls {
+	//	assert.EqualValues(t, true, b.Asset != "BNB")
+	//}
 }
 
 func Test_Trader_GetAndUpdateFutuBalances(t *testing.T) {
@@ -270,22 +271,22 @@ func Test_Trader_GetAndUpdateFutuBalances(t *testing.T) {
 	assert.EqualValues(t, true, len(nbls) >= 1)
 
 	// test add new balance to BNB
-	bnb := bnf.Balance{Asset: "BNB", Balance: "30", AvailableBalance: "30"}
-	trader.binFutuUpdateBalances(bnb)
-	nbls = trader.binFutuGetBalances()
-	for _, b := range nbls {
-		if b.Asset == "BNB" {
-			assert.EqualValues(t, "30", b.Balance)
-		}
-	}
+	//bnb := bnf.Balance{Asset: "BNB", Balance: "30", AvailableBalance: "30"}
+	//trader.binFutuUpdateBalances(bnb)
+	//nbls = trader.binFutuGetBalances()
+	//for _, b := range nbls {
+	//	if b.Asset == "BNB" {
+	//		assert.EqualValues(t, "30", b.Balance)
+	//	}
+	//}
 
-	// test remove balance from the holdings
-	bnb = bnf.Balance{Asset: "BNB", Balance: "0", AvailableBalance: "0"}
-	trader.binFutuUpdateBalances(bnb)
-	nbls = trader.binFutuGetBalances()
-	for _, b := range nbls {
-		assert.EqualValues(t, true, b.Asset != "BNB")
-	}
+	//// test remove balance from the holdings
+	//bnb = bnf.Balance{Asset: "BNB", Balance: "0", AvailableBalance: "0"}
+	//trader.binFutuUpdateBalances(bnb)
+	//nbls = trader.binFutuGetBalances()
+	//for _, b := range nbls {
+	//	assert.EqualValues(t, true, b.Asset != "BNB")
+	//}
 }
 
 func Test_Trader_UpdateConfigs(t *testing.T) {
