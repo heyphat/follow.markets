@@ -50,7 +50,7 @@ func (w *watcher) isConnected() bool { return w.connected }
 // Get return a runner which is watching on the watchlist
 func (w *watcher) get(name string) *runner.Runner {
 	if m, ok := w.runners.Load(name); ok {
-		return m.(wmember).runner
+		return m.(*wmember).runner
 	}
 	return nil
 }
@@ -107,7 +107,7 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs, fd *runner.Fund
 	if !w.connected {
 		w.connect()
 	}
-	m := wmember{
+	m := &wmember{
 		runner: runner.NewRunner(ticker, rc),
 		channels: &streamingChannels{
 			bar: make(chan *ta.Candle, 2),
@@ -151,7 +151,7 @@ func (w *watcher) watch(ticker string, rc *runner.RunnerConfigs, fd *runner.Fund
 // await loops forever to receive streaming data from the streamer. This function is meant
 // to run in a separate go routine. The watcher can close listening channels to stop watching when
 // it receives drop signals from the market.
-func (w *watcher) await(mem wmember) {
+func (w *watcher) await(mem *wmember) {
 	go func() {
 		if mem.channels.bar == nil {
 			return
@@ -188,8 +188,8 @@ func (w *watcher) drop(ticker string, rc *runner.RunnerConfigs) error {
 	if !ok {
 		return errors.New("runner not found")
 	}
-	r := mem.(wmember).runner
-	for !w.registerStreamingChannel(mem.(wmember)) {
+	r := mem.(*wmember).runner
+	for !w.registerStreamingChannel(mem.(*wmember)) {
 		w.logger.Error.Println(w.newLog(r.GetName(), "failed to deregister streaming data"))
 	}
 	w.runners.Delete(r.GetUniqueName())
@@ -246,16 +246,16 @@ func (w *watcher) connect() {
 
 // registerStreamingChannel registers or deregisters a runner to the streamer in order to
 // receive candles broadcasted by data providor.
-func (w *watcher) registerStreamingChannel(mem wmember) bool {
-	doneStreamingRegister := false
+func (w *watcher) registerStreamingChannel(m *wmember) bool {
+	done := false
 	var maxTries int
-	for !doneStreamingRegister && maxTries <= 3 {
+	for !done && maxTries <= 3 {
 		resC := make(chan *payload)
-		w.communicator.watcher2Streamer <- w.communicator.newMessage(mem.runner, nil, mem.channels, nil, resC)
-		doneStreamingRegister = (<-resC).what.dynamic.(bool)
+		w.communicator.watcher2Streamer <- w.communicator.newMessage(m.runner, nil, m.channels, nil, resC)
+		done = (<-resC).what.dynamic.(bool)
 		maxTries++
 	}
-	return doneStreamingRegister
+	return done
 }
 
 // this method processes requests from the streamer.
