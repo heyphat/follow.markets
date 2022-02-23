@@ -21,6 +21,7 @@ type notifier struct {
 	bot       *tele.BotAPI
 	notis     *sync.Map
 	chatIDs   []int64
+	password  string
 
 	// shared properties with other market participants
 	logger       *log.Logger
@@ -54,6 +55,7 @@ func newNotifier(participants *sharedParticipants, configs *config.Configs) (*no
 		bot:       bot,
 		notis:     &sync.Map{},
 		chatIDs:   chatIDs,
+		password:  configs.Market.Notifier.Telegram.BotPassword,
 
 		logger:       participants.logger,
 		communicator: participants.communicator,
@@ -85,28 +87,53 @@ func (n *notifier) connect() {
 
 // await awaits for message from user to add chatID or report trades.
 func (n *notifier) await() {
+	authorized := make(map[int64]bool)
+	validUntil := time.Now()
 	updates := n.bot.GetUpdatesChan(tele.NewUpdate(0))
 	for update := range updates {
 		if update.Message != nil {
-			msg := tele.NewMessage(update.Message.Chat.ID, "Select a query")
-			go n.addChatIDs([]int64{update.Message.Chat.ID})
+			msg := tele.NewMessage(update.Message.Chat.ID, "Select a proper command.")
 			cmd := update.Message.Command()
 			if len(cmd) > 0 {
 				switch cmd {
+				case "start":
+					validUntil = time.Now().Add(time.Second * 30)
+					msg.Text = "Enter your password within 30 seconds."
 				case string(TRADER):
-					msg.ReplyMarkup = traderKeyboad
-				default:
-					msg.Text = fmt.Sprintf("You're all set. Your chatID is %d.", update.Message.Chat.ID)
-					msg.ReplyToMessageID = update.Message.MessageID
+					if val, ok := authorized[update.Message.Chat.ID]; ok && val {
+						msg.Text = "Select an option"
+						msg.ReplyMarkup = traderKeyboad
+					} else {
+						msg.Text = "Please authorize yourself with the passowrd first."
+					}
 				}
+				msg.ReplyToMessageID = update.Message.MessageID
 				n.bot.Send(msg)
 				continue
 			}
+			msg.ReplyToMessageID = update.Message.MessageID
+			if time.Now().Before(validUntil) && update.Message.Text == n.password {
+				go n.addChatIDs([]int64{update.Message.Chat.ID})
+				msg.Text = fmt.Sprintf("You're all set. Your chatID is %d.", update.Message.Chat.ID)
+				authorized[update.Message.Chat.ID] = true
+				n.bot.Send(msg)
+				if _, err := n.bot.Request(tele.NewDeleteMessage(update.Message.Chat.ID, update.Message.MessageID)); err != nil {
+					n.logger.Error.Println(n.newLog("tele", err.Error()))
+				}
+			} else {
+				n.bot.Send(msg)
+			}
+			continue
 		}
 		if update.CallbackQuery != nil {
 			msg := tele.NewMessage(update.CallbackQuery.Message.Chat.ID, "")
 			if _, err := n.bot.Request(tele.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)); err != nil {
 				n.logger.Error.Println(n.newLog("tele", err.Error()))
+				continue
+			}
+			if val, ok := authorized[update.CallbackQuery.Message.Chat.ID]; !val || !ok {
+				msg.Text = "Please authorize yourself with the passowrd first."
+				n.bot.Send(msg)
 				continue
 			}
 			resC := make(chan *payload)
