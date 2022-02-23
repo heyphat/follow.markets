@@ -48,8 +48,9 @@ type Configs struct {
 		} `json:"provider"`
 		Notifier struct {
 			Telegram struct {
-				BotToken string   `json:"bot_token"`
-				ChatIDs  []string `json:"chat_ids"`
+				ChatIDs     []string `json:"chat_ids"`
+				BotToken    string   `json:"bot_token"`
+				BotPassword string   `json:"bot_password"`
 			} `json:"telegram"`
 		} `json:"notifier"`
 		Watcher struct {
