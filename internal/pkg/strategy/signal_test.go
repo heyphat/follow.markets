@@ -3,6 +3,7 @@ package strategy
 import (
 	"io/ioutil"
 	"testing"
+	"time"
 
 	"follow.markets/internal/pkg/runner"
 	tax "follow.markets/internal/pkg/techanex"
@@ -79,4 +80,20 @@ func Test_TradeExecutionPrice(t *testing.T) {
 	price, ok := signal.TradeExecutionPrice(r)
 	assert.EqualValues(t, true, ok)
 	assert.EqualValues(t, "30000.0", price.FormattedString(1))
+}
+
+func Test_GetMaxWaitToFill(t *testing.T) {
+	path := "./signals/signal.json"
+	raw, err := ioutil.ReadFile(path)
+	assert.EqualValues(t, nil, err)
+
+	signal, err := NewSignalFromBytes(raw)
+	assert.EqualValues(t, nil, err)
+
+	ok := signal.Evaluate(nil, nil)
+	assert.EqualValues(t, false, ok)
+
+	wait, ok := signal.GetMaxWaitToFill()
+	assert.EqualValues(t, true, ok)
+	assert.EqualValues(t, time.Minute, wait)
 }
