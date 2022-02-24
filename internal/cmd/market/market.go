@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/dlclark/regexp2"
-	ta "github.com/itsphat/techan"
 	"github.com/sdcoffey/big"
 
+	db "follow.markets/internal/pkg/database"
 	"follow.markets/internal/pkg/runner"
 	"follow.markets/internal/pkg/strategy"
 	tax "follow.markets/internal/pkg/techanex"
@@ -321,12 +321,15 @@ func (m *MarketStruct) GetNotifications() map[string]time.Time {
 }
 
 // tester endpoints
-func (m *MarketStruct) Test(ticker string, balance float64, stg *strategy.Strategy, start, end *time.Time, file string) (*ta.TradingRecord, error) {
-	result, err := m.tester.test(ticker, big.NewDecimal(balance), stg, start, end, file)
+func (m *MarketStruct) Test(id int64) error {
+	st := db.BacktestStatusAccepted
+	go m.tester.provider.dbClient.UpdateBacktestStatus(id, &st)
+	rs, err := m.tester.test(id)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return result.record, nil
+	fmt.Println(rs)
+	return nil
 }
 
 // trader endpoints

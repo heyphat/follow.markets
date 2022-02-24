@@ -216,7 +216,7 @@ func Test_Trader_IsHolding(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 
 	coin := bn.Balance{Asset: "SHIB", Free: "30", Locked: "0"}
-	trader.binSpotUpdateBalances(coin)
+	trader.binSpotBalances.Store("SHIBUSDT", coin)
 	ok := trader.isHolding(runner)
 	assert.EqualValues(t, true, ok)
 
