@@ -10,7 +10,6 @@ import (
 	"follow.markets/internal/pkg/runner"
 	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/util"
-	ta "github.com/itsphat/techan"
 	"github.com/sdcoffey/big"
 )
 
@@ -169,17 +168,22 @@ func (s Signal) IsBearish() bool {
 }
 
 // Side returns BUY or SELL side of the signal depending on the given postion. This is only for tester to know whether to in or out a postion.
-func (s Signal) Side(side ta.OrderSide) ta.OrderSide {
-	if s.IsBullish() && side == ta.BUY {
-		return ta.BUY
-	} else if s.IsBullish() && side == ta.SELL {
-		return ta.SELL
-	} else if s.IsBearish() && side == ta.BUY {
-		return ta.SELL
-	} else if s.IsBearish() && side == ta.SELL {
-		return ta.BUY
+func (s Signal) BacktestSide(side string) string {
+	if strings.ToUpper(side) != "BUY" || strings.ToUpper(side) != "SELL" {
+		return side
+	}
+	isBuy := strings.ToUpper(side) == "BUY"
+	if s.IsBullish() && isBuy {
+		return "BUY"
+	} else if s.IsBullish() && !isBuy {
+		return "SELL"
+	} else if s.IsBearish() && isBuy {
+		return "SELL"
+	} else if s.IsBearish() && !isBuy {
+		return "BUY"
 	} else {
-		panic("unknown signal type")
+		return side
+		//panic("unknown signal type")
 	}
 }
 
