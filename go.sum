@@ -87,8 +87,14 @@ github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB7
 github.com/gorilla/websocket v1.4.1 h1:q7AeDBpnBk8AogcD4DSag/Ukw/KV+YhzLj2bP5HvKCM=
 github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
+github.com/itsphat/notionapi v1.7.4-0.20220223212658-58345abf9f6b h1:MW5mwOXEkSUMq66cF8NGu+Ct9bnJ2VDNVz5NIpSyj+c=
+github.com/itsphat/notionapi v1.7.4-0.20220223212658-58345abf9f6b/go.mod h1:v0k4sXTnWwh1+6YP/mz4PNbyA/jomVCLgwyNiQ6iir4=
 github.com/itsphat/techan v0.12.2-0.20211105102610-8a483a2fe288 h1:zzRmDEuSA9VGkNWMk8sg6YadKurzViDILoYY8KAqFr4=
 github.com/itsphat/techan v0.12.2-0.20211105102610-8a483a2fe288/go.mod h1:1d7DBkAYQWnSgk+A4JkACpiCGSDxuhlo5wJd+qXUAT8=
+github.com/itsphat/techan v0.12.2-0.20220224115928-f270049f5246 h1:d1lf9bFbvsshbelg++VmI3SSGNoT5BCQ0fAkF+YNOsA=
+github.com/itsphat/techan v0.12.2-0.20220224115928-f270049f5246/go.mod h1:1d7DBkAYQWnSgk+A4JkACpiCGSDxuhlo5wJd+qXUAT8=
+github.com/itsphat/techan v0.12.2-0.20220224121459-2e19228392e4 h1:Vjw267taEUckc/AKMcTbLQhCHhbaPu9gvxDyLmcYcd8=
+github.com/itsphat/techan v0.12.2-0.20220224121459-2e19228392e4/go.mod h1:1d7DBkAYQWnSgk+A4JkACpiCGSDxuhlo5wJd+qXUAT8=
 github.com/jomei/notionapi v1.7.3 h1:0mr0hZATm3Es8STszjpt5YgDx3mSyZDHu1r5W2FKD5w=
 github.com/jomei/notionapi v1.7.3/go.mod h1:wgxFlmxL+oIfxclWkt8jta0PkcBepajish2uCxzBxTo=
 github.com/json-iterator/go v1.1.9 h1:9yzud/Ht36ygwatGx56VwCZtlI/2AD15T1X2sjSuGns=

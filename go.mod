@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
-	github.com/itsphat/techan v0.12.2-0.20211105102610-8a483a2fe288
+	github.com/itsphat/techan v0.12.2-0.20220224121459-2e19228392e4
 	github.com/miguelmota/go-coinmarketcap v0.1.8
 	github.com/sdcoffey/big v0.7.0
 	github.com/stretchr/testify v1.7.0
@@ -28,6 +28,7 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/pprof v0.0.0-20210423192551-a2663126120b // indirect
+	github.com/itsphat/notionapi v1.7.4-0.20220223212658-58345abf9f6b // indirect
 	github.com/jomei/notionapi v1.7.3 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
