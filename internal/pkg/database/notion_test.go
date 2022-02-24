@@ -96,3 +96,30 @@ func Test_Notion_InsertOrUpdateSetups(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, ok)
 }
+
+func Test_Notion_GetBacktest(t *testing.T) {
+	db, _, err := notionTestSuit()
+	defer db.Disconnect()
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, true, db.isInitialized)
+
+	// use the shared backtest db for this test
+	bt, err := db.GetBacktest(1645593180000)
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, "test", bt.Signal.Name)
+}
+
+func Test_Notion_UpdateBacktestStatus(t *testing.T) {
+	db, _, err := notionTestSuit()
+	defer db.Disconnect()
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, true, db.isInitialized)
+
+	// use the shared backtest db for this test
+	err = db.UpdateBacktestStatus(1645593180000, BacktestStatusAccepted)
+	assert.EqualValues(t, nil, err)
+	err = db.UpdateBacktestStatus(1645593180000, BacktestStatusError)
+	assert.EqualValues(t, nil, err)
+	err = db.UpdateBacktestStatus(1645593180000, BacktestStatusCompleted)
+	assert.EqualValues(t, nil, err)
+}
