@@ -20,6 +20,10 @@ type Client interface {
 
 	// notification methods
 	InsertNotifications(ns []*Notification) (bool, error)
+
+	// backtest methods
+	GetBacktest(id int64) (*Backtest, error)
+	UpdateBacktestStatus(id int64, st *BacktestStatus) error
 }
 
 // Create a new db client.
