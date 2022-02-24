@@ -3,7 +3,7 @@ package database
 import (
 	"time"
 
-	notion "github.com/jomei/notionapi"
+	notion "github.com/itsphat/notionapi"
 )
 
 type QueryOptions struct {
