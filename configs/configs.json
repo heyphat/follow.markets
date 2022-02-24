@@ -106,7 +106,8 @@
     "notion": {
       "integration_token": "your_integration_token",
       "setup_db_id": "your_setup_db_id",
-      "notification_db_id": "your_notification_db_id"
+      "notification_db_id": "your_notification_db_id",
+      "backtest_db_id": "your_backtest_db_id"
     }
   }
 }
