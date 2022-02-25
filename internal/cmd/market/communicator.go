@@ -11,6 +11,7 @@ import (
 	ta "github.com/itsphat/techan"
 )
 
+// this agent handles all the communications between other agents.
 type communicator struct {
 	watcher2Streamer   chan *message
 	watcher2Evaluator  chan *message
@@ -24,6 +25,7 @@ type communicator struct {
 	notifier2Trader    chan *message
 }
 
+// this returns a communicator with initialized communicating channels.
 func newCommunicator() *communicator {
 	return &communicator{
 		watcher2Streamer:   make(chan *message),
@@ -39,11 +41,15 @@ func newCommunicator() *communicator {
 	}
 }
 
+// the messge structure to communicate between agents.
+// an agent can ask for a request and expect a response, a response channel needs to be added.
+// somtimes if an agent doesn't expect the response, the response channel can be nil.
 type message struct {
 	request  *payload
 	response chan *payload
 }
 
+// the message's payload structure.
 type payload struct {
 	requestID  uuid.UUID
 	responseID uuid.UUID
@@ -52,6 +58,8 @@ type payload struct {
 	when time.Time
 }
 
+// the data of the payload, agents are passing around runner, signal and streaming channels,
+// sometimes with an unidentified type of data.
 type data struct {
 	runner   *runner.Runner
 	signal   *strategy.Signal
@@ -60,6 +68,7 @@ type data struct {
 	dynamic interface{}
 }
 
+// this is a handy method to create a message.
 func (c *communicator) newMessage(
 	r *runner.Runner,
 	s *strategy.Signal,
@@ -72,6 +81,7 @@ func (c *communicator) newMessage(
 	}
 }
 
+// this is a handy method to create a payload.
 func (c *communicator) newPayload(
 	r *runner.Runner,
 	s *strategy.Signal,
@@ -96,6 +106,7 @@ func (c *communicator) newPayload(
 	}
 }
 
+// this method adds a unique ID to a request. We might need it later.
 func (pl *payload) addRequestID(id *uuid.UUID) *payload {
 	if id != nil {
 		pl.responseID = *id
@@ -105,17 +116,20 @@ func (pl *payload) addRequestID(id *uuid.UUID) *payload {
 	return pl
 }
 
+// this method adds a unique ID to a response. We might need it later.
 func (pl *payload) addResponseID() *payload {
 	pl.responseID = uuid.New()
 	return pl
 }
 
+// strreaming channels of a payload data if agents request for streaming data.
 type streamingChannels struct {
 	bar   chan *ta.Candle
 	trade chan *tax.Trade
 	depth chan interface{}
 }
 
+// This method is to close all the streaming channels when an agent is done with streaming data.
 func (scs *streamingChannels) close() {
 	if scs == nil {
 		return
