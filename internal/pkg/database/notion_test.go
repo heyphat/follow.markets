@@ -116,10 +116,33 @@ func Test_Notion_UpdateBacktestStatus(t *testing.T) {
 	assert.EqualValues(t, true, db.isInitialized)
 
 	// use the shared backtest db for this test
-	err = db.UpdateBacktestStatus(1645593180000, BacktestStatusAccepted)
+	status := BacktestStatusAccepted
+	err = db.UpdateBacktestStatus(1645593180000, &status)
 	assert.EqualValues(t, nil, err)
-	err = db.UpdateBacktestStatus(1645593180000, BacktestStatusError)
+
+	status = BacktestStatusProcessing
+	err = db.UpdateBacktestStatus(1645593180000, &status)
 	assert.EqualValues(t, nil, err)
-	err = db.UpdateBacktestStatus(1645593180000, BacktestStatusCompleted)
+
+	status = BacktestStatusCompleted
+	err = db.UpdateBacktestStatus(1645593180000, &status)
+	assert.EqualValues(t, nil, err)
+}
+
+func Test_Notion_UpdateBacktestResult(t *testing.T) {
+	db, _, err := notionTestSuit()
+	defer db.Disconnect()
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, true, db.isInitialized)
+
+	rs := make(map[string]float64, 6)
+	rs["AverageProfit"] = 0.1
+	rs["Profit"] = 0.1
+	rs["PctGain"] = 0.1
+	//rs["PeriodProfit"] = 0.1
+	rs["TotalTrades"] = 0.1
+	rs["ProfitableTrades"] = 0.1
+	rs["Buy&Hold"] = 0.1
+	err = db.UpdateBacktestResult(1645593180000, rs)
 	assert.EqualValues(t, nil, err)
 }

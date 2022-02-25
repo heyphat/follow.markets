@@ -139,7 +139,7 @@ func (db MongoDB) UpdateBacktestStatus(id int64, st *BacktestStatus) error {
 	return errors.New("not support yet")
 }
 
-func (db MongoDB) UpdateBacktestResults(id int64, rs *BacktestResult) error {
+func (db MongoDB) UpdateBacktestResult(id int64, rs map[string]float64) error {
 	return errors.New("not support yet")
 }
 

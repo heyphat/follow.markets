@@ -24,6 +24,7 @@ type Client interface {
 	// backtest methods
 	GetBacktest(id int64) (*Backtest, error)
 	UpdateBacktestStatus(id int64, st *BacktestStatus) error
+	UpdateBacktestResult(id int64, rs map[string]float64) error
 }
 
 // Create a new db client.

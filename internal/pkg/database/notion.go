@@ -165,7 +165,20 @@ func (n Notion) UpdateBacktestStatus(id int64, st *BacktestStatus) error {
 	return nil
 }
 
-func (n Notion) UpdateBacktestResults(id int64, rs *BacktestResult) error {
+func (n Notion) UpdateBacktestResult(id int64, rs map[string]float64) error {
+	page, err := n.getBacktestPage(id)
+	if err != nil {
+		return err
+	}
+	p := make(map[string]notion.Property, 6)
+	for k, v := range rs {
+		p[k] = notion.NumberProperty{Number: v}
+	}
+	if _, err := n.client.Page.Update(context.Background(),
+		notion.PageID(page.ID.String()),
+		&notion.PageUpdateRequest{Properties: p}); err != nil {
+		return err
+	}
 	return nil
 }
 
