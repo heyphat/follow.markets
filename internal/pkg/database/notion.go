@@ -243,7 +243,7 @@ func (n Notion) GetBacktest(id int64) (*Backtest, error) {
 			if v.GetType() == notion.PropertyTypeNumber {
 				p := v.(*notion.NumberProperty)
 				if p.Number > 0 {
-					bt.LossTolerance = p.Number
+					bt.ProfitMargin = p.Number
 				}
 			}
 		case "Start":
@@ -258,7 +258,8 @@ func (n Notion) GetBacktest(id int64) (*Backtest, error) {
 			if v.GetType() == notion.PropertyTypeDate {
 				p := v.(*notion.DateProperty)
 				if p.Date.Start == nil {
-					return nil, errors.New("missing end date")
+					bt.End = time.Now()
+					continue
 				}
 				bt.End = time.Time(*p.Date.Start)
 			}
