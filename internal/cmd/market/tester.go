@@ -1,7 +1,6 @@
 package market
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 
@@ -12,6 +11,8 @@ import (
 )
 
 type tester struct {
+	savePath string
+
 	// shared properties with other market participants
 	logger   *log.Logger
 	provider *provider
@@ -22,6 +23,7 @@ func newTester(participants *sharedParticipants) (*tester, error) {
 		return nil, errors.New("missing shared participants")
 	}
 	return &tester{
+		savePath: "./test_result",
 		logger:   participants.logger,
 		provider: participants.provider,
 	}, nil
@@ -69,12 +71,10 @@ func (t *tester) test(id int64) (*backtest, error) {
 			})
 		}
 	}
-	buffer := bytes.NewBufferString("")
-	tradeLogs := ta.LogTradesAnalysis{Writer: buffer}
-	_ = tradeLogs.Analyze(bt.rcs)
-	//t.logger.Info.Println(t.newLog(tradeLogs))
-	fmt.Println(tradeLogs)
-	bt.bt.Status = db.BacktestStatusCompleted
+	if err != t.provider.dbClient.UpdateBacktestResult(bt.bt.ID, bt.summary(t.savePath)) {
+		bt.bt.UpdateStatus(db.BacktestStatusError)
+	}
+	bt.bt.UpdateStatus(db.BacktestStatusCompleted)
 	return bt, nil
 }
 
