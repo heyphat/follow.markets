@@ -402,19 +402,27 @@ func (t *trader) shouldClose(st *setup, currentPrice big.Decimal) (bool, big.Dec
 func (t *trader) placeMarketOrder(r *runner.Runner, side, quantity string) error {
 	switch r.GetMarketType() {
 	case runner.Cash:
-		_, err := t.provider.binSpot.NewCreateOrderService().
+		_, quantityPrecision, err := t.provider.fetchBinSpotExchangeInfo(r.GetName())
+		if err != nil {
+			return err
+		}
+		_, err = t.provider.binSpot.NewCreateOrderService().
 			Symbol(r.GetName()).
 			Side(bn.SideType(side)).
 			Type(bn.OrderTypeMarket).
-			Quantity(quantity).
+			Quantity(big.NewFromString(quantity).FormattedString(quantityPrecision)).
 			Do(context.Background())
 		return err
 	case runner.Futures:
-		_, err := t.provider.binFutu.NewCreateOrderService().
+		_, quantityPrecision, err := t.provider.fetchBinFutuExchangeInfo(r.GetName())
+		if err != nil {
+			return err
+		}
+		_, err = t.provider.binFutu.NewCreateOrderService().
 			Symbol(r.GetName()).
 			Side(bnf.SideType(side)).
 			Type(bnf.OrderTypeMarket).
-			Quantity(quantity).
+			Quantity(big.NewFromString(quantity).FormattedString(quantityPrecision)).
 			ReduceOnly(true).
 			Do(context.Background())
 		return err
@@ -512,6 +520,10 @@ func (t *trader) monitorBinTrade(st *setup) {
 
 	// Waiting for the order to be (partially) filled
 	nw := time.Now()
+	maxWait := t.maxWaitToFill
+	if val, ok := st.signal.GetMaxWaitToFill(); ok {
+		maxWait = val
+	}
 	for st.orderStatus != "FILLED" && st.orderStatus != "PARTIALLY_FILLED" {
 		time.Sleep(time.Millisecond * 100)
 		if st.orderStatus == "CANCELED" ||
@@ -520,7 +532,7 @@ func (t *trader) monitorBinTrade(st *setup) {
 			st.orderStatus == "PENDING_CANCEL" {
 			return
 		}
-		if time.Now().Sub(nw) > t.maxWaitToFill {
+		if time.Now().Sub(nw) > maxWait {
 			if err := t.cancleOpenOrder(st.runner, st.orderID); err != nil {
 				t.logger.Error.Println(t.newLog(err.Error()))
 			}
@@ -651,6 +663,8 @@ func (t *trader) binSpotUserDataStreaming() {
 	isError, isInit := false, true
 	dataHandler := func(e *bn.WsUserDataEvent) {
 		switch e.Event {
+		case bn.UserDataEventTypeBalanceUpdate:
+			fallthrough
 		case bn.UserDataEventTypeOutboundAccountPosition:
 			if err := t.binSpotUpdateBalances(); err != nil {
 				t.logger.Error.Println(t.newLog(err.Error()))
@@ -660,8 +674,6 @@ func (t *trader) binSpotUserDataStreaming() {
 				val.(*setup).binSpotUpdateTrade(e.OrderUpdate)
 				t.provider.dbClient.InsertOrUpdateSetups([]*db.Setup{val.(*setup).convertDB()})
 			}
-		case bn.UserDataEventTypeBalanceUpdate:
-			fallthrough
 		case bn.UserDataEventTypeListStatus:
 			t.logger.Info.Println(t.newLog(fmt.Sprintf("cash %s, %+v", string(e.Event), *e)))
 		default:

@@ -1,22 +1,18 @@
 package market
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"os"
-	"time"
 
-	"github.com/sdcoffey/big"
-
-	"follow.markets/internal/pkg/runner"
-	"follow.markets/internal/pkg/strategy"
-	tax "follow.markets/internal/pkg/techanex"
-	"follow.markets/pkg/log"
 	ta "github.com/itsphat/techan"
+
+	db "follow.markets/internal/pkg/database"
+	"follow.markets/pkg/log"
 )
 
 type tester struct {
+	savePath string
+
 	// shared properties with other market participants
 	logger   *log.Logger
 	provider *provider
@@ -27,77 +23,59 @@ func newTester(participants *sharedParticipants) (*tester, error) {
 		return nil, errors.New("missing shared participants")
 	}
 	return &tester{
+		savePath: "./test_result",
 		logger:   participants.logger,
 		provider: participants.provider,
 	}, nil
 }
 
-type tmember struct {
-	balance  big.Decimal
-	runner   *runner.Runner
-	record   *ta.TradingRecord
-	strategy *strategy.Strategy
-}
-
-func (t *tester) test(ticker string,
-	initBalance big.Decimal,
-	stg *strategy.Strategy,
-	start, end *time.Time,
-	file string) (tmember, error) {
-	if initBalance.LTE(big.ZERO) {
-		return tmember{}, errors.New("init balance has to be > 0")
-	}
-	if stg == nil || stg.EntryRule == nil {
-		return tmember{}, errors.New("missing trading strategy or signal")
-	}
-	r := runner.NewRunner(ticker, &runner.RunnerConfigs{
-		LFrames:  stg.EntryRule.Signal.GetPeriods(),
-		IConfigs: tax.NewDefaultIndicatorConfigs(),
-	})
-	mem := tmember{
-		runner:   r,
-		record:   ta.NewTradingRecord(),
-		balance:  initBalance,
-		strategy: stg.SetRunner(r),
-	}
-	candles, err := t.provider.fetchBinanceSpotKlinesV3(ticker, r.SmallestFrame(), &fetchOptions{start: start, end: end})
+func (t *tester) test(id int64) (*backtest, error) {
+	status := db.BacktestStatusProcessing
+	go t.provider.dbClient.UpdateBacktestStatus(id, &status)
+	data, err := t.provider.dbClient.GetBacktest(id)
 	if err != nil {
-		return mem, err
+		status = db.BacktestStatusError
+		t.provider.dbClient.UpdateBacktestStatus(id, &status)
+		return nil, err
+	}
+	bt := newBacktest(data)
+	newStatus := &bt.bt.Status
+	defer t.provider.dbClient.UpdateBacktestStatus(id, newStatus)
+	candles, err := t.provider.fetchBinanceSpotKlinesV3(bt.r.GetName(), bt.r.SmallestFrame(), &fetchOptions{start: &bt.bt.Start, end: &bt.bt.End})
+	if err != nil {
+		bt.bt.UpdateStatus(db.BacktestStatusError)
+		return nil, err
 	}
 	for i, c := range candles {
-		if !mem.runner.SyncCandle(c) {
-			t.logger.Warning.Println(t.newLog(ticker, "failed to sync new candle on watching"))
+		if !bt.r.SyncCandle(c) {
+			t.logger.Warning.Println(t.newLog(bt.r.GetName(), "failed to sync new candle on watching"))
 			continue
 		}
-		if mem.strategy.ShouldEnter(i, mem.record) {
-			mem.record.Operate(ta.Order{
-				Side:          stg.EntryRule.Signal.Side(ta.BUY),
+		if bt.s.ShouldEnter(i, bt.rcs) {
+			bt.rcs.Operate(ta.Order{
+				Side:          ta.OrderSideFromString(bt.s.EntryRule.Signal.BacktestSide("BUY")),
 				Price:         c.ClosePrice,
-				Amount:        mem.balance.Div(c.ClosePrice),
-				Security:      ticker,
+				Amount:        bt.balance.Div(c.ClosePrice),
+				Security:      bt.r.GetName(),
 				ExecutionTime: c.Period.Start,
 			})
 			continue
 		}
-		if mem.strategy.ShouldExit(i, mem.record) || (mem.record.CurrentPosition().IsOpen() && i == len(candles)-1) {
-			mem.record.Operate(ta.Order{
-				Side:          stg.EntryRule.Signal.Side(ta.SELL),
+		if bt.s.ShouldExit(i, bt.rcs) || (bt.rcs.CurrentPosition().IsOpen() && i == len(candles)-1) {
+			bt.rcs.Operate(ta.Order{
+				Side:          ta.OrderSideFromString(bt.s.EntryRule.Signal.BacktestSide("SELL")),
 				Price:         c.ClosePrice,
-				Amount:        mem.record.CurrentPosition().EntranceOrder().Amount,
-				Security:      ticker,
+				Amount:        bt.rcs.CurrentPosition().EntranceOrder().Amount,
+				Security:      bt.r.GetName(),
 				ExecutionTime: c.Period.Start,
 			})
 		}
 	}
-	buffer := bytes.NewBufferString("")
-	logTrades := ta.LogTradesAnalysis{Writer: buffer}
-	_ = logTrades.Analyze(mem.record)
-	fmt.Println(logTrades)
-	fmt.Println(mem.strategy.EntryRule.Signal.Description())
-	if err := os.WriteFile(file, buffer.Bytes(), 0444); err != nil {
-		return mem, err
+	if err != t.provider.dbClient.UpdateBacktestResult(bt.bt.ID, bt.summary(t.savePath)) {
+		bt.bt.UpdateStatus(db.BacktestStatusError)
 	}
-	return mem, nil
+	bt.bt.UpdateStatus(db.BacktestStatusCompleted)
+	return bt, nil
 }
 
 // returns a log for the tester

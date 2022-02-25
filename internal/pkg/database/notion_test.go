@@ -96,3 +96,53 @@ func Test_Notion_InsertOrUpdateSetups(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, true, ok)
 }
+
+func Test_Notion_GetBacktest(t *testing.T) {
+	db, _, err := notionTestSuit()
+	defer db.Disconnect()
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, true, db.isInitialized)
+
+	// use the shared backtest db for this test
+	bt, err := db.GetBacktest(1645593180000)
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, "test", bt.Signal.Name)
+}
+
+func Test_Notion_UpdateBacktestStatus(t *testing.T) {
+	db, _, err := notionTestSuit()
+	defer db.Disconnect()
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, true, db.isInitialized)
+
+	// use the shared backtest db for this test
+	status := BacktestStatusAccepted
+	err = db.UpdateBacktestStatus(1645593180000, &status)
+	assert.EqualValues(t, nil, err)
+
+	status = BacktestStatusProcessing
+	err = db.UpdateBacktestStatus(1645593180000, &status)
+	assert.EqualValues(t, nil, err)
+
+	status = BacktestStatusCompleted
+	err = db.UpdateBacktestStatus(1645593180000, &status)
+	assert.EqualValues(t, nil, err)
+}
+
+func Test_Notion_UpdateBacktestResult(t *testing.T) {
+	db, _, err := notionTestSuit()
+	defer db.Disconnect()
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, true, db.isInitialized)
+
+	rs := make(map[string]float64, 6)
+	rs["AverageProfit"] = 0.1
+	rs["Profit"] = 0.1
+	rs["PctGain"] = 0.1
+	//rs["PeriodProfit"] = 0.1
+	rs["TotalTrades"] = 0.1
+	rs["ProfitableTrades"] = 0.1
+	rs["Buy&Hold"] = 0.1
+	err = db.UpdateBacktestResult(1645593180000, rs)
+	assert.EqualValues(t, nil, err)
+}

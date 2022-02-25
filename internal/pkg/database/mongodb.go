@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -128,6 +129,18 @@ func (db MongoDB) InsertNotifications(ns []*Notification) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func (db MongoDB) GetBacktest(id int64) (*Backtest, error) {
+	return nil, errors.New("not support yet")
+}
+
+func (db MongoDB) UpdateBacktestStatus(id int64, st *BacktestStatus) error {
+	return errors.New("not support yet")
+}
+
+func (db MongoDB) UpdateBacktestResult(id int64, rs map[string]float64) error {
+	return errors.New("not support yet")
 }
 
 func (db MongoDB) newLog(msg string) string {

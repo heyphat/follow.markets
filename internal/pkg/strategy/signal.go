@@ -10,20 +10,26 @@ import (
 	"follow.markets/internal/pkg/runner"
 	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/util"
-	ta "github.com/itsphat/techan"
 	"github.com/sdcoffey/big"
 )
 
 type Signal struct {
-	Name       string        `json:"name"`
-	Groups     Groups        `json:"groups"`
-	OwnerID    *int64        `json:"owner_id"`
-	TradePrice *Comparable   `json:"trade_price"`
-	TimePeriod time.Duration `json:"primary_period"`
-
+	// the signal basic information
+	Name       string `json:"name"`
+	OwnerID    *int64 `json:"owner_id"`
 	NotifyType string `json:"notify_type"`
 	TrackType  string `json:"track_type"`
 	SignalType string `json:"signal_type"`
+
+	// The conditions of the signal
+	Groups     Groups        `json:"groups"`
+	TimePeriod time.Duration `json:"primary_period"`
+
+	// The trading information for the signal
+	Trade struct {
+		Price         *Comparable `json:"price"`
+		MaxWaitToFill *int64      `json:"max_wait_to_fill"` // in second
+	} `json:"trade"`
 }
 
 type Signals []*Signal
@@ -45,9 +51,6 @@ func NewSignalFromBytes(bytes []byte) (*Signal, error) {
 			return nil, err
 		}
 	}
-	//if err := signal.TradePrice.validate(); err != nil {
-	//	return nil, err
-	//}
 	periods := signal.GetPeriods()
 	signal.TimePeriod = periods[0]
 	return &signal, err
@@ -76,7 +79,8 @@ func (s *Signal) copy() *Signal {
 	ns.TrackType = s.TrackType
 	ns.NotifyType = s.NotifyType
 	ns.TimePeriod = s.TimePeriod
-	ns.TradePrice = s.TradePrice.copy()
+	ns.Trade.Price = s.Trade.Price.copy()
+	ns.Trade.MaxWaitToFill = s.Trade.MaxWaitToFill
 	return &ns
 }
 
@@ -131,17 +135,26 @@ func (s Signal) CloseTradingSide() string {
 
 // TradeExecutionPrice returns a price level for trade, ideally after the signal is successfully evaluated.
 func (s Signal) TradeExecutionPrice(r *runner.Runner) (big.Decimal, bool) {
-	if s.TradePrice == nil {
+	if s.Trade.Price == nil {
 		return big.ZERO, false
 	}
-	if err := s.TradePrice.validate(); err != nil {
+	if err := s.Trade.Price.validate(); err != nil {
 		return big.ZERO, false
 	}
-	if s.TradePrice.Fundamental != nil && s.TradePrice.Candle == nil && s.TradePrice.Indicator == nil {
+	if s.Trade.Price.Fundamental != nil && s.Trade.Price.Candle == nil && s.Trade.Price.Indicator == nil {
 		return big.ZERO, false
 	}
-	_, price, ok := s.TradePrice.mapDecimal(r, nil)
+	_, price, ok := s.Trade.Price.mapDecimal(r, nil)
 	return price, ok
+}
+
+// MaxWaitToFill returns the duration in second the trader should wait for an open order to be filled
+// once a signal is triggered.
+func (s Signal) GetMaxWaitToFill() (time.Duration, bool) {
+	if s.Trade.MaxWaitToFill == nil {
+		return time.Second, false
+	}
+	return time.Duration(*s.Trade.MaxWaitToFill) * time.Second, true
 }
 
 // IsBullish return true if the signal is bullish, false otherwise.
@@ -155,17 +168,22 @@ func (s Signal) IsBearish() bool {
 }
 
 // Side returns BUY or SELL side of the signal depending on the given postion. This is only for tester to know whether to in or out a postion.
-func (s Signal) Side(side ta.OrderSide) ta.OrderSide {
-	if s.IsBullish() && side == ta.BUY {
-		return ta.BUY
-	} else if s.IsBullish() && side == ta.SELL {
-		return ta.SELL
-	} else if s.IsBearish() && side == ta.BUY {
-		return ta.SELL
-	} else if s.IsBearish() && side == ta.SELL {
-		return ta.BUY
+func (s Signal) BacktestSide(side string) string {
+	if strings.ToUpper(side) != "BUY" || strings.ToUpper(side) != "SELL" {
+		return side
+	}
+	isBuy := strings.ToUpper(side) == "BUY"
+	if s.IsBullish() && isBuy {
+		return "BUY"
+	} else if s.IsBullish() && !isBuy {
+		return "SELL"
+	} else if s.IsBearish() && isBuy {
+		return "SELL"
+	} else if s.IsBearish() && !isBuy {
+		return "BUY"
 	} else {
-		panic("unknown signal type")
+		return side
+		//panic("unknown signal type")
 	}
 }
 
