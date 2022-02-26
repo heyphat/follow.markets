@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	"follow.markets/internal/pkg/runner"
@@ -14,6 +15,7 @@ import (
 	"follow.markets/pkg/log"
 	"follow.markets/pkg/util"
 	notion "github.com/itsphat/notionapi"
+	ta "github.com/itsphat/techan"
 )
 
 type Notion struct {
@@ -147,44 +149,16 @@ func (n Notion) getBacktestPage(id int64) (*notion.Page, error) {
 	return &rsp.Results[0], nil
 }
 
-func (n Notion) UpdateBacktestStatus(id int64, st *BacktestStatus) error {
+func (n Notion) InsertBacktest(bt *Backtest) error {
 	if !n.isInitialized {
 		return errors.New("DB hasn't been initialized.")
-	}
-	page, err := n.getBacktestPage(id)
-	if err != nil {
-		return err
-	}
-	p := make(map[string]notion.Property, 1)
-	p["Status"] = notion.SelectProperty{Select: notion.Option{Name: string(*st)}}
-	if _, err := n.client.Page.Update(context.Background(),
-		notion.PageID(page.ID.String()),
-		&notion.PageUpdateRequest{Properties: p}); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (n Notion) UpdateBacktestResult(id int64, rs map[string]float64) error {
-	page, err := n.getBacktestPage(id)
-	if err != nil {
-		return err
-	}
-	p := make(map[string]notion.Property, 6)
-	for k, v := range rs {
-		p[k] = notion.NumberProperty{Number: v}
-	}
-	if _, err := n.client.Page.Update(context.Background(),
-		notion.PageID(page.ID.String()),
-		&notion.PageUpdateRequest{Properties: p}); err != nil {
-		return err
 	}
 	return nil
 }
 
 func (n Notion) GetBacktest(id int64) (*Backtest, error) {
 	if !n.isInitialized {
-		return nil, errors.New("DB hasn't been isInitialized.")
+		return nil, errors.New("DB hasn't been initialized.")
 	}
 	page, err := n.getBacktestPage(id)
 	if err != nil {
@@ -290,6 +264,119 @@ func (n Notion) GetBacktest(id int64) (*Backtest, error) {
 		}
 	}
 	return bt, nil
+}
+
+func (n Notion) UpdateBacktestStatus(id int64, st *BacktestStatus) error {
+	if !n.isInitialized {
+		return errors.New("DB hasn't been initialized.")
+	}
+	page, err := n.getBacktestPage(id)
+	if err != nil {
+		return err
+	}
+	p := make(map[string]notion.Property, 1)
+	p["Status"] = notion.SelectProperty{Select: notion.Option{Name: string(*st)}}
+	if _, err := n.client.Page.Update(context.Background(),
+		notion.PageID(page.ID.String()),
+		&notion.PageUpdateRequest{Properties: p}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (n Notion) createBacktestResultDatabase(parentID notion.PageID, title string) (*notion.Database, error) {
+	ps := make(map[string]notion.PropertyConfig)
+	ps["Ticker"] = notion.TitlePropertyConfig{ID: "title", Type: notion.PropertyConfigTypeTitle, Title: struct{}{}}
+	ps["Side"] = notion.SelectPropertyConfig{
+		Type: notion.PropertyConfigTypeSelect,
+		Select: notion.Select{Options: []notion.Option{notion.Option{Name: "BUY", Color: notion.ColorGreen},
+			notion.Option{Name: "SELL", Color: notion.ColorRed}}}}
+	ps["EntryPrice"] = notion.RichTextPropertyConfig{Type: notion.PropertyConfigTypeRichText, RichText: struct{}{}}
+	ps["EntryAmount"] = notion.RichTextPropertyConfig{Type: notion.PropertyConfigTypeRichText, RichText: struct{}{}}
+	ps["EntryTime"] = notion.DatePropertyConfig{Type: notion.PropertyConfigTypeDate, Date: struct{}{}}
+	ps["ExitPrice"] = notion.RichTextPropertyConfig{Type: notion.PropertyConfigTypeRichText, RichText: struct{}{}}
+	ps["ExitAmount"] = notion.RichTextPropertyConfig{Type: notion.PropertyConfigTypeRichText, RichText: struct{}{}}
+	ps["ExitTime"] = notion.DatePropertyConfig{Type: notion.PropertyConfigTypeDate, Date: struct{}{}}
+	ps["Profit"] = notion.RichTextPropertyConfig{Type: notion.PropertyConfigTypeRichText, RichText: struct{}{}}
+	request := &notion.DatabaseCreateRequest{
+		Parent: notion.Parent{
+			Type:   notion.ParentTypePageID,
+			PageID: parentID,
+		},
+		Properties: ps,
+		Title: []notion.RichText{notion.RichText{
+			Text: notion.Text{Content: title}}},
+	}
+	return n.client.Database.Create(context.Background(), request)
+	// append object
+	//type st struct {
+	//	ChildDatabase struct {
+	//		Title string `json:"title"`
+	//	} `json:"child_database"`
+	//}
+	//childDB := st{}
+	//childDB.ChildDatabase.Title = title
+	//request := &notion.AppendBlockChildrenRequest{
+	//	Children: []notion.Block{notion.ChildDatabaseBlock{
+	//		notion.BasicBlock{
+	//			Object: notion.ObjectTypeBlock,
+	//			Type:   notion.BlockTypeChildDatabase,
+	//		},
+	//		childDB.ChildDatabase},
+	//	},
+	//}
+	//return n.client.Block.AppendChildren(context.Background(), notion.BlockID(parentID.String()), request)
+}
+
+func (n Notion) UpdateBacktestResult(id int64, rs map[string]float64, ts ...*ta.Position) error {
+	page, err := n.getBacktestPage(id)
+	if err != nil {
+		return err
+	}
+	p := make(map[string]notion.Property, 6)
+	for k, v := range rs {
+		p[k] = notion.NumberProperty{Number: v}
+	}
+	if _, err := n.client.Page.Update(context.Background(),
+		notion.PageID(page.ID.String()),
+		&notion.PageUpdateRequest{Properties: p}); err != nil {
+		return err
+	}
+	if len(ts) == 0 {
+		return nil
+	}
+	db, err := n.createBacktestResultDatabase(notion.PageID(page.ID.String()), strconv.Itoa(int(id))+"-"+strconv.Itoa(int(time.Now().Unix())))
+	if err != nil {
+		return err
+	}
+	for _, t := range ts {
+		if t == nil {
+			continue
+		}
+		ps := make(map[string]notion.Property)
+		entryO := t.EntranceOrder()
+		exitO := t.ExitOrder()
+		if entryO != nil {
+			entryT := notion.Date(entryO.ExecutionTime)
+			ps["Ticker"] = notion.TitleProperty{Title: []notion.RichText{notion.RichText{Text: notion.Text{Content: entryO.Security}}}}
+			ps["Side"] = notion.SelectProperty{Select: notion.Option{Name: entryO.Side.String()}}
+			ps["EntryTime"] = notion.DateProperty{Date: notion.DateObject{Start: &entryT}}
+			ps["EntryPrice"] = notion.RichTextProperty{RichText: []notion.RichText{notion.RichText{Text: notion.Text{Content: entryO.Price.FormattedString(8)}}}}
+			ps["EntryAmount"] = notion.RichTextProperty{RichText: []notion.RichText{notion.RichText{Text: notion.Text{Content: entryO.Amount.FormattedString(8)}}}}
+		}
+		if exitO != nil {
+			eixtT := notion.Date(exitO.ExecutionTime)
+			ps["ExitTime"] = notion.DateProperty{Date: notion.DateObject{Start: &eixtT}}
+			ps["ExitPrice"] = notion.RichTextProperty{RichText: []notion.RichText{notion.RichText{Text: notion.Text{Content: exitO.Price.FormattedString(8)}}}}
+			ps["ExitAmount"] = notion.RichTextProperty{RichText: []notion.RichText{notion.RichText{Text: notion.Text{Content: exitO.Amount.FormattedString(8)}}}}
+			ps["Profit"] = notion.RichTextProperty{RichText: []notion.RichText{notion.RichText{Text: notion.Text{Content: t.ExitValue().Sub(t.CostBasis()).FormattedString(8)}}}}
+		}
+		if _, err := n.client.Page.Create(context.Background(), n.newPageRequest(notion.DatabaseID(db.ID.String()), ps)); err != nil {
+			n.logger.Error.Println(n.newLog(err.Error()))
+			return err
+		}
+	}
+	return nil
 }
 
 func (n Notion) newLog(msg string) string {
