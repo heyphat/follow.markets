@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	ta "github.com/itsphat/techan"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -131,6 +132,10 @@ func (db MongoDB) InsertNotifications(ns []*Notification) (bool, error) {
 	return true, nil
 }
 
+func (db MongoDB) InsertBacktest(bt *Backtest) error {
+	return errors.New("not support yet")
+}
+
 func (db MongoDB) GetBacktest(id int64) (*Backtest, error) {
 	return nil, errors.New("not support yet")
 }
@@ -139,7 +144,7 @@ func (db MongoDB) UpdateBacktestStatus(id int64, st *BacktestStatus) error {
 	return errors.New("not support yet")
 }
 
-func (db MongoDB) UpdateBacktestResult(id int64, rs map[string]float64) error {
+func (db MongoDB) UpdateBacktestResult(id int64, rs map[string]float64, ta ...*ta.Position) error {
 	return errors.New("not support yet")
 }
 
