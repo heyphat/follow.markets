@@ -6,22 +6,34 @@
 4. `datadog`: if you want to monitor the application performance on datadog, you can set up a datadog agent and update the corresponding variables in this session. Otherwise, leaving it unchanged will be fine.
 
 5. `market`: the main configuration you will need to understand and update for your system. The market consists of a few components which have their own configurations. 
-    1. `provider`: market data providers.
+    1. `base.crypto.quote_currency`: the basic information of the market, all the other agents can refer to. Usually `USDT`.
+    2. `provider`: market data providers.
         1. `binance`: currently the application tracks Binance spot and futures markets,  you need to have a Binance account and obtain the keys, `api_key` and `secret_key`.
         2. `coinmarketcap`: coinmarketcap APIs provide the fundamental data for coins and tokens, for example: supply and circulation. If the coinmarketcap `api_key` is missing, you won't be able to configure signals based on fundamentals.
-    2. `notifier`: is responsible for communicating with users via telegram bot. Telegram is free and easy to use. 
+    3. `notifier`: is responsible for communicating with users via telegram bot. Telegram is free and easy to use. 
         1. `bot_token`: a telegram bot token. Ask the [BotFather](https://core.telegram.org/bots) for a telegram `bot_token` if you don't know how to get it yet. Then start a conversation with your bot after deploying the system. The bot'll notify you messages when your signals are successfully evaluated.
-        2. `chat_ids`: a list of chatIDs. If you know your tele account chatID, you can configure it here. Otherwise, you can obtain it from the `bot`.
-    3. `watcher`: is responsible for watching the markets. It holds the market data of all runners on the watchlist. 
-        1. `base_market`: usually `USDT`, if you want `BUSD` or others, you can set it here. 
+        2. `bot_password`: this password is to prevent others to access your bot. You can set it to anything, the bot will ask you for authorization when you start talking to it.
+        3. `chat_ids`: a list of chatIDs. If you know your tele account chatID, you can configure it here. Otherwise, you can obtain it from the `bot`.
+    4. `watcher`: is responsible for watching the markets. It holds the market data of all runners on the watchlist.
         2. `watchlist`: a list of regex patterns that are matched against all tradable tickers on Binance spot and futures markets. The sample watchlist in `configs/configs.json` matches all `USDT`-based pairs. If you want to watch only 1 ticker, `BTCUSDT` for example, you can just add `BTCUSDT` to the watchlist.
-        3. `runner`: when a ticker matches the `watchlist` patterns, the watcher initializes it as a runner entity and starts to watch on it. A runner consists of multiple timeseries of candles and indicators. One timeseries is associated with one timeframe. 
+        3. `runner`: when a ticker matches the `watchlist` patterns, the watcher initializes it as a `runner` and starts to watch on it. A runner consists of multiple timeseries of candles and indicators. One timeseries is associated with one timeframe. 
             1. `frames`: a list of timeframes you want the watcher to watch on. The supported frames are: `1m`, `3m`, `5m`, `10m`, `15m`, `30m`, `1h`, `2h`, `4h`, `1d`. The values must be in second. 
             2. `indicators`: a list of indicators. Refer to the `indicator` docs for a list of supported indicators. An indicator comes with a list of parameters, often be a list of window frames.
-    4. `evaluator`: is responsible for evaluating your signals. Refer to the `evaluator` [docs]() for more information about how to build a signal. The values under this session should only be changed if you know what you are doing. 
-        1. `singal.source_path`: the place to store all the signals. 
-    5. `tester`: is responsible for testing your strategies. Refer to the `tester` [docs]() for more information about how to execute a backtest. The values under this session should only be changed if you know what you are doing.
+    5. `evaluator`: is responsible for evaluating your signals. Refer to the `evaluator` [docs]() for more information about how to build a signal.
+        1. `source_path`: the place to store all of your signals. 
+    6. `tester`: is responsible for testing your signals/strategies. Refer to the `tester` [docs]() for more information about how to execute a backtest.
         1. `save_path`: the place to save all the test results.
-        2. `init_balance`: the initialized balance before testing.
-        2. `profit_margin`: the profit margin.
-        4. `loss_tolerance`: the loss tolerance.
+        2. `init_balance`: the initialized balance before testing. You can also configure this in the NotionDB before executing a backtest request.
+        2. `profit_margin`: the profit margin. You can also configure this in the NotionDB before executing a backtest request.
+        4. `loss_tolerance`: the loss tolerance. You can also configure this in the NotionDB before executing a backtest request.
+    7. `trader`: when evaluator completes its jobs with a valid signal, it will send the signal to trader to place trades. Trades will carry out from placing an order to closing trades by the trader.
+        1. `allowed`: global variable to disable trader. Set it to `false`, trader won't be able to trade. You can also switch this on the tele bot via the notifier after authorizing identity.
+        2. `allowed_markets`: `CASH` or/and `FUTURES`. 
+        3. `allowed_patterns`: if you want to trade only 1 ticker, say `BTCUSDT`, you can set it here. If you don't set anything, it won't trades. If you use the same regex as watcher, It will trade the entire markets.
+        4. `min_balance_to_trade`: the amount in dollar to place an order. With the `FUTURES` market, this amount will be multiply by `max_leverage`. If you don't have enough this minimum amount of balance on the quote currency, it won't trade.
+        5. `max_leverage`: this is used for `FUTURES` market, it will leverage your money to place trades. `CASH` market will always have leverage of 1.
+        6. `max_wait_to_fill`: the trader will cancel the order if it won't be matched after this amount of seconds.
+        7. `loss_tolerance`: the loss tolerance per trade based on the current best price and average filled price.
+        8. `profit_margin`: the profit margin per trade based on the current best price and average filled price.
+        9. `max_loss_per_trade`: this is used for `FUTURES` markets, since I want to set the absolute loss instead of ratio like `CASH` market.
+        10. `min_profit_per_trade`: this is used for `FUTURES` markets, since I want to set absolute profit instead of ratio like `CASH` market.
