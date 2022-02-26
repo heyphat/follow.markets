@@ -27,9 +27,9 @@
         2. `profit_margin`: the profit margin. You can also configure this in the NotionDB before executing a backtest request.
         4. `loss_tolerance`: the loss tolerance. You can also configure this in the NotionDB before executing a backtest request.
     7. `trader`: when evaluator completes its jobs with a valid signal, it will send the signal to trader to place trades. Trades will be carried out from placing a limit order (always limit order set by the signal) to converting base currency back to quote currency by the trader.
-        1. `allowed`: global variable to disable trader. Set it to `false`, trader won't be able to trade. You can also switch this on the tele bot via the notifier after authorizing identity or update the trader's configuration via trader APIs.
+        1. `allowed`: is global variable to disable trader. Set it to `false`, trader won't be able to trade. You can also switch this on the tele bot via the notifier after authorizing identity or update the trader's configuration via trader APIs.
         2. `allowed_markets`: `CASH` or/and `FUTURES`. 
-        3. `allowed_patterns`: if you want to trade only 1 ticker, say `BTCUSDT`, you can set it here. If you don't set anything, it won't trades. If you use the same regex as the watcher, It will trade the entire markets.
+        3. `allowed_patterns`: if you want to trade only 1 ticker, say `BTCUSDT`, you can set it here. If you don't set anything, it won't trade. If you use the same regex as the watcher, It will trade the entire markets.
         4. `min_balance_to_trade`: the amount in dollar to place an order. With the `FUTURES` market, this amount will be multiplied by `max_leverage`. If you don't have enough this minimum balance on the quote currency, it won't trade.
         5. `max_leverage`: this is used for `FUTURES` market, it will leverage your money to place trades. `CASH` market will always have leverage of 1.
         6. `max_wait_to_fill` (in seconds): the trader will cancel an order after this amount of seconds if it hasn't been matched yet.
@@ -37,3 +37,7 @@
         8. `profit_margin`: the profit margin per trade based on the current best price and average filled price. Example, 0.02, 2% gain.
         9. `max_loss_per_trade`: this is used for `FUTURES` markets, since I want to set the absolute loss instead of ratio like `CASH` market.
         10. `min_profit_per_trade`: this is used for `FUTURES` markets, since I want to set absolute profit instead of ratio like `CASH` market.
+5. `database`: this is optional on the system. I didn't want to use any database, but since the project grows bigger, some form of persistent datasource is required. It supports `mongodb` and `notion` at the moment. You can remove this session if you don't want to use db, and just want to track market via tele bot.
+    1. `use`: scpecifies which type of db you want to initialize.
+    2. `mongodb`: the configuration for mongodb.
+    3. `notion`: the configuration for notiondb.
