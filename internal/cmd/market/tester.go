@@ -71,7 +71,7 @@ func (t *tester) test(id int64) (*backtest, error) {
 			})
 		}
 	}
-	if err != t.provider.dbClient.UpdateBacktestResult(bt.bt.ID, bt.summary(t.savePath)) {
+	if err != t.provider.dbClient.UpdateBacktestResult(bt.bt.ID, bt.summary(t.savePath), bt.rcs.Trades...) {
 		bt.bt.UpdateStatus(db.BacktestStatusError)
 	}
 	bt.bt.UpdateStatus(db.BacktestStatusCompleted)

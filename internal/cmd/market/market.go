@@ -324,11 +324,10 @@ func (m *MarketStruct) GetNotifications() map[string]time.Time {
 func (m *MarketStruct) Test(id int64) error {
 	st := db.BacktestStatusAccepted
 	go m.tester.provider.dbClient.UpdateBacktestStatus(id, &st)
-	rs, err := m.tester.test(id)
+	_, err := m.tester.test(id)
 	if err != nil {
 		return err
 	}
-	fmt.Println(rs)
 	return nil
 }
 
