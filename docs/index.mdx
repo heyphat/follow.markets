@@ -1,11 +1,11 @@
 # About
 
-This is an engine that enables traders to configure trading signals from markets' observable price actions, build, backtest trading strategies, and eventually conduct and manage trades.
+This is an engine that enables traders to configure trading signals from markets' observable price actions, build and backtest trading signals/strategies, then eventually conduct and manage trades.
 
 This project was born because I found it hard to
-1. constantly keep track of the entire market movements based on a set of configurable conditions/rules which is called `signal` within the scope of this project.
-2. quickly validate trading strategies with absolutely zero coding skill. When a beautiful strategy pops up in my head, just configure it, then execute the backtest request.
-3. easily trade the markets with my own validated & profitable strategies (not yet completely implemented).
+1. constantly keep track of the entire market movements based on a set of configurable conditions/rules which is called `signal`.
+2. quickly validate trading strategies with absolutely zero coding steps. When a beautiful strategy pops up in my head, just configure it, then execute the backtest request.
+3. easily trade the markets with my own validated & profitable strategies.
 
 So if you find yourself suffering the same pains I had, give it a shot. I would love to hear your thoughts about this.
 
@@ -31,16 +31,25 @@ change the port flag, `-p`, to match with your setting of `server.port` in the `
 
 If you use arm64-based machine or want to build it from the source code, run the `bash scripts/build` to build docker image, it should build the image with `dev` tag.
 
-After the application deployment, you should be able to call to check on the watchlist via the watcher [APIs](https://docs.follow.markets/market-components-and-apis/watcher#get-the-list-of-runners-that-being-watched-from-the-watcher).
+After the application deployment, you should be able to call to check on the watchlist via the watcher [APIs](). If you check the logs you should see this
+
+```
+2022/02/26 11:53:02 Datadog Tracer v1.34.0 INFO: DATADOG TRACER CONFIGURATION .......
+172.17.0.1 - - [26/Feb/2022:11:53:04 +0000] "POST /evaluator/drop/sample HTTP/1.1" 200 0
+INFO: 2022/02/26 11:53:06 watcher.go:147: [watcher] ETHUSDT: started watching
+INFO: 2022/02/26 11:53:08 watcher.go:147: [watcher] ETHUSDTPERP: started watching
+INFO: 2022/02/26 11:53:11 watcher.go:147: [watcher] BTCUSDT: started watching
+INFO: 2022/02/26 11:53:14 watcher.go:147: [watcher] BTCUSDTPERP: started watching
+```
 
 # Configuration
 
-This part discusses only the mandatory variables in the `configs/configs.json` file. For more information, refer to the docs [here](https://docs.follow.markets/followmarkets/configuration).
+This part discusses only the mandatory variables in the `configs/configs.json` file. For more information, refer to the docs [here]().
 
 1. Market data provider: `market.provider.binance`. The application targets crypto market at the moment and consumes data provided by Binance. You need to have a Binance account and get the keys, `api_key` and `secret_key`. 
 2. Market notifier bot: 
     1. `market.notifier.telegram.bot_token`. Ask the [BotFather](https://core.telegram.org/bots) for a telegram `bot_token` if you don't know how to get it yet. Then start a conversation with your bot after deploying the system. If you know your tele account `chatID`, you can add it to the `market.notifier.telegram.chat_ids` in advance. Otherwise, you can obtain it from the `bot`.
-    2. `market.notifier.telegram.bot_password` this password is to prevent other to access your bot. You can set it to anything, the bot will ask for authorization when you talk to it.
+    2. `market.notifier.telegram.bot_password` this password is to prevent others to access your bot. You can set it to anything, the bot will ask you for authorization when you start talking to it.
 3. Visit the signal configurator [here](https://follow.markets) to craft your own signals, or download some samples
     1. 5 minute bullish flag, [here](https://follow.markets/signals/5m_bullish_flag).
     2. 15 minute bullish flag, [here](https://follow.markets/signals/15m_bullish_flag).
@@ -50,23 +59,31 @@ This part discusses only the mandatory variables in the `configs/configs.json` f
 
 # Todos 
 - [ ] Add more indicators.
+- [ ] Add more brokers.
 - [ ] Integrate with the stock market.
 
 # More docs 
-1. [Configuration](https://docs.follow.markets/followmarkets/configuration)
+1. [Configuration]()
 2. The market components & APIs 
-    1. [Watcher](https://docs.follow.markets/market-components-and-apis/watcher)
-    2. [Evaluator](https://docs.follow.markets/market-components-and-apis/evaluator)
-    4. [Notifier](https://docs.follow.markets/market-components-and-apis/notifier)
-    5. [Tetster](https://docs.follow.markets/market-components-and-apis/tester)
+    1. [Watcher]()
+    2. [Evaluator]()
+    4. [Notifier]()
+    5. [Tetster]()
+    6. [Trader]
 3. Other concepts 
-    1. [Signal](https://docs.follow.markets/other-concepts/signal)
-    2. [Strategy](https://docs.follow.markets/other-concepts/strategy)
+    1. [Signal]()
+    2. [Strategy]()
+    3. [runner]()
 
 # Contribution
 Feel free to send PRs.
 
 # Examples
+1. Visit the configurator to see it for yourself.
+2. Some backtest samples
+    1. ![main backtest db](./images/Screen Shot 2022-02-26 at 9.04.54 PM.png)
+    2. ![backtest result db](./images/Screen Shot 2022-02-26 at 9.00.10 PM.png)
+
 # Support
 <p align="center">
     <a href="https://www.buymeacoffee.com/phat" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-green.png" alt="Buy Me A Coffee" height="41" width="174"></a>
