@@ -1,4 +1,4 @@
-
+## Application configurations
 1. `env`: the targeted environment when deploying the application, `development` or `production`. If it is `development`, some parts of the application won't be fully initialized to save API call credit. For example, `coinmarketcap` API calls.
 
 3. `server`: this is the basic configuration of the application. The variables are self-explanatory. If you want to change the port where the application will be listening to, you can do it on `server.port`. 
