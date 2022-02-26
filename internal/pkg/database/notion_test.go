@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"follow.markets/pkg/config"
+	ta "github.com/itsphat/techan"
+	"github.com/sdcoffey/big"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -139,10 +141,26 @@ func Test_Notion_UpdateBacktestResult(t *testing.T) {
 	rs["AverageProfit"] = 0.1
 	rs["Profit"] = 0.1
 	rs["PctGain"] = 0.1
-	//rs["PeriodProfit"] = 0.1
 	rs["TotalTrades"] = 0.1
 	rs["ProfitableTrades"] = 0.1
 	rs["Buy&Hold"] = 0.1
-	err = db.UpdateBacktestResult(1645593180000, rs)
+	entryOrder := ta.Order{
+		Side:          ta.BUY,
+		Security:      "BTCUSDT",
+		Price:         big.NewDecimal(10.0),
+		Amount:        big.NewDecimal(10.0),
+		ExecutionTime: time.Now(),
+	}
+	exitOrder := ta.Order{
+		Side:          ta.SELL,
+		Security:      "BTCUSDT",
+		Price:         big.NewDecimal(12.0),
+		Amount:        big.NewDecimal(10.0),
+		ExecutionTime: time.Now().Add(time.Minute * 10),
+	}
+	ts := ta.NewTradingRecord()
+	ts.Operate(entryOrder)
+	ts.Operate(exitOrder)
+	err = db.UpdateBacktestResult(1645593180000, rs, ts.Trades...)
 	assert.EqualValues(t, nil, err)
 }

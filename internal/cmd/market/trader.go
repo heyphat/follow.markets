@@ -88,12 +88,6 @@ func newTrader(participants *sharedParticipants, configs *config.Configs) (*trad
 	if err = t.binFutuUpdateBalances(); err != nil {
 		return nil, err
 	}
-	//if t.binSpotBalances, err = t.provider.fetchBinSpotBalances(t.quoteCurrency); err != nil {
-	//	return nil, err
-	//}
-	//if t.binFutuBalances, err = t.provider.fetchBinFutuBalances(t.quoteCurrency); err != nil {
-	//	return nil, err
-	//}
 	if t.binSpotListenKey, t.binFutuListenKey, err = t.provider.fetchBinUserDataListenKey(); err != nil {
 		return nil, err
 	}
@@ -454,7 +448,7 @@ func (t *trader) cancleOpenOrder(r *runner.Runner, oid int64) error {
 }
 
 // processEvaluatorRequest take care of requests from the evaluator,
-// which places trades if the given runner passed the initialChecks method and
+// which will place trades if the given runner passes the initialChecks method and
 // the given signal gives a valid limit price.
 func (t *trader) processEvaluatorRequest(msg *message) error {
 	if msg.request.what.runner == nil || msg.request.what.signal == nil {

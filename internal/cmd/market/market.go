@@ -73,7 +73,7 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 	if err != nil {
 		return nil, err
 	}
-	tester, err := newTester(common)
+	tester, err := newTester(common, configs)
 	if err != nil {
 		return nil, err
 	}
@@ -215,10 +215,10 @@ func (m *MarketStruct) initWatchlist() error {
 
 // initSignals adds all the singals defined as json files in the configs/signals dir.
 func (m *MarketStruct) initSignals() error {
-	if len(m.configs.Market.Evaluator.Signal.SourcePath) == 0 {
+	if len(m.configs.Market.Evaluator.SourcePath) == 0 {
 		return nil
 	}
-	files, err := util.IOReadDir(m.configs.Market.Evaluator.Signal.SourcePath)
+	files, err := util.IOReadDir(m.configs.Market.Evaluator.SourcePath)
 	if err != nil {
 		return err
 	}
@@ -324,11 +324,10 @@ func (m *MarketStruct) GetNotifications() map[string]time.Time {
 func (m *MarketStruct) Test(id int64) error {
 	st := db.BacktestStatusAccepted
 	go m.tester.provider.dbClient.UpdateBacktestStatus(id, &st)
-	rs, err := m.tester.test(id)
+	_, err := m.tester.test(id)
 	if err != nil {
 		return err
 	}
-	fmt.Println(rs)
 	return nil
 }
 

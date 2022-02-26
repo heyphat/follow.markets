@@ -1,5 +1,6 @@
 configs/deploy.configs.json
-configs/test_results/*
+configs/results/*.txt
 
 internal/cmd/market/test_result
 scripts/dev
+

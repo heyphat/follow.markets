@@ -5,6 +5,7 @@ import (
 
 	"follow.markets/internal/pkg/runner"
 	"follow.markets/pkg/config"
+	ta "github.com/itsphat/techan"
 )
 
 // The database interface. Each type of database has it own implementation of these methods
@@ -13,21 +14,22 @@ type Client interface {
 	Disconnect()
 	IsInitialized() bool
 
-	// setup methods
+	// trade setup methods
 	InsertSetups(ss []*Setup) (bool, error)
 	InsertOrUpdateSetups(ss []*Setup) (bool, error)
 	GetSetups(r *runner.Runner, opts *QueryOptions) ([]*Setup, error)
 
-	// notification methods
+	// signal notification methods
 	InsertNotifications(ns []*Notification) (bool, error)
 
 	// backtest methods
+	InsertBacktest(bt *Backtest) error
 	GetBacktest(id int64) (*Backtest, error)
 	UpdateBacktestStatus(id int64, st *BacktestStatus) error
-	UpdateBacktestResult(id int64, rs map[string]float64) error
+	UpdateBacktestResult(id int64, rs map[string]float64, ts ...*ta.Position) error
 }
 
-// Create a new db client.
+// Create a new db client based on user configuration options.
 func NewClient(configs *config.Configs) Client {
 	if strings.ToLower(configs.Database.Use) == "mongodb" && configs.Database.MongoDB != nil {
 		return newMongDBClient(configs)

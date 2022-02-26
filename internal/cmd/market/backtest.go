@@ -2,7 +2,9 @@ package market
 
 import (
 	"bytes"
+	"fmt"
 	"os"
+	"time"
 
 	ta "github.com/itsphat/techan"
 	"github.com/sdcoffey/big"
@@ -11,6 +13,7 @@ import (
 	"follow.markets/internal/pkg/runner"
 	"follow.markets/internal/pkg/strategy"
 	tax "follow.markets/internal/pkg/techanex"
+	"follow.markets/pkg/util"
 )
 
 // the tester tests on a backtest.
@@ -47,11 +50,14 @@ func newBacktest(bt *db.Backtest) *backtest {
 	return out
 }
 
-func (bt backtest) summary(file string) map[string]float64 {
+func (bt backtest) name() string {
+	return bt.r.GetName() + "-" + bt.bt.Signal.Name + "-" + time.Now().Format(simpleLayout)
+}
+
+func (bt backtest) summary(dir string) map[string]float64 {
 	sm := make(map[string]float64, 6)
 	sm["Profit"] = ta.TotalProfitAnalysis{}.Analyze(bt.rcs)
 	sm["PctGain"] = ta.PercentGainAnalysis{}.Analyze(bt.rcs)
-	//sm["PeriodProfit"] = ta.PeriodProfitAnalysis{Period: bt.bt.Start.Sub(bt.bt.End)}.Analyze(bt.rcs)
 	sm["TotalTrades"] = float64(len(bt.rcs.Trades))
 	sm["ProfitableTrades"] = ta.ProfitableTradesAnalysis{}.Analyze(bt.rcs)
 	sm["AverageProfit"] = ta.AverageProfitAnalysis{}.Analyze(bt.rcs)
@@ -63,7 +69,13 @@ func (bt backtest) summary(file string) map[string]float64 {
 	}
 	buffer := bytes.NewBufferString("")
 	_ = ta.LogTradesAnalysis{Writer: buffer}.Analyze(bt.rcs)
-	if err := os.WriteFile(file, buffer.Bytes(), 0444); err != nil {
+	file, err := util.ConcatPath(dir, bt.name())
+	if err != nil {
+		fmt.Println("ERROR", err)
+		return sm
+	}
+	if err := os.WriteFile(file+".txt", buffer.Bytes(), 0444); err != nil {
+		fmt.Println("ERROR", err)
 	}
 	return sm
 }

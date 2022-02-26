@@ -61,9 +61,7 @@ type Configs struct {
 			} `json:"runner"`
 		} `json:"watcher"`
 		Evaluator struct {
-			Signal struct {
-				SourcePath string `json:"source_path"`
-			} `json:"signal"`
+			SourcePath string `json:"source_path"`
 		} `json:evaluator`
 		Tester struct {
 			SavePath      string  `json:"save_path"`

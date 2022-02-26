@@ -68,12 +68,10 @@
       }
     },
     "evaluator": {
-      "signal": {
-        "source_path": "./configs/signals"
-      }
+      "source_path": "./configs/signals"
     },
     "tester": {
-      "save_path": "./configs/test_results",
+      "save_path": "./configs/results",
       "init_balance": 10000,
       "profit_margin": 0.1,
       "loss_tolerance": 0.05
