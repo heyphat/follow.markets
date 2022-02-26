@@ -3,4 +3,5 @@ configs/results/*.txt
 
 internal/cmd/market/test_result
 scripts/dev
+scripts/deploy
 
