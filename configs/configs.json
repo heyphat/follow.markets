@@ -99,7 +99,8 @@
       "uri": "mongodb+srv://{USER}:{PASSWORD}@{HOST}:{PORT}/?authSource=admin",
       "db_name": "your_database_name",
       "setup_col_name": "your_collection_name",
-      "notification_col_name": "your_collection_name"
+      "notification_col_name": "your_collection_name",
+      "backtest_col_name": "backtests"
     },
     "notion": {
       "integration_token": "your_integration_token",
