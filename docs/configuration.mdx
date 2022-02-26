@@ -21,7 +21,7 @@
             2. `indicators`: a list of indicators. Refer to the `indicator` docs for a list of supported indicators. An indicator comes with a list of parameters, often be a list of window frames.
     5. `evaluator`: this agent is responsible for evaluating your signals. Refer to the `evaluator` [docs]() for more information about how to build a signal. A signal is a set of rules that are avaluated against the candles and indicators on a runner. Make sure that you set the right params for the `runner` before using it to configure signals.
         1. `source_path`: the place to store all of your signals. All the signals in this directory will be evaluated every minutes (when a new candle formed) to all runners on the watchlist. 
-    6. `tester`: this agent is responsible for testing your signals/strategies. Refer to the `tester` [docs](https://paxon.notion.site/Backtests-ac8e074b161e4994a3b5cea593130a3f) for more information about how to execute a backtest.
+    6. `tester`: this agent is responsible for testing your signals/strategies. Refer to the `tester` [docs](https://paxon.notion.site/Backtests-ac8e074b161e4994a3b5cea593130a3f) for more information about how to execute a backtest request.
         1. `save_path`: the place to save all the test results.
         2. `init_balance`: the initialized balance before testing. You can also configure this in the NotionDB before executing a backtest request.
         2. `profit_margin`: the profit margin. You can also configure this in the NotionDB before executing a backtest request.
