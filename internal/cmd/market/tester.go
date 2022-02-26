@@ -7,6 +7,7 @@ import (
 	ta "github.com/itsphat/techan"
 
 	db "follow.markets/internal/pkg/database"
+	"follow.markets/pkg/config"
 	"follow.markets/pkg/log"
 )
 
@@ -18,12 +19,12 @@ type tester struct {
 	provider *provider
 }
 
-func newTester(participants *sharedParticipants) (*tester, error) {
+func newTester(participants *sharedParticipants, configs *config.Configs) (*tester, error) {
 	if participants == nil || participants.communicator == nil || participants.logger == nil {
 		return nil, errors.New("missing shared participants")
 	}
 	return &tester{
-		savePath: "./test_result",
+		savePath: configs.Market.Tester.SavePath,
 		logger:   participants.logger,
 		provider: participants.provider,
 	}, nil
