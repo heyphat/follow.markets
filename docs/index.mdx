@@ -23,31 +23,32 @@ docker pull phat/follow.markets:latest
 docker run -d --rm --name follow.markets \
   -p 6868:6868\
   -v $(pwd)/configs/configs.json:/configs/configs.json \
-  -v $(pwd)/configs/test_results:/configs/test_results \
+  -v $(pwd)/configs/results:/configs/results \
   phat/follow.markets:latest
 ```
 
 change the port flag, `-p`, to match with your setting of `server.port` in the `configs/configs.json` file if needed.
 
-If you use arm64-based machine or want to build it from the source code, run the `bash scripts/build` to build docker image.
+If you use arm64-based machine or want to build it from the source code, run the `bash scripts/build` to build docker image, it should build the image with `dev` tag.
 
 After the application deployment, you should be able to call to check on the watchlist via the watcher [APIs](https://docs.follow.markets/market-components-and-apis/watcher#get-the-list-of-runners-that-being-watched-from-the-watcher).
 
 # Configuration
 
-This part discusses only the mandatory environment variables in the `configs/configs.json` file. For more information, refer to the docs [here](https://docs.follow.markets/followmarkets/configuration).
+This part discusses only the mandatory variables in the `configs/configs.json` file. For more information, refer to the docs [here](https://docs.follow.markets/followmarkets/configuration).
 
 1. Market data provider: `market.provider.binance`. The application targets crypto market at the moment and consumes data provided by Binance. You need to have a Binance account and get the keys, `api_key` and `secret_key`. 
-2. Market notifier bot: `market.notifier.telegram.bot_token`. Ask the [BotFather](https://core.telegram.org/bots) for a telegram `bot_token` if you don't know how to get it yet. Then start a conversation with your bot after deploying the system. If you know your tele account `chatID`, you can add it to the `market.notifier.telegram.chat_ids` in advance. Otherwise, you can obtain it from the `bot`.
+2. Market notifier bot: 
+    1. `market.notifier.telegram.bot_token`. Ask the [BotFather](https://core.telegram.org/bots) for a telegram `bot_token` if you don't know how to get it yet. Then start a conversation with your bot after deploying the system. If you know your tele account `chatID`, you can add it to the `market.notifier.telegram.chat_ids` in advance. Otherwise, you can obtain it from the `bot`.
+    2. `market.notifier.telegram.bot_password` this password is to prevent other to access your bot. You can set it to anything, the bot will ask for authorization when you talk to it.
 3. Visit the signal configurator [here](https://follow.markets) to craft your own signals, or download some samples
     1. 5 minute bullish flag, [here](https://follow.markets/signals/5m_bullish_flag).
     2. 15 minute bullish flag, [here](https://follow.markets/signals/15m_bullish_flag).
     3. 5 minute bullish rolling, [here](https://follow.markets/signals/5m_bullish_rolling)
     4. 15 minute moving average crossing over, [here](https://follow.markets/signals/15m_ma_cross_over)
-4. Market signal source path: `market.evaluator.signal.source_path`. Place your signals into this directory before deployment. There is another way to add signals to the system, visit the [evaluator docs](https://github.com/itsphat/follow.markets/blob/docs/docs/evaluator.mdx#evaluator) for more information.
+4. Market signal source path: `market.evaluator.source_path`. Place your signals into this directory before deployment. There is another way to add signals to the system, visit the [evaluator docs](https://github.com/itsphat/follow.markets/blob/docs/docs/evaluator.mdx#evaluator) for more information.
 
 # Todos 
-- [ ] Build the trader.
 - [ ] Add more indicators.
 - [ ] Integrate with the stock market.
 
@@ -65,6 +66,7 @@ This part discusses only the mandatory environment variables in the `configs/con
 # Contribution
 Feel free to send PRs.
 
+# Examples
 # Support
 <p align="center">
     <a href="https://www.buymeacoffee.com/phat" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-green.png" alt="Buy Me A Coffee" height="41" width="174"></a>
