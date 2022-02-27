@@ -73,8 +73,9 @@ This part discusses only the mandatory variables in the `configs/configs.json` f
 3. Other concepts 
     1. [Signal]()
     2. [Strategy]()
-    3. [runner]()
-    4. [Database]()
+    3. [Runner]()
+    4. [Indicator]()
+    5. [Database]()
 
 
 # Examples
