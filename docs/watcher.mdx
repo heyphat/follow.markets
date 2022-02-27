@@ -1,0 +1,121 @@
+
+# GET /watcher/watchlist
+$ curl localhost:6868/watcher/watchlist
+
+> {
+>   "watchlist": [
+>     "BTCUSDT", "BTCUSDTPERP"
+>   ]
+> }
+
+
+# GET /watcher/last/{ticker}
+$ curl localhost:6868/watcher/last/BTCUSDT
+
+> {
+>   "candles": [
+>     {
+>       "st": "2022-02-27T02:55:00",
+>       "et": "2022-02-27T02:56:00",
+>       "o": "38516.26",
+>       "h": "38539.30",
+>       "l": "38516.24",
+>       "c": "38539.30",
+>       "v": "6.97",
+>       "tc": 346
+>     },
+>     {
+>       "st": "2022-02-27T02:54:00",
+>       "et": "2022-02-27T02:57:00",
+>       "o": "38511.92",
+>       "h": "38539.30",
+>       "l": "38511.91",
+>       "c": "38539.30",
+>       "v": "11.35",
+>       "tc": 624
+>     },
+>     {
+>       "st": "2022-02-27T02:55:00",
+>       "et": "2022-02-27T03:00:00",
+>       "o": "38516.26",
+>       "h": "38539.30",
+>       "l": "38516.24",
+>       "c": "38539.30",
+>       "v": "6.97",
+>       "tc": 346
+>     },
+>     ...
+>     ...
+>   ],
+>   "indicators": [
+>     {
+>       "st": "2022-02-27T02:55:00",
+>       "et": "2022-02-27T02:56:00",
+>       "indicators": {
+>         "BollingerLowerBand-26": "38474.40",
+>         "BollingerLowerBand-50": "38368.52",
+>         "BollingerUpperBand-26": "38555.40",
+>         "BollingerUpperBand-50": "38575.70",
+>         "ExponentialMovingAverage-200": "38656.04",
+>         "ExponentialMovingAverage-25": "38503.15",
+>         "ExponentialMovingAverage-50": "38487.94",
+>         "ExponentialMovingAverage-9": "38515.28",
+>         "ExponentialMovingAverage-99": "38520.00",
+>         "LowHighChangeMovingAverage-200": "0.12",
+>         "MovingAverge-200": "38685.81",
+>         "MovingAverge-50": "38472.11",
+>         "MovingAverge-99": "38453.55",
+>         "OpenCloseAbsoluteChangeMovingAverage-200": "0.07",
+>         "VolumeMovingAverage-200": "25.77",
+>         "VolumeMovingAverage-50": "14.98"
+>       }
+>     },
+>     {
+>       "st": "2022-02-27T02:54:00",
+>       "et": "2022-02-27T02:57:00",
+>       "indicators": {
+>         "BollingerLowerBand-26": "38318.17",
+>         "BollingerLowerBand-50": "38205.50",
+>         "BollingerUpperBand-26": "38596.02",
+>         "BollingerUpperBand-50": "38884.70",
+>         "ExponentialMovingAverage-200": "38931.73",
+>         "ExponentialMovingAverage-25": "38501.48",
+>         "ExponentialMovingAverage-50": "38588.55",
+>         "ExponentialMovingAverage-9": "38511.29",
+>         "ExponentialMovingAverage-99": "38760.45",
+>         "LowHighChangeMovingAverage-200": "0.19",
+>         "MovingAverge-200": "39042.28",
+>         "MovingAverge-50": "38545.10",
+>         "MovingAverge-99": "38840.43",
+>         "OpenCloseAbsoluteChangeMovingAverage-200": "0.10",
+>         "VolumeMovingAverage-200": "59.19",
+>         "VolumeMovingAverage-50": "87.97"
+>       }
+>     },
+>     {
+>       "st": "2022-02-27T02:55:00",
+>       "et": "2022-02-27T03:00:00",
+>       "indicators": {
+>         "BollingerLowerBand-26": "38244.43",
+>         "BollingerLowerBand-50": "38163.52",
+>         "BollingerUpperBand-26": "38741.66",
+>         "BollingerUpperBand-50": "39326.71",
+>         "ExponentialMovingAverage-200": "38997.56",
+>         "ExponentialMovingAverage-25": "38554.31",
+>         "ExponentialMovingAverage-50": "38707.45",
+>         "ExponentialMovingAverage-9": "38507.19",
+>         "ExponentialMovingAverage-99": "38880.65",
+>         "LowHighChangeMovingAverage-200": "0.25",
+>         "MovingAverge-200": "39051.43",
+>         "MovingAverge-50": "38745.12",
+>         "MovingAverge-99": "39022.40",
+>         "OpenCloseAbsoluteChangeMovingAverage-200": "0.13",
+>         "VolumeMovingAverage-200": "94.22",
+>         "VolumeMovingAverage-50": "123.61"
+>       }
+>     }
+>     ...
+>     ...
+>   ]
+> }
+
