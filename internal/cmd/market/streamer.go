@@ -49,7 +49,7 @@ type controller struct {
 }
 
 // connect connects the streamer to other market participants py listening to
-// a decicated channels for the communication.
+// decicated channels for the communication.
 func (s *streamer) connect() {
 	s.Lock()
 	defer s.Unlock()
