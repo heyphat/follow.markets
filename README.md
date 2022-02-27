@@ -73,8 +73,9 @@ This part discusses only the mandatory variables in the `configs/configs.json` f
 3. Other concepts 
     1. [Signal]()
     2. [Strategy]()
-    3. [runner]()
-    4. [Database]()
+    3. [Runner]()
+    4. [Indicator]()
+    5. [Database]()
 
 
 # Examples
@@ -90,6 +91,9 @@ This part discusses only the mandatory variables in the `configs/configs.json` f
 
 # Contribution
 Feel free to send PRs.
+
+# Disclaimer
+This software is for educational purposes only. Do not risk money which you are afraid to lose. USE THE SOFTWARE AT YOUR OWN RISK. THE AUTHORS AND ALL AFFILIATES ASSUME NO RESPONSIBILITY FOR YOUR TRADING RESULTS.
 
 # Support
 <p align="center">
