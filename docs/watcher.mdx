@@ -120,3 +120,21 @@ curl localhost:6868/watcher/last/BTCUSDT
 >   ]
 > }
 
+# GET /watcher/synced/{ticker}
+```
+curl localhost:6868/watcher/synced/BTCUSDT
+```
+
+> {
+>   "is_synced": true
+> }
+
+# POST /watcher/watch/{ticker}
+```
+curl -x -POST localhost:6868/watcher/watch/BTCUSDT
+```
+
+# POST /watcher/drop/{ticker}
+```
+curl -x -POST localhost:6868/watcher/drop/BTCUSDT
+```
