@@ -1,6 +1,9 @@
 
 # GET /watcher/watchlist
-$ curl localhost:6868/watcher/watchlist
+
+```
+curl localhost:6868/watcher/watchlist
+```
 
 > {
 >   "watchlist": [
@@ -10,7 +13,9 @@ $ curl localhost:6868/watcher/watchlist
 
 
 # GET /watcher/last/{ticker}
-$ curl localhost:6868/watcher/last/BTCUSDT
+```
+curl localhost:6868/watcher/last/BTCUSDT
+```
 
 > {
 >   "candles": [
@@ -44,8 +49,6 @@ $ curl localhost:6868/watcher/last/BTCUSDT
 >       "v": "6.97",
 >       "tc": 346
 >     },
->     ...
->     ...
 >   ],
 >   "indicators": [
 >     {
@@ -114,8 +117,6 @@ $ curl localhost:6868/watcher/last/BTCUSDT
 >         "VolumeMovingAverage-50": "123.61"
 >       }
 >     }
->     ...
->     ...
 >   ]
 > }
 
