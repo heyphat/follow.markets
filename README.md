@@ -92,6 +92,9 @@ This part discusses only the mandatory variables in the `configs/configs.json` f
 # Contribution
 Feel free to send PRs.
 
+# Disclaimer
+This software is for educational purposes only. Do not risk money which you are afraid to lose. USE THE SOFTWARE AT YOUR OWN RISK. THE AUTHORS AND ALL AFFILIATES ASSUME NO RESPONSIBILITY FOR YOUR TRADING RESULTS.
+
 # Support
 <p align="center">
     <a href="https://www.buymeacoffee.com/phat" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-green.png" alt="Buy Me A Coffee" height="41" width="174"></a>
