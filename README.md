@@ -30,7 +30,7 @@ change the port flag, `-p`, to match with your setting of `server.port` in the `
 
 If you use arm64-based machine or want to build it from the source code, run the `bash scripts/build` to build docker image, it should build the image with `dev` tag.
 
-After the application deployment, you should be able to call to check on the watchlist via the watcher [APIs](). If you check the logs you should see this
+After the application deployment, you should be able to call to check on the watchlist via the watcher [APIs](https://github.com/itsphat/follow.markets/blob/main/docs/watcher.mdx). If you check the logs you should see this
 
 ```
 2022/02/26 11:53:02 Datadog Tracer v1.34.0 INFO: DATADOG TRACER CONFIGURATION .......
@@ -64,7 +64,7 @@ This part discusses only the mandatory variables in the `configs/configs.json` f
 # More docs (to be updated...)
 1. [Configuration](https://github.com/itsphat/follow.markets/tree/main/configs)
 2. The market components & APIs 
-    1. [Watcher]()
+    1. [Watcher](https://github.com/itsphat/follow.markets/blob/main/docs/watcher.mdx)
     2. [Evaluator]()
     4. [Notifier]()
     5. [Tester]()
@@ -81,13 +81,13 @@ This part discusses only the mandatory variables in the `configs/configs.json` f
 # Examples
 1. Visit the configurator to see it for yourself.
 2. Some backtest samples. I'm using Notion option from the `database` configs. Here is the [link](https://paxon.notion.site/Dev-Trading-5b9bc26a7a2c4bdbb6f671a59fc8a326) to the notionDB template that you need to duplicate if you want to use notion.
-    1. ![main backtest db](images/backtest_db.png)
-    2. ![backtest result db](images/backtest_results.png)
+    1. ![main backtest db](docs/images/backtestDB.png)
+    2. ![backtest result db](docs/images/backtestRS.png)
 3. Some real trades completed by the bot with one of the sample signals
-    1. ![trades](images/trades.png)
+    1. ![trades](docs/images/trades.png)
 4. Telebot communications
-    1. [bot signal](images/bot_signal.PNG)
-    2. [trade_report](images/trade_report.PNG) 
+    1. ![bot signal](docs/images/bot.png)
+    2. ![trade_report](docs/images/report.png) 
 
 # Contribution
 Feel free to send PRs.
