@@ -30,7 +30,7 @@ change the port flag, `-p`, to match with your setting of `server.port` in the `
 
 If you use arm64-based machine or want to build it from the source code, run the `bash scripts/build` to build docker image, it should build the image with `dev` tag.
 
-After the application deployment, you should be able to call to check on the watchlist via the watcher [APIs](https://github.com/itsphat/follow.markets/blob/main/docs/watcher.mdx). If you check the logs you should see this
+After the application deployment, you should be able to call to check on the watchlist via the watcher [APIs](https://github.com/heyphat/follow.markets/blob/main/docs/watcher.mdx). If you check the logs you should see this
 
 ```
 2022/02/26 11:53:02 Datadog Tracer v1.34.0 INFO: DATADOG TRACER CONFIGURATION .......
@@ -43,7 +43,7 @@ INFO: 2022/02/26 11:53:14 watcher.go:147: [watcher] BTCUSDTPERP: started watchin
 
 # Configuration
 
-This part discusses only the mandatory variables in the `configs/configs.json` file. For more information, refer to the docs [here](https://github.com/itsphat/follow.markets/tree/main/configs).
+This part discusses only the mandatory variables in the `configs/configs.json` file. For more information, refer to the docs [here](https://github.com/heyphat/follow.markets/tree/main/configs).
 
 1. Market data provider: `market.provider.binance`. The application targets crypto market at the moment and consumes data provided by Binance. You need to have a Binance account and get the keys, `api_key` and `secret_key`. 
 2. Market notifier bot: 
@@ -62,9 +62,9 @@ This part discusses only the mandatory variables in the `configs/configs.json` f
 - [ ] Integrate with the stock market.
 
 # More docs (to be updated...)
-1. [Configuration](https://github.com/itsphat/follow.markets/tree/main/configs)
+1. [Configuration](https://github.com/heyphat/follow.markets/tree/main/configs)
 2. The market components & APIs 
-    1. [Watcher](https://github.com/itsphat/follow.markets/blob/main/docs/watcher.mdx)
+    1. [Watcher](https://github.com/heyphat/follow.markets/blob/main/docs/watcher.mdx)
     2. [Evaluator]()
     4. [Notifier]()
     5. [Tester]()
