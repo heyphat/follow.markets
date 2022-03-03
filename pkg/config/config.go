@@ -47,7 +47,8 @@ type Configs struct {
 			} `json:"coinmarketcap"`
 		} `json:"provider"`
 		Notifier struct {
-			Telegram struct {
+			ShowDescription bool `json:"show_signal_description"`
+			Telegram        struct {
 				ChatIDs     []string `json:"chat_ids"`
 				BotToken    string   `json:"bot_token"`
 				BotPassword string   `json:"bot_password"`
