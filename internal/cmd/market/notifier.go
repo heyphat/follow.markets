@@ -17,11 +17,12 @@ import (
 
 type notifier struct {
 	sync.Mutex
-	connected bool
-	bot       *tele.BotAPI
-	notis     *sync.Map
-	chatIDs   []int64
-	password  string
+	connected        bool
+	bot              *tele.BotAPI
+	notis            *sync.Map
+	chatIDs          []int64
+	password         string
+	showDesscription bool
 
 	// shared properties with other market participants
 	logger       *log.Logger
@@ -51,11 +52,12 @@ func newNotifier(participants *sharedParticipants, configs *config.Configs) (*no
 		return nil, err
 	}
 	return &notifier{
-		connected: false,
-		bot:       bot,
-		notis:     &sync.Map{},
-		chatIDs:   chatIDs,
-		password:  configs.Market.Notifier.Telegram.BotPassword,
+		connected:        false,
+		bot:              bot,
+		notis:            &sync.Map{},
+		chatIDs:          chatIDs,
+		password:         configs.Market.Notifier.Telegram.BotPassword,
+		showDesscription: configs.Market.Notifier.ShowDescription,
 
 		logger:       participants.logger,
 		communicator: participants.communicator,
@@ -175,10 +177,11 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	if msg.request.what.runner == nil || msg.request.what.signal == nil {
 		return
 	}
-	s := msg.request.what.signal
-	r := msg.request.what.runner
-	id := r.GetUniqueName() + "-" + s.Name
-	mess := id + "\n" + s.Description()
+	r, s := msg.request.what.runner, msg.request.what.signal
+	id, mess := r.GetUniqueName()+"-"+s.Name, r.GetUniqueName()+"-"+s.Name
+	if n.showDesscription {
+		mess += "\n" + s.Description()
+	}
 	notis := []*db.Notification{
 		&db.Notification{
 			Ticker:    r.GetName(),
