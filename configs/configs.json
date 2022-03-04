@@ -37,7 +37,7 @@
       "show_signal_description": false,
       "telegram": {
         "bot_token": "telegram_bot_token",
-        "bot_passowrd": "your_password",
+        "bot_password": "your_password",
         "chat_ids": [
           "telegrame_chat_id_1",
           "telegrame_chat_id_2"
