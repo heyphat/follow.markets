@@ -98,7 +98,7 @@ func (n *notifier) await() {
 			cmd := update.Message.Command()
 			if len(cmd) > 0 {
 				switch cmd {
-				case "start":
+				case "start", "authorize":
 					validUntil = time.Now().Add(time.Second * 30)
 					msg.Text = "Enter your password within 30 seconds."
 				case string(TRADER):
@@ -106,7 +106,7 @@ func (n *notifier) await() {
 						msg.Text = "Select an option"
 						msg.ReplyMarkup = traderKeyboad
 					} else {
-						msg.Text = "Please authorize yourself with the passowrd first."
+						msg.Text = "Please authorize yourself with the password first."
 					}
 				}
 				msg.ReplyToMessageID = update.Message.MessageID
