@@ -34,7 +34,7 @@ type Configs struct {
 		Base struct {
 			LocalTime string `json:"local_timezone"`
 			Crypto    struct {
-				QuoteCurrency string `json:"crypto_quote"`
+				QuoteCurrency string `json:"quote_currency"`
 			} `json:"crypto"`
 		} `json:"base"`
 		Provider struct {
