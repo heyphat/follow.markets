@@ -370,27 +370,27 @@ func (t *trader) shouldClose(st *setup, currentPrice big.Decimal) (bool, big.Dec
 	if currentPrice.EQ(big.ZERO) || st.avgFilledPrice.EQ(big.ZERO) {
 		return true, big.ZERO, big.ZERO
 	}
-	//isFutures := st.runner.GetMarketType() == runner.Futures
-	//isCash := st.runner.GetMarketType() == runner.Cash
+	isFutures := st.runner.GetMarketType() == runner.Futures
+	isCash := st.runner.GetMarketType() == runner.Cash
 	isBuy := strings.ToUpper(st.orderSide) == "BUY"
 	if currentPrice.LTE(st.avgFilledPrice) {
 		pnl := st.avgFilledPrice.Sub(currentPrice).Div(currentPrice)
 		pnlDollar := pnl.Mul(st.accFilledQtity.Mul(st.avgFilledPrice)).Mul(st.usedLeverage)
 		if isBuy {
-			//return (isCash && pnl.GTE(t.lossTolerance)) || (isFutures && pnlDollar.GTE(t.maxLossPerTrade)), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
-			return pnlDollar.GTE(t.maxLossPerTrade), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
+			return (isCash && pnl.GTE(t.lossTolerance)) || (isFutures && pnlDollar.GTE(t.maxLossPerTrade)), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
+			//return pnlDollar.GTE(t.maxLossPerTrade), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
 		}
-		//return (isCash && pnl.GTE(t.profitMargin)) || (isFutures && pnlDollar.GTE(t.minProfitPerTrade)), pnl, pnlDollar
-		return pnlDollar.GTE(t.minProfitPerTrade), pnl, pnlDollar
+		return (isCash && pnl.GTE(t.profitMargin)) || (isFutures && pnlDollar.GTE(t.minProfitPerTrade)), pnl, pnlDollar
+		//return pnlDollar.GTE(t.minProfitPerTrade), pnl, pnlDollar
 	} else {
 		pnl := currentPrice.Sub(st.avgFilledPrice).Div(st.avgFilledPrice)
 		pnlDollar := pnl.Mul(st.accFilledQtity.Mul(st.avgFilledPrice)).Mul(st.usedLeverage)
 		if !isBuy {
-			//return (isCash && pnl.GTE(t.lossTolerance)) || (isFutures && pnlDollar.GTE(t.maxLossPerTrade)), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
-			return pnlDollar.GTE(t.maxLossPerTrade), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
+			return (isCash && pnl.GTE(t.lossTolerance)) || (isFutures && pnlDollar.GTE(t.maxLossPerTrade)), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
+			//return pnlDollar.GTE(t.maxLossPerTrade), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
 		}
-		//return (isCash && pnl.GTE(t.profitMargin)) || (isFutures && pnlDollar.GTE(t.minProfitPerTrade)), pnl, pnlDollar
-		return pnlDollar.GTE(t.minProfitPerTrade), pnl, pnlDollar
+		return (isCash && pnl.GTE(t.profitMargin)) || (isFutures && pnlDollar.GTE(t.minProfitPerTrade)), pnl, pnlDollar
+		//return pnlDollar.GTE(t.minProfitPerTrade), pnl, pnlDollar
 	}
 	return false, big.ZERO, big.ZERO
 }
