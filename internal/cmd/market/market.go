@@ -100,8 +100,11 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 			common.logger.Error.Println("failed to init signals with err: ", err)
 		}
 		go func() {
-			if err := Market.initWatchlist(); err != nil {
-				common.logger.Error.Println("failed to init watchlist with err: ", err)
+			for {
+				if err := Market.initWatchlist(); err != nil {
+					common.logger.Error.Println("failed to init watchlist with err: ", err)
+				}
+				time.Sleep(time.Hour * 24)
 			}
 		}()
 		go func() {
