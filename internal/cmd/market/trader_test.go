@@ -308,3 +308,18 @@ func Test_Trader_UpdateConfigs(t *testing.T) {
 	assert.EqualValues(t, "10.0", trader.maxLossPerTrade.FormattedString(1))
 	assert.EqualValues(t, "20.0", trader.minProfitPerTrade.FormattedString(1))
 }
+
+func Test_Trader_IsRecentlyTraded(t *testing.T) {
+	trader, r, err := testSuit("BTCUSDT")
+	assert.EqualValues(t, nil, err)
+
+	o := &bn.CreateOrderResponse{
+		Price: "10", OrigQuantity: "20",
+		TransactTime: time.Now().Unix() * 1000}
+	s := &strategy.Signal{}
+	st := newSetup(r, s, big.ONE, o)
+
+	trader.binTrades.Store(r.GetUniqueName(), st)
+
+	assert.EqualValues(t, true, trader.isRecentlyTraded(r))
+}
