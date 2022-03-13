@@ -15,6 +15,10 @@ import (
 	"follow.markets/pkg/log"
 )
 
+const (
+	waitToInitChannel = 3
+)
+
 type streamer struct {
 	sync.Mutex
 	connected   bool
@@ -245,7 +249,7 @@ func (s *streamer) streamingBinanceKline(name string, stop chan struct{},
 			<-done
 		}
 	}()
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * waitToInitChannel)
 	return stop
 }
 
@@ -265,7 +269,7 @@ func (s *streamer) streamingBinanceFuturesKline(name string, stop chan struct{},
 			<-done
 		}
 	}()
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * waitToInitChannel)
 	return stop
 }
 
@@ -285,7 +289,7 @@ func (s *streamer) streamingBinanceTrade(name string, stop chan struct{},
 			<-done
 		}
 	}()
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * waitToInitChannel)
 	return stop
 }
 
@@ -305,7 +309,7 @@ func (s *streamer) streamingBinanceFuturesTrade(name string, stop chan struct{},
 			<-done
 		}
 	}()
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * waitToInitChannel)
 	return stop
 }
 
@@ -325,7 +329,7 @@ func (s *streamer) streamingBinancePartitialDepth(name string,
 			<-done
 		}
 	}()
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * waitToInitChannel)
 	return stop
 }
 
@@ -346,7 +350,7 @@ func (s *streamer) streamingBinanceFuturesPartitialDepth(name string,
 		}
 	}()
 	// DO NOT remove the sleep, otherwise the channel won't be initialized
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * waitToInitChannel)
 	return stop
 }
 
