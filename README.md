@@ -13,7 +13,7 @@ So if you find yourself suffering the same pains I had, give it a shot. I would 
 The easiest way is to pull the docker image `phat/follow.markets:latest` from the docker hub, clone this project and update the `configs/configs.json` file with your personal credentials and likings then run the docker command 
 
 ```
-git clone https://github.com/itsphat/follow.markets.git
+git clone https://github.com/heyphat/follow.markets.git
 
 cd follow.markets
 
