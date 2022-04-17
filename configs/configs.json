@@ -34,6 +34,7 @@
       }
     },
     "notifier": {
+      "show_signal_description": false,
       "telegram": {
         "bot_token": "telegram_bot_token",
         "bot_password": "your_password",

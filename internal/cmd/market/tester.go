@@ -53,9 +53,13 @@ func (t *tester) test(id int64) (*backtest, error) {
 			continue
 		}
 		if bt.s.ShouldEnter(i, bt.rcs) {
+			price, ok := bt.bt.Signal.TradeExecutionPrice(bt.r)
+			if !ok {
+				price = c.ClosePrice
+			}
 			bt.rcs.Operate(ta.Order{
 				Side:          ta.OrderSideFromString(bt.s.EntryRule.Signal.BacktestSide("BUY")),
-				Price:         c.ClosePrice,
+				Price:         price,
 				Amount:        bt.balance.Div(c.ClosePrice),
 				Security:      bt.r.GetName(),
 				ExecutionTime: c.Period.Start,

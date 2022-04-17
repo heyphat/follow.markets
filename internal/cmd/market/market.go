@@ -100,8 +100,11 @@ func NewMarket(configFilePath *string) (*MarketStruct, error) {
 			common.logger.Error.Println("failed to init signals with err: ", err)
 		}
 		go func() {
-			if err := Market.initWatchlist(); err != nil {
-				common.logger.Error.Println("failed to init watchlist with err: ", err)
+			for {
+				if err := Market.initWatchlist(); err != nil {
+					common.logger.Error.Println("failed to init watchlist with err: ", err)
+				}
+				time.Sleep(time.Hour * 24)
 			}
 		}()
 		go func() {
@@ -323,7 +326,7 @@ func (m *MarketStruct) GetNotifications() map[string]time.Time {
 // tester endpoints
 func (m *MarketStruct) Test(id int64) error {
 	st := db.BacktestStatusAccepted
-	go m.tester.provider.dbClient.UpdateBacktestStatus(id, &st)
+	m.tester.provider.dbClient.UpdateBacktestStatus(id, &st)
 	_, err := m.tester.test(id)
 	if err != nil {
 		return err

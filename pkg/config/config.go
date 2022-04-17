@@ -34,7 +34,7 @@ type Configs struct {
 		Base struct {
 			LocalTime string `json:"local_timezone"`
 			Crypto    struct {
-				QuoteCurrency string `json:"crypto_quote"`
+				QuoteCurrency string `json:"quote_currency"`
 			} `json:"crypto"`
 		} `json:"base"`
 		Provider struct {
@@ -47,7 +47,8 @@ type Configs struct {
 			} `json:"coinmarketcap"`
 		} `json:"provider"`
 		Notifier struct {
-			Telegram struct {
+			ShowDescription bool `json:"show_signal_description"`
+			Telegram        struct {
 				ChatIDs     []string `json:"chat_ids"`
 				BotToken    string   `json:"bot_token"`
 				BotPassword string   `json:"bot_password"`

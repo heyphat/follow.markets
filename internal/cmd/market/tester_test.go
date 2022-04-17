@@ -40,7 +40,7 @@ func Test_Tester_NotionTest(t *testing.T) {
 	assert.EqualValues(t, nil, err)
 	assert.EqualValues(t, "development", configs.Stage)
 
-	tester, err := newTester(initSharedParticipants(configs))
+	tester, err := newTester(initSharedParticipants(configs), configs)
 	assert.EqualValues(t, nil, err)
 
 	rs, err := tester.test(1645593180000)

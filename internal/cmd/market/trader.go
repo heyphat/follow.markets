@@ -18,6 +18,7 @@ import (
 	tax "follow.markets/internal/pkg/techanex"
 	"follow.markets/pkg/config"
 	"follow.markets/pkg/log"
+	"follow.markets/pkg/util"
 )
 
 type trader struct {
@@ -345,6 +346,20 @@ func (t *trader) isEnoughBalance(r *runner.Runner) bool {
 	return false
 }
 
+// isRecentlyTraded checks if the runner was being recently traded, within the period of
+// waiting for order filled.
+func (t *trader) isRecentlyTraded(r *runner.Runner) bool {
+	val, ok := t.binTrades.Load(r.GetUniqueName())
+	if !ok {
+		return ok
+	}
+	st := val.(*setup)
+	if time.Now().Sub(util.ConvertUnixMillisecond2Time(st.orderTime)) < t.maxWaitToFill {
+		return true
+	}
+	return false
+}
+
 // initialCheck validates if a runner is currently allowed to be traded before placing an order to the markets.
 // the checks include isAllowedMarkets, isAllowedPatterns, not isHolding, not isOrdering and the account has
 // enough balance to open a trade.
@@ -355,7 +370,7 @@ func (t *trader) initialChecks(r *runner.Runner) bool {
 	if !t.isAllowedMarkets(r) || !t.isAllowedPatterns(r) {
 		return false
 	}
-	if t.isHolding(r) || t.isOrdering(r) {
+	if t.isHolding(r) || t.isOrdering(r) || t.isRecentlyTraded(r) {
 		return false
 	}
 	if !t.isEnoughBalance(r) {
@@ -378,15 +393,19 @@ func (t *trader) shouldClose(st *setup, currentPrice big.Decimal) (bool, big.Dec
 		pnlDollar := pnl.Mul(st.accFilledQtity.Mul(st.avgFilledPrice)).Mul(st.usedLeverage)
 		if isBuy {
 			return (isCash && pnl.GTE(t.lossTolerance)) || (isFutures && pnlDollar.GTE(t.maxLossPerTrade)), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
+			//return pnlDollar.GTE(t.maxLossPerTrade), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
 		}
 		return (isCash && pnl.GTE(t.profitMargin)) || (isFutures && pnlDollar.GTE(t.minProfitPerTrade)), pnl, pnlDollar
+		//return pnlDollar.GTE(t.minProfitPerTrade), pnl, pnlDollar
 	} else {
 		pnl := currentPrice.Sub(st.avgFilledPrice).Div(st.avgFilledPrice)
 		pnlDollar := pnl.Mul(st.accFilledQtity.Mul(st.avgFilledPrice)).Mul(st.usedLeverage)
 		if !isBuy {
 			return (isCash && pnl.GTE(t.lossTolerance)) || (isFutures && pnlDollar.GTE(t.maxLossPerTrade)), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
+			//return pnlDollar.GTE(t.maxLossPerTrade), pnl.Mul(big.NewFromString("-1")), pnlDollar.Mul(big.NewFromString("-1"))
 		}
-		return (isCash && pnl.GTE(t.profitMargin)) || (isFutures && pnlDollar.GTE(t.maxLossPerTrade)), pnl, pnlDollar
+		return (isCash && pnl.GTE(t.profitMargin)) || (isFutures && pnlDollar.GTE(t.minProfitPerTrade)), pnl, pnlDollar
+		//return pnlDollar.GTE(t.minProfitPerTrade), pnl, pnlDollar
 	}
 	return false, big.ZERO, big.ZERO
 }
