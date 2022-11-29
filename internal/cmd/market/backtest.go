@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 	"github.com/sdcoffey/big"
 
 	db "follow.markets/internal/pkg/database"

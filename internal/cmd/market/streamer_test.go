@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 
 	"follow.markets/internal/pkg/runner"
 	tax "follow.markets/internal/pkg/techanex"

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 	"github.com/sdcoffey/big"
 
 	tax "follow.markets/internal/pkg/techanex"

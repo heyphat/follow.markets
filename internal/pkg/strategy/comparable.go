@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 	"github.com/sdcoffey/big"
 
 	"follow.markets/internal/pkg/runner"

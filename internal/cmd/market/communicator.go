@@ -8,7 +8,7 @@ import (
 	"follow.markets/internal/pkg/runner"
 	"follow.markets/internal/pkg/strategy"
 	tax "follow.markets/internal/pkg/techanex"
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 )
 
 // this agent handles all the communications between other agents.

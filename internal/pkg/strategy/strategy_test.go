@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	bn "github.com/adshao/go-binance/v2"
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 
 	"follow.markets/internal/pkg/runner"
 	tax "follow.markets/internal/pkg/techanex"

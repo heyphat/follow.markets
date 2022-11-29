@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strconv"
 
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 )
 
 func AvailableIndicators() []string {

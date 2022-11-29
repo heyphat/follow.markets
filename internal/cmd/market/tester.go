@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 
 	db "follow.markets/internal/pkg/database"
 	"follow.markets/pkg/config"
