@@ -5,7 +5,7 @@ import (
 
 	"follow.markets/internal/pkg/runner"
 	"follow.markets/pkg/config"
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 )
 
 // The database interface. Each type of database has it own implementation of these methods

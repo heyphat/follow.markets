@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +15,8 @@ import (
 	"follow.markets/pkg/log"
 	"follow.markets/pkg/util"
 )
+
+const tradingViewURL = "https://www.tradingview.com/chart/?symbol={sb}&interval={intv}"
 
 type notifier struct {
 	sync.Mutex
@@ -182,6 +185,9 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	if n.showDesscription {
 		mess += "\n" + s.Description()
 	}
+	url := strings.Replace(tradingViewURL, "{sb}", r.GetName(), 1)
+	url = strings.Replace(url, "{intv}", strconv.Itoa(int(s.TimePeriod/time.Minute)), 1)
+	mess += "\n" + url
 	notis := []*db.Notification{
 		&db.Notification{
 			Ticker:    r.GetName(),

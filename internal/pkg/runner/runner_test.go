@@ -5,7 +5,7 @@ import (
 	"time"
 
 	bn "github.com/adshao/go-binance/v2"
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 	"github.com/stretchr/testify/assert"
 
 	tax "follow.markets/internal/pkg/techanex"

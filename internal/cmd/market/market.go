@@ -192,6 +192,7 @@ func (m *MarketStruct) initWatchlist() error {
 				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs(runner.Cash), fd); err != nil {
 					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol+"-"+string(runner.Cash), err.Error()))
 				}
+				time.Sleep(time.Second * 15)
 			}
 		}
 		for _, s := range futuStats {
@@ -210,6 +211,7 @@ func (m *MarketStruct) initWatchlist() error {
 				if err := m.watcher.watch(s.Symbol, m.parseRunnerConfigs(runner.Futures), fd); err != nil {
 					m.watcher.logger.Error.Println(m.watcher.newLog(s.Symbol+"-"+string(runner.Futures), err.Error()))
 				}
+				time.Sleep(time.Second * 15)
 			}
 		}
 	}

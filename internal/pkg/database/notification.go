@@ -3,7 +3,7 @@ package database
 import (
 	"time"
 
-	notion "github.com/itsphat/notionapi"
+	notion "github.com/heyphat/notionapi"
 )
 
 type Notification struct {

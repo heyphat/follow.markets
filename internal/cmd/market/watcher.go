@@ -8,7 +8,7 @@ import (
 
 	"follow.markets/internal/pkg/runner"
 	"follow.markets/pkg/log"
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 
 	tax "follow.markets/internal/pkg/techanex"
 )
