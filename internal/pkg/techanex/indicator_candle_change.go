@@ -1,7 +1,7 @@
 package techanex
 
 import (
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 	"github.com/sdcoffey/big"
 )
 

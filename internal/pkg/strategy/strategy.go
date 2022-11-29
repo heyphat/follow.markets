@@ -2,7 +2,7 @@ package strategy
 
 import (
 	"follow.markets/internal/pkg/runner"
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 )
 
 type Strategy struct {

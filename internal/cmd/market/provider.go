@@ -11,7 +11,7 @@ import (
 	"follow.markets/pkg/config"
 	bn "github.com/adshao/go-binance/v2"
 	bnf "github.com/adshao/go-binance/v2/futures"
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 	cc "github.com/miguelmota/go-coinmarketcap/pro/v1"
 	"github.com/sdcoffey/big"
 
@@ -22,6 +22,7 @@ import (
 
 const (
 	timeFramePattern = `\d+(m|h)`
+	klineMaxSize     = 500
 )
 
 type provider struct {

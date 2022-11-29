@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 	"github.com/sdcoffey/big"
 )
 

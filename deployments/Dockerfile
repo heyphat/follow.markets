@@ -1,5 +1,5 @@
 # Compile
-FROM golang:1.17 as builder
+FROM golang:1.18 as builder
 
 WORKDIR /follow.markets
 
@@ -8,7 +8,7 @@ RUN go mod download
 
 COPY . .
 RUN rm -r configs
-RUN CGO_ENABLED=0 GOOS=linux go build ./cmd/app
+RUN CGO_ENABLED=0 GOOS=linux go build -buildvcs=false ./cmd/app
 
 # This image is to deploy the binary
 FROM alpine

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"follow.markets/pkg/config"
-	ta "github.com/itsphat/techan"
+	ta "github.com/heyphat/techan"
 	"github.com/sdcoffey/big"
 	"github.com/stretchr/testify/assert"
 )

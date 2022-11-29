@@ -14,8 +14,8 @@ import (
 	"follow.markets/pkg/config"
 	"follow.markets/pkg/log"
 	"follow.markets/pkg/util"
-	notion "github.com/itsphat/notionapi"
-	ta "github.com/itsphat/techan"
+	notion "github.com/heyphat/notionapi"
+	ta "github.com/heyphat/techan"
 )
 
 type Notion struct {
