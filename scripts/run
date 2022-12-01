@@ -1,19 +1,18 @@
 #!/bin/bash
 
-STAGE=$1
-if [ -z "$1" ]; then
-    STAGE=dev
-fi
 
-LOGGER_URL=
+bash script/build
 
+STAGE=$(git rev-parse --symbolic-full-name --abbrev-ref HEAD)
 docker kill ${STAGE}.follow.markets
 docker run -d --rm --name ${STAGE}.follow.markets \
   -p 6868:6868 \
-  -v $(pwd)/configs/deploy.configs.json:/configs/configs.json \
+  -v $(pwd)/configs/${STAGE}.configs.json:/configs/configs.json \
   -v $(pwd)/configs/results:/configs/results \
   -v $(pwd)/configs/signals:/configs/signals \
   phat/follow.markets:${STAGE}
+
+#LOGGER_URL=
 #--log-driver fluentd \
 #--log-opt mode=non-blocking --log-opt max-buffer-size=10m \
 #--log-opt fluentd-address=${LOGGER_URL} \

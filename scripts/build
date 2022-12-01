@@ -1,10 +1,11 @@
 #!/bin/bash
 
 
-STAGE=$1
-if [ -z "$1" ]; then
-    STAGE=dev
-fi
+#STAGE=$1
+#if [ -z "$1" ]; then
+#    STAGE=dev
+#fi
+STAGE=$(git rev-parse --symbolic-full-name --abbrev-ref HEAD)
 
 docker build --rm -t phat/follow.markets:$(git rev-parse HEAD) -f deployments/Dockerfile .
 docker tag phat/follow.markets:$(git rev-parse HEAD) phat/follow.markets:${STAGE}
