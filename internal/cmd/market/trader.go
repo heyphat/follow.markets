@@ -82,6 +82,7 @@ func newTrader(participants *sharedParticipants, configs *config.Configs) (*trad
 	}
 	var err error
 	if err = t.updateConfigs(configs); err != nil {
+		return nil, err
 	}
 	if err = t.binSpotUpdateBalances(); err != nil {
 		return nil, err
