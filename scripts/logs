@@ -1,0 +1,4 @@
+#!/bin/bash
+
+STAGE=$(git rev-parse --symbolic-full-name --abbrev-ref HEAD)
+docker logs -f ${STAGE}.follow.markets
