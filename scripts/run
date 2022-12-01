@@ -1,12 +1,16 @@
 #!/bin/bash
 
-
-bash script/build
-
 STAGE=$(git rev-parse --symbolic-full-name --abbrev-ref HEAD)
+PORT=9999
+if [ ${STAGE} = "main" ];then
+  PORT=6868
+fi
+
+echo "bot is initializing @" ${STAGE}".follow.markets:"${PORT}
+
 docker kill ${STAGE}.follow.markets
 docker run -d --rm --name ${STAGE}.follow.markets \
-  -p 6868:6868 \
+  -p ${PORT}:${PORT} \
   -v $(pwd)/configs/${STAGE}.configs.json:/configs/configs.json \
   -v $(pwd)/configs/results:/configs/results \
   -v $(pwd)/configs/signals:/configs/signals \
