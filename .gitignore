@@ -1,4 +1,4 @@
-configs/deploy.configs.json
+configs/*.configs.json
 configs/results/*.txt
 configs/signals/*.json
 
