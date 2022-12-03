@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	timeFramePattern = `\d+(m|h)`
+	timeFramePattern = `\d+(s|m|h)`
 	klineMaxSize     = 500
 )
 
