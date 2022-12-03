@@ -11,6 +11,7 @@ import (
 	tele "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 	db "follow.markets/internal/pkg/database"
+	"follow.markets/internal/pkg/runner"
 	"follow.markets/pkg/config"
 	"follow.markets/pkg/log"
 	"follow.markets/pkg/util"
@@ -185,7 +186,11 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	if n.showDesscription {
 		mess += "\n" + s.Description()
 	}
-	url := strings.Replace(tradingViewURL, "{sb}", r.GetName(), 1)
+	name := r.GetName()
+	if r.GetMarketType() == runner.Futures {
+		name = r.GetUniqueName()
+	}
+	url := strings.Replace(tradingViewURL, "{sb}", name, 1)
 	url = strings.Replace(url, "{intv}", strconv.Itoa(int(s.TimePeriod/time.Minute)), 1)
 	mess += "\n" + url
 	notis := []*db.Notification{
@@ -195,6 +200,7 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 			Broker:    "Binance",
 			Signal:    s.Name,
 			CreatedAt: time.Now(),
+			URL:       url,
 		},
 	}
 	if s.IsOnetime() {
