@@ -6,7 +6,7 @@ This project was born because I found it hard to
 2. quickly validate trading strategies with absolutely zero coding steps. When a beautiful strategy pops up in my head, just configure it, then execute a backtest request.
 3. trade the markets with configurable, validated & profitable strategies.
 
-So if you find yourself suffering the same pains I had, give it a shot. I would love to hear your thoughts about this.
+So if you find yourself suffering from the same pains I had, give it a shot. I would love to hear your thoughts on this.
 
 # Getting Started
 
