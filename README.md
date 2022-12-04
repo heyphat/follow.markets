@@ -24,7 +24,7 @@ docker run -d --rm --name follow.markets \
   -v $(pwd)/configs/configs.json:/configs/configs.json \
   -v $(pwd)/configs/results:/configs/results \
   -v $(pwd)/configs/signals:/configs/signals \
-  phat/follow.markets:latest
+  phat/follow.markets:main
 ```
 
 change the port flag, `-p`, to match with your setting of `server.port` in the `configs/configs.json` file if needed.
