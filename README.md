@@ -17,7 +17,7 @@ git clone https://github.com/heyphat/follow.markets.git
 
 cd follow.markets
 
-docker pull phat/follow.markets:latest
+docker pull phat/follow.markets:main
 
 docker run -d --rm --name follow.markets \
   -p 6868:6868\
