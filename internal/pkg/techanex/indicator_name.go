@@ -21,6 +21,7 @@ func AvailableIndicators() []string {
 		STO.ToString(),
 		MACD.ToString(),
 		HMACD.ToString(),
+		VWAP.ToString(),
 	}
 }
 
@@ -39,6 +40,7 @@ const (
 	STO   IndicatorName = "Stochastic"
 	MACD  IndicatorName = "MACD"
 	HMACD IndicatorName = "MACDHistogram"
+	VWAP  IndicatorName = "VWAP"
 )
 
 func (n IndicatorName) getIndicator(ts *ta.TimeSeries, param interface{}) ta.Indicator {
@@ -63,6 +65,12 @@ func (n IndicatorName) getIndicator(ts *ta.TimeSeries, param interface{}) ta.Ind
 		return ta.NewRelativeStrengthIndexIndicator(ta.NewClosePriceIndicator(ts), param.(int))
 	case STO:
 		return ta.NewFastStochasticIndicator(ts, param.(int))
+	case VWAP:
+		//loc, _ := time.LoadLocation("UTC")
+		//if param.(int) == 0 {
+		//	loc, _ = time.LoadLocation("UTC")
+		//}
+		return ta.NewVWAPIndicator(ts, nil)
 	case MACD:
 		windows := param.([]int)
 		if len(windows) < 2 {

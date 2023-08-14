@@ -9,7 +9,7 @@ fi
 echo "bot is initializing @" ${STAGE}".follow.markets:"${PORT}
 
 docker kill ${STAGE}.follow.markets
-docker run -d --rm --name ${STAGE}.follow.markets \
+docker run -dit --rm --name ${STAGE}.follow.markets \
   -p ${PORT}:${PORT} \
   -v $(pwd)/configs/${STAGE}.configs.json:/configs/configs.json \
   -v $(pwd)/configs/results:/configs/results \

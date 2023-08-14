@@ -71,6 +71,8 @@ github.com/heyphat/notionapi v1.7.4-0.20221129133244-4d98722f5eaf h1:CbsKhGZBvSt
 github.com/heyphat/notionapi v1.7.4-0.20221129133244-4d98722f5eaf/go.mod h1:EsOe8VRHLuYAq12h/UhTXoxdDlhpvHrssTXb3XRzD3w=
 github.com/heyphat/techan v0.12.2-0.20221129132819-c59e0e46b7cb h1:AwGYmKL8y0oval3GRKjD8ZX5ssWhX9VzSwZwIlKNC+Q=
 github.com/heyphat/techan v0.12.2-0.20221129132819-c59e0e46b7cb/go.mod h1:nScf4szPhja85SHVzXMb/hcvuMVfXvxCBHa9HhlrDb0=
+github.com/heyphat/techan v0.12.2-0.20230813232913-5aa30e0c8688 h1:hyHGpwwNIFE2S4aMplLbFkBWrpipRKdXdnQFrslPaxA=
+github.com/heyphat/techan v0.12.2-0.20230813232913-5aa30e0c8688/go.mod h1:nScf4szPhja85SHVzXMb/hcvuMVfXvxCBHa9HhlrDb0=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/itsphat/notionapi v1.7.4-0.20220223212658-58345abf9f6b h1:MW5mwOXEkSUMq66cF8NGu+Ct9bnJ2VDNVz5NIpSyj+c=
 github.com/itsphat/notionapi v1.7.4-0.20220223212658-58345abf9f6b/go.mod h1:v0k4sXTnWwh1+6YP/mz4PNbyA/jomVCLgwyNiQ6iir4=

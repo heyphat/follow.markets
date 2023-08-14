@@ -31,6 +31,7 @@ func newTester(participants *sharedParticipants, configs *config.Configs) (*test
 }
 
 func (t *tester) test(id int64) (*backtest, error) {
+	// if the smallest frame is 3 minute, cannot use 5 minute in the signal criterion
 	status := db.BacktestStatusProcessing
 	go t.provider.dbClient.UpdateBacktestStatus(id, &status)
 	data, err := t.provider.dbClient.GetBacktest(id)

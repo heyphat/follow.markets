@@ -38,6 +38,9 @@ type Configs struct {
 			} `json:"crypto"`
 		} `json:"base"`
 		Provider struct {
+			Polygon struct {
+				APIKey *string `json:"api_key"`
+			}
 			Binance struct {
 				APIKey    string `json:"api_key"`
 				SecretKey string `json:"secret_key"`
@@ -130,5 +133,8 @@ func NewConfigs(filePath *string) (*Configs, error) {
 	if len(configs.Market.Provider.Binance.APIKey) == 0 {
 		return &configs, errors.New("missing binance api key and secret")
 	}
+	//if len(configs.Market.Provider.Polygon.APIKey) == 0 {
+	//	return &configs, errors.New("missing polygon api key")
+	//}
 	return &configs, err
 }

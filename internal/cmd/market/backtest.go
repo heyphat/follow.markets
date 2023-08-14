@@ -38,7 +38,7 @@ func newBacktest(bt *db.Backtest) *backtest {
 	out.s = &strategy.Strategy{
 		ExitRule:       nil,
 		EntryRule:      strategy.NewRule(*bt.Signal),
-		RiskRewardRule: strategy.NewRiskRewardRule(-bt.LossTolerance, bt.ProfitMargin),
+		RiskRewardRule: strategy.NewRiskRewardRule(-bt.LossTolerance, bt.ProfitMargin, true),
 	}
 	out.r = runner.NewRunner(bt.Ticker, &runner.RunnerConfigs{
 		LFrames:  bt.Signal.GetPeriods(),

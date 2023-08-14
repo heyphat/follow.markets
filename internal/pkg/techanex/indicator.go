@@ -24,6 +24,7 @@ func NewDefaultIndicatorConfigs() IndicatorConfigs {
 	configs[STO] = []int{14}
 	configs[MACD] = []int{9, 26}
 	configs[HMACD] = []int{9, 12, 26}
+	configs[VWAP] = []int{0}
 	return configs
 }
 

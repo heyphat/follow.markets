@@ -10,7 +10,7 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/heyphat/notionapi v1.7.4-0.20221129133244-4d98722f5eaf
-	github.com/heyphat/techan v0.12.2-0.20221129132819-c59e0e46b7cb
+	github.com/heyphat/techan v0.12.2-0.20230813232913-5aa30e0c8688
 	github.com/miguelmota/go-coinmarketcap v0.1.8
 	github.com/sdcoffey/big v0.7.0
 	github.com/stretchr/testify v1.7.0

@@ -1,5 +1,5 @@
 {
-  "env": "development",  
+  "env": "development",
   "server": {
     "host": "",
     "port": 6868,
@@ -25,6 +25,9 @@
       }
     },
     "provider": {
+      "polygon": {
+        "api_key": ""
+      },
       "binance": {
         "api_key": "your_key",
         "secret_key": "your_key"
@@ -38,20 +41,15 @@
       "telegram": {
         "bot_token": "telegram_bot_token",
         "bot_password": "your_password",
-        "chat_ids": [
-          "telegrame_chat_id_1",
-          "telegrame_chat_id_2"
-        ] 
+        "chat_ids": ["telegrame_chat_id_1", "telegrame_chat_id_2"]
       }
     },
     "watcher": {
       "watchlist": [
-       "(?=(?<!(USDP|SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)"
+        "(?=(?<!(USDP|SUSD|BUSD|BVND|PAX|DAI|TUSD|USDC|VAI|BRL|AUD|BIRD|EUR|GBP|BIDR|DOWN|UP|BEAR|BULL))USDT)(?=USDT$)"
       ],
       "runner": {
-        "frames": [
-          60, 300, 900, 1800, 3600, 14400, 86400
-        ],
+        "frames": [60, 300, 900, 1800, 3600, 14400, 86400],
         "indicators": {
           "MovingAverge": [9, 26, 50],
           "VolumeMovingAverage": [200],
@@ -79,12 +77,8 @@
     },
     "trader": {
       "allowed": false,
-      "allowed_patterns": [
-        "BTCUSDT"
-      ],
-      "allowed_markets": [
-        "CASH" 
-      ],
+      "allowed_patterns": ["BTCUSDT"],
+      "allowed_markets": ["CASH"],
       "max_leverage": 1,
       "min_balance_to_trade": 1,
       "max_wait_to_fill": 60,

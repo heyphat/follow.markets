@@ -53,7 +53,7 @@ func NewStopLossRule(tol float64) *StopLossRule {
 	return &StopLossRule{LossTolerance: big.NewDecimal(-tol)}
 }
 
-func (sr StopLossRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
+func (sr *StopLossRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
 	if sr.runner == nil {
 		return false
 	}
@@ -74,13 +74,15 @@ func (sr StopLossRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
 }
 
 type TakeProfitRule struct {
-	ProfitMargin big.Decimal
+	ProfitMargin     big.Decimal
+	PassedLimitNTime float64
+	WithTrailing     bool
 
 	runner *runner.Runner
 }
 
-func NewTakeProfitRule(mgr float64) *TakeProfitRule {
-	return &TakeProfitRule{ProfitMargin: big.NewDecimal(mgr)}
+func NewTakeProfitRule(mgr float64, tl bool) *TakeProfitRule {
+	return &TakeProfitRule{ProfitMargin: big.NewDecimal(mgr), WithTrailing: tl}
 }
 
 func (pr *TakeProfitRule) SetRunner(r *runner.Runner) *TakeProfitRule {
@@ -91,7 +93,16 @@ func (pr *TakeProfitRule) SetRunner(r *runner.Runner) *TakeProfitRule {
 	return pr
 }
 
-func (pr TakeProfitRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
+func (pr *TakeProfitRule) SetPassedLimit() {
+	pr.PassedLimitNTime += 1.0
+}
+
+func (pr *TakeProfitRule) ResetPassedLimit() {
+	pr.PassedLimitNTime = 0
+}
+
+// only works on bullish signal
+func (pr *TakeProfitRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
 	if pr.runner == nil {
 		return false
 	}
@@ -107,18 +118,33 @@ func (pr TakeProfitRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
 		return false
 	}
 	openPrice := record.CurrentPosition().EntranceOrder().Price
+	if pr.PassedLimitNTime > 0 && pr.WithTrailing {
+		halfSize := pr.ProfitMargin.Div(big.NewDecimal(2.0))
+		openPrice = openPrice.Mul(big.ONE.Add(halfSize.Mul(big.NewDecimal(pr.PassedLimitNTime))))
+		if candle.ClosePrice.LTE(openPrice) {
+			pr.ResetPassedLimit()
+			return true
+		}
+	}
 	profit := candle.ClosePrice.Div(openPrice).Sub(big.ONE)
-	return profit.GTE(pr.ProfitMargin)
+	if !pr.WithTrailing {
+		return profit.GTE(pr.ProfitMargin)
+	}
+	if profit.GTE(pr.ProfitMargin) && pr.WithTrailing {
+		pr.SetPassedLimit()
+	}
+	return false
 }
 
 type RiskRewardRule struct {
-	StopLoss   *StopLossRule
-	TakeProfit *TakeProfitRule
+	StopLoss     *StopLossRule
+	TakeProfit   *TakeProfitRule
+	WithTrailing bool
 }
 
-func NewRiskRewardRule(lossTolerance, profitMargin float64) *RiskRewardRule {
+func NewRiskRewardRule(lossTolerance, profitMargin float64, withTrailing bool) *RiskRewardRule {
 	return &RiskRewardRule{StopLoss: NewStopLossRule(lossTolerance),
-		TakeProfit: NewTakeProfitRule(profitMargin),
+		TakeProfit: NewTakeProfitRule(profitMargin, withTrailing),
 	}
 }
 
@@ -131,6 +157,6 @@ func (rr *RiskRewardRule) SetRunner(r *runner.Runner) *RiskRewardRule {
 	return rr
 }
 
-func (rr RiskRewardRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
+func (rr *RiskRewardRule) IsSatisfied(index int, record *ta.TradingRecord) bool {
 	return ta.Or(rr.StopLoss, rr.TakeProfit).IsSatisfied(index, record)
 }
