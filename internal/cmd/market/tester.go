@@ -43,7 +43,7 @@ func (t *tester) test(id int64) (*backtest, error) {
 	bt := newBacktest(data)
 	newStatus := &bt.bt.Status
 	defer t.provider.dbClient.UpdateBacktestStatus(id, newStatus)
-	candles, err := t.provider.fetchBinanceSpotKlinesV3(bt.r.GetName(), bt.r.SmallestFrame(), &fetchOptions{start: &bt.bt.Start, end: &bt.bt.End})
+	candles, err := t.provider.fetchBinanceSpotKlinesV3(bt.r.GetName(), bt.r.SmallestFrame(), &fetchOptions{start: &bt.bt.Start, end: &bt.bt.End, limit: 499})
 	if err != nil {
 		bt.bt.UpdateStatus(db.BacktestStatusError)
 		return nil, err

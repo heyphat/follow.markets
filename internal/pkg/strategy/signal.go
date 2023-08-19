@@ -2,7 +2,6 @@ package strategy
 
 import (
 	"encoding/json"
-	"errors"
 	"sort"
 	"strings"
 	"time"
@@ -22,8 +21,8 @@ type Signal struct {
 	SignalType string `json:"signal_type"`
 
 	// The conditions of the signal
-	Groups     Groups        `json:"groups"`
 	TimePeriod time.Duration `json:"primary_period"`
+	Rule       Groups        `json:"rule"`
 
 	// The trading information for the signal
 	Trade struct {
@@ -43,13 +42,11 @@ func NewSignalFromBytes(bytes []byte) (*Signal, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(signal.Groups) == 0 {
-		return nil, errors.New("not a valid signal")
-	}
-	for _, g := range signal.Groups {
-		if err := g.validate(); err != nil {
-			return nil, err
-		}
+	//if signal.Rule == nil {
+	//	return nil, errors.New("not a valid signal")
+	//}
+	if err := signal.Rule.validate(); err != nil {
+		return nil, err
 	}
 	periods := signal.GetPeriods()
 	signal.TimePeriod = periods[0]
@@ -61,19 +58,14 @@ func (s *Signal) Evaluate(r *runner.Runner, t *tax.Trade) bool {
 	if r == nil && t == nil {
 		return false
 	}
-	for _, g := range s.Groups {
-		if !g.evaluate(r, t) {
-			return false
-		}
-	}
-	return true
+	return s.Rule.evaluate(r, t)
 }
 
 // copy does a deep copy on the signal.
 func (s *Signal) copy() *Signal {
 	var ns Signal
 	ns.Name = s.Name
-	ns.Groups = s.Groups.copy()
+	ns.Rule = s.Rule.copy()
 	ns.OwnerID = s.OwnerID
 	ns.SignalType = s.SignalType
 	ns.TrackType = s.TrackType
@@ -97,7 +89,7 @@ func (ss Signals) Copy() Signals {
 func (s Signal) Description() string {
 	var out []string
 	var thisFrame, thatFrame string
-	for _, cg := range s.Groups {
+	for _, cg := range s.Rule.Groups {
 		for _, g := range cg.Groups {
 			for _, c := range g.Conditions {
 				if c.Msg != nil {
@@ -189,7 +181,7 @@ func (s Signal) BacktestSide(side string) string {
 
 func (s Signal) GetPeriods() []time.Duration {
 	var periods []time.Duration
-	for _, gs := range s.Groups {
+	for _, gs := range s.Rule.Groups {
 		for _, g := range gs.Groups {
 			if g == nil {
 				continue

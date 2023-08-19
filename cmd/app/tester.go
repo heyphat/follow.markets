@@ -24,7 +24,11 @@ func test(w http.ResponseWriter, req *http.Request) {
 			logger.Error.Println(err)
 		}
 	}()
+	bts := []byte("OK")
+	header := w.Header()
+	header.Set("Content-Length", strconv.Itoa(len(bts)))
 	w.WriteHeader(http.StatusOK)
+	w.Write(bts)
 }
 
 //func test(w http.ResponseWriter, req *http.Request) {

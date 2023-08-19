@@ -193,12 +193,55 @@ func (gs *ConditionGroups) evaluate(r *runner.Runner, t *tax.Trade) bool {
 	}
 }
 
-type Groups []*ConditionGroups
+type Groups struct {
+	Groups []*ConditionGroups `json:"groups"`
+	Opt    *Operator          `json:"opt"`
+}
 
-func (gs Groups) copy() Groups {
-	var ngs Groups
-	for _, g := range gs {
-		ngs = append(ngs, g.copy())
+func (ggs Groups) copy() Groups {
+	var nggs Groups
+	nggs.Opt = nggs.Opt.copy()
+	for _, g := range ggs.Groups {
+		nggs.Groups = append(nggs.Groups, g.copy())
 	}
-	return ngs
+	return nggs
+}
+
+func (ggs *Groups) validate() error {
+	if ggs.Opt == nil {
+		return errors.New("missing group operator")
+	}
+	if strings.ToLower(string(*ggs.Opt)) != strings.ToLower(string(Or)) && strings.ToLower(string(*ggs.Opt)) != strings.ToLower(string(And)) {
+		return errors.New("invalid group condition")
+	}
+	for _, g := range ggs.Groups {
+		if err := g.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (ggs *Groups) evaluate(r *runner.Runner, t *tax.Trade) bool {
+	if r == nil {
+		return false
+	}
+	switch *ggs.Opt {
+	case And:
+		for _, g := range ggs.Groups {
+			if !g.evaluate(r, t) {
+				return false
+			}
+		}
+		return true
+	case Or:
+		for _, g := range ggs.Groups {
+			if g.evaluate(r, t) {
+				return true
+			}
+		}
+		return false
+	default:
+		return false
+	}
 }
