@@ -203,7 +203,7 @@ type Groups struct {
 
 func (ggs Groups) copy() Groups {
 	var nggs Groups
-	nggs.Opt = nggs.Opt.copy()
+	nggs.Opt = ggs.Opt.copy()
 	for _, g := range ggs.Groups {
 		nggs.Groups = append(nggs.Groups, g.copy())
 	}
