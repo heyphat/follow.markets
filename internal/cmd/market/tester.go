@@ -3,6 +3,7 @@ package market
 import (
 	"errors"
 	"fmt"
+	"math"
 
 	ta "github.com/heyphat/techan"
 
@@ -30,19 +31,66 @@ func newTester(participants *sharedParticipants, configs *config.Configs) (*test
 	}, nil
 }
 
-func (t *tester) test(id int64) (*backtest, error) {
-	// if the smallest frame is 3 minute, cannot use 5 minute in the signal criterion
-	status := db.BacktestStatusProcessing
-	go t.provider.dbClient.UpdateBacktestStatus(id, &status)
-	data, err := t.provider.dbClient.GetBacktest(id)
+func (t *tester) execute(id int64) error {
+	status := db.BacktestStatusAccepted
+	statusPointer := &status
+	defer t.provider.dbClient.UpdateBacktestStatus(id, statusPointer, false)
+	backtests, err := t.initTest(id)
 	if err != nil {
 		status = db.BacktestStatusError
-		t.provider.dbClient.UpdateBacktestStatus(id, &status)
+		return err
+	}
+	*statusPointer = db.BacktestStatusProcessing
+	go t.provider.dbClient.UpdateBacktestStatus(id, statusPointer, false)
+	for _, backtest := range backtests {
+		_, err := t.runTest(backtest.bt.ID, backtest)
+		if err != nil {
+			status = db.BacktestStatusError
+			return err
+		}
+	}
+	*statusPointer = db.BacktestStatusCompleted
+	return nil
+}
+
+func (t *tester) initTest(id int64) ([]*backtest, error) {
+	data, err := t.provider.dbClient.GetBacktest(id)
+	if err != nil {
 		return nil, err
 	}
-	bt := newBacktest(data)
+	tickers := []string{}
+	if data.NRunners > 0 {
+		gainers, err := t.provider.fetchRunners(true, int(data.NRunners))
+		if err != nil {
+			return nil, err
+		}
+		tickers = append(tickers, gainers...)
+	} else {
+		losers, err := t.provider.fetchRunners(false, int(math.Abs(float64(data.NRunners))))
+		if err != nil {
+			return nil, err
+		}
+		tickers = append(tickers, losers...)
+	}
+	var out []*backtest
+	for _, ticker := range tickers {
+		backtest := newBacktest(data.Copy(&ticker))
+		backtestResultID, err := t.provider.dbClient.CreateBacktestResultItem(backtest.bt)
+		if err != nil {
+			return nil, err
+		}
+		backtest.bt.ID = backtestResultID
+		out = append(out, backtest)
+	}
+	return out, nil
+}
+
+func (t *tester) runTest(id int64, bt *backtest) (*backtest, error) {
+	// if the smallest frame is 3 minute, cannot use 5 minute in the signal criterion
+	status := db.BacktestStatusProcessing
+	go t.provider.dbClient.UpdateBacktestStatus(id, &status, true)
 	newStatus := &bt.bt.Status
-	defer t.provider.dbClient.UpdateBacktestStatus(id, newStatus)
+	defer t.provider.dbClient.UpdateBacktestStatus(id, newStatus, true)
 	candles, err := t.provider.fetchBinanceSpotKlinesV3(bt.r.GetName(), bt.r.SmallestFrame(), &fetchOptions{start: &bt.bt.Start, end: &bt.bt.End, limit: 499})
 	if err != nil {
 		bt.bt.UpdateStatus(db.BacktestStatusError)

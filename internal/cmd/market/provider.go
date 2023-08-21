@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -258,4 +259,45 @@ func (p *provider) fetchBinFutuExchangeInfo(ticker string) (int, int, error) {
 		}
 	}
 	return precision, lotSize, nil
+}
+
+func (p *provider) fetchRunners(isGanner bool, top int) ([]string, error) {
+	limit := 10
+	if top > 0 {
+		limit = top
+	}
+	ps, err := p.binSpot.NewListPriceChangeStatsService().Do(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	type change struct {
+		ticker  string
+		percent big.Decimal
+	}
+	var changes []change
+	for _, p := range ps {
+		if !strings.HasSuffix(p.Symbol, "USDT") {
+			continue
+		}
+		if strings.Contains(p.Symbol, "UP") ||
+			strings.Contains(p.Symbol, "BULL") ||
+			strings.Contains(p.Symbol, "BEAR") ||
+			strings.Contains(p.Symbol, "DOWN") {
+			continue
+		}
+		changes = append(changes, change{ticker: p.Symbol, percent: big.NewFromString(p.PriceChangePercent)})
+	}
+	if isGanner {
+		sort.Slice(changes, func(i, j int) bool { return changes[i].percent.GTE(changes[j].percent) })
+	} else {
+		sort.Slice(changes, func(i, j int) bool { return changes[i].percent.LTE(changes[j].percent) })
+	}
+	var out []string
+	for i, c := range changes {
+		if i >= limit {
+			break
+		}
+		out = append(out, c.ticker)
+	}
+	return out, nil
 }

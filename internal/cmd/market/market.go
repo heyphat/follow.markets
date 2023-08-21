@@ -12,7 +12,6 @@ import (
 	"github.com/dlclark/regexp2"
 	"github.com/sdcoffey/big"
 
-	db "follow.markets/internal/pkg/database"
 	"follow.markets/internal/pkg/runner"
 	"follow.markets/internal/pkg/strategy"
 	tax "follow.markets/internal/pkg/techanex"
@@ -327,13 +326,9 @@ func (m *MarketStruct) GetNotifications() map[string]time.Time {
 
 // tester endpoints
 func (m *MarketStruct) Test(id int64) error {
-	st := db.BacktestStatusAccepted
-	m.tester.provider.dbClient.UpdateBacktestStatus(id, &st)
-	_, err := m.tester.test(id)
-	if err != nil {
-		return err
-	}
-	return nil
+	//st := db.BacktestStatusAccepted
+	//m.tester.provider.dbClient.UpdateBacktestStatus(id, &st)
+	return m.tester.execute(id)
 }
 
 // trader endpoints

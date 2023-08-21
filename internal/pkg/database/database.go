@@ -25,23 +25,25 @@ type Client interface {
 	// backtest methods
 	InsertBacktest(bt *Backtest) error
 	GetBacktest(id int64) (*Backtest, error)
-	UpdateBacktestStatus(id int64, st *BacktestStatus) error
+	UpdateBacktestStatus(id int64, st *BacktestStatus, isResult bool) error
 	UpdateBacktestResult(id int64, rs map[string]float64, ts ...*ta.Position) error
+	CreateBacktestResultItem(bt *Backtest) (int64, error)
 }
 
 // Create a new db client based on user configuration options.
 func NewClient(configs *config.Configs) Client {
-	if strings.ToLower(configs.Database.Use) == "mongodb" && configs.Database.MongoDB != nil {
-		return newMongDBClient(configs)
-	}
+	//if strings.ToLower(configs.Database.Use) == "mongodb" && configs.Database.MongoDB != nil {
+	//	return newMongDBClient(configs)
+	//}
 	if strings.ToLower(configs.Database.Use) == "notion" && configs.Database.Notion != nil {
 		return newNotionClient(configs)
 	}
-	if configs.Database.MongoDB != nil {
-		return newMongDBClient(configs)
-	} else if configs.Database.Notion != nil {
+	//if configs.Database.MongoDB != nil {
+	//	return newMongDBClient(configs)
+	//} else if configs.Database.Notion != nil {
+	if configs.Database.Notion != nil {
 		return newNotionClient(configs)
 	} else {
-		return MongoDB{}
+		return newNotionClient(configs)
 	}
 }

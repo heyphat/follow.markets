@@ -21,9 +21,29 @@ type Backtest struct {
 	End           time.Time         `bson:"end" json:"end"`
 	CreatedAt     time.Time         `bson:"created_at" json:"created_at"`
 	Status        BacktestStatus    `bson:"status" json:"status"`
+
+	ResultID int64 `bson:"id" json:"id"`
+	NRunners int64 `bson:"n_runners" json:"n_runners"`
 }
 
 func (bt *Backtest) UpdateStatus(s BacktestStatus) { bt.Status = s }
+
+func (bt *Backtest) Copy(ticker *string) *Backtest {
+	nbt := Backtest{}
+	if ticker != nil {
+		nbt.Ticker = *ticker
+	}
+	nbt.Balance = bt.Balance
+	nbt.Market = bt.Market
+	nbt.LossTolerance = bt.LossTolerance
+	nbt.ProfitMargin = bt.ProfitMargin
+	nbt.Signal = bt.Signal
+	nbt.Start = bt.Start
+	nbt.End = bt.End
+	nbt.CreatedAt = time.Now()
+	nbt.Status = BacktestStatusAccepted
+	return &nbt
+}
 
 type BacktestStatus string
 
