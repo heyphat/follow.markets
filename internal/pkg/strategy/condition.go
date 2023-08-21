@@ -6,6 +6,7 @@ import (
 
 	"follow.markets/internal/pkg/runner"
 	tax "follow.markets/internal/pkg/techanex"
+	"github.com/sdcoffey/big"
 )
 
 type Condition struct {
@@ -72,6 +73,8 @@ func (c *Condition) evaluate(r *runner.Runner, t *tax.Trade) bool {
 		valid = thisD.GTE(thatD)
 	case Equal:
 		valid = thisD.GTE(thatD)
+	case NotEqual:
+		valid = !thisD.Sub(thatD).EQ(big.ZERO)
 	}
 	if valid {
 		c.Msg = &mess

@@ -8,6 +8,7 @@ const (
 	Equal     Operator = "EQUAL"
 	LessEqual Operator = "LESS_EQUAL"
 	MoreEqual Operator = "MORE_EQUAL"
+	NotEqual  Operator = "NOT_EQUAL"
 
 	Or  Operator = "OR"
 	And Operator = "AND"
@@ -25,6 +26,8 @@ func (o *Operator) toString() string {
 		return "<="
 	case MoreEqual:
 		return ">="
+	case NotEqual:
+		return "<>"
 	default:
 		return "UNKNOWN"
 	}
