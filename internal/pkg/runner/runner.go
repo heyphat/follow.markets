@@ -27,7 +27,7 @@ var (
 		4 * time.Hour,
 		24 * time.Hour,
 	}
-	maxSize = 500
+	maxSize = 1500
 )
 
 func ChangeMaxSize(size int) {
