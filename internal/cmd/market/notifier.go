@@ -17,7 +17,7 @@ import (
 	"follow.markets/pkg/util"
 )
 
-const tradingViewURL = "https://www.tradingview.com/chart/?symbol={sb}&interval={intv}"
+const tradingViewURL = "https://www.tradingview.com/chart/?symbol={ex}:{sb}&interval={intv}"
 
 type notifier struct {
 	sync.Mutex
@@ -190,7 +190,8 @@ func (n *notifier) processEvaluatorRequest(msg *message) {
 	if r.GetMarketType() == runner.Futures {
 		name = r.GetUniqueName()
 	}
-	url := strings.Replace(tradingViewURL, "{sb}", name, 1)
+	url := strings.Replace(tradingViewURL, "{ex}", r.GetExchange(), 1)
+	url = strings.Replace(url, "{sb}", name, 1)
 	url = strings.Replace(url, "{intv}", strconv.Itoa(int(s.TimePeriod/time.Minute)), 1)
 	mess += "\n" + url
 	notis := []*db.Notification{

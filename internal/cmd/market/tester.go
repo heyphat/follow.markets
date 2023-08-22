@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"time"
 
 	ta "github.com/heyphat/techan"
 
@@ -43,10 +44,10 @@ func (t *tester) execute(id int64) error {
 	*statusPointer = db.BacktestStatusProcessing
 	go t.provider.dbClient.UpdateBacktestStatus(id, statusPointer, false)
 	for _, backtest := range backtests {
-		_, err := t.runTest(backtest.bt.ID, backtest)
-		if err != nil {
-			status = db.BacktestStatusError
-			return err
+		if _, err := t.runTest(backtest.bt.ID, backtest); err != nil {
+			//status = db.BacktestStatusError
+			t.logger.Error.Println(err)
+			time.Sleep(60)
 		}
 	}
 	*statusPointer = db.BacktestStatusCompleted

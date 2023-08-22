@@ -44,14 +44,14 @@ type RunnerConfigs struct {
 func NewRunnerDefaultConfigs() *RunnerConfigs {
 	lineFrames := []time.Duration{
 		time.Minute,
-		//3 * time.Minute,
+		3 * time.Minute,
 		5 * time.Minute,
-		//10 * time.Minute,
+		10 * time.Minute,
 		15 * time.Minute,
-		30 * time.Minute,
-		60 * time.Minute,
+		//30 * time.Minute,
+		//60 * time.Minute,
 		//2 * time.Hour,
-		4 * time.Hour,
+		//4 * time.Hour,
 		24 * time.Hour,
 	}
 	return &RunnerConfigs{
@@ -105,6 +105,14 @@ func (r *Runner) GetConfigs() *RunnerConfigs { return r.configs }
 
 // GetName returns the runner's name.
 func (r *Runner) GetName() string { return r.name }
+
+// GetExchange returns the exchange name where the runner is listed
+func (r *Runner) GetExchange() string {
+	if r.configs.Asset == Crypto {
+		return "BINANCE"
+	}
+	return "UNKNOWN"
+}
 
 // GetUniqueName returns the unique name for the runner.
 func (r *Runner) GetUniqueName(prefix ...string) string {
